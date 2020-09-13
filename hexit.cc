@@ -7,10 +7,17 @@
 #include <unordered_set>
 
 namespace fs = std::filesystem;
+typedef std::unordered_set<std::uint32_t> IntCache;
 
-constexpr int                   OFFSET_LEN =  8;
-constexpr std::uint32_t     BYTES_PER_LINE = 16;
-constexpr int           FIRST_BYTE_PER_ROW = OFFSET_LEN + 2 + 1;
+constexpr int               OFFSET_LEN =  8;
+constexpr std::uint32_t BYTES_PER_LINE = 16;
+constexpr int                FIRST_HEX = OFFSET_LEN + 2 + 1;
+constexpr int              FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
+
+constexpr int CTRL_Q = 'q' & 0x1F;
+constexpr int CTRL_S = 's' & 0x1F;
+constexpr int CTRL_X = 'x' & 0x1F;
+constexpr int CTRL_A = 'a' & 0x1F;
 
 struct FileData
 {
@@ -95,24 +102,30 @@ struct FileData
 class TScreen
 {
 private:
-    WINDOW*                                m_screen;
-    FileData*                               m_fdata;
-    int                 m_cy, m_cx, m_lines, m_cols;
-    std::uint32_t             m_byte, m_byte_offset;
-    bool                                   m_update;
-    std::unordered_set<std::uint32_t> m_dirty_cache;
+    enum class Mode
+    {
+        HEX,
+        ASCII,
+    };
+
+    WINDOW*                          m_screen;
+    FileData*                         m_fdata;
+    bool                             m_update;
+    Mode                               m_mode;
+    IntCache                    m_dirty_cache;
+    std::uint32_t       m_byte, m_byte_offset;
+    int           m_cy, m_cx, m_lines, m_cols;
 
 public:
     TScreen(WINDOW* win, FileData* fdata)
         :m_screen(win),
          m_fdata(fdata),
-         m_cy(1),
-         m_cx(FIRST_BYTE_PER_ROW),
+         m_update(true),
+         m_mode(Mode::HEX),
+         m_byte(0), m_byte_offset(0),
+         m_cy(1), m_cx(FIRST_HEX),
          m_lines(std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines))),
-         m_cols(COLS-2),
-         m_byte(0),
-         m_byte_offset(0),
-         m_update(true)
+         m_cols(COLS-2)
     {
         m_fdata->m_last_line = m_lines;
         keypad(m_screen, true);
@@ -132,14 +145,29 @@ public:
         mvwprintw(m_screen, line + 1, 1, "%08X  ", group*BYTES_PER_LINE);
 
         std::uint32_t byte_index = group*BYTES_PER_LINE;
-        int col = FIRST_BYTE_PER_ROW;
+        int col = FIRST_HEX;
 
-        for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3)
+        for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
         {
             if (i < bytes_to_draw)
-                mvwprintw(m_screen, line + 1, col, "%02X ", m_fdata->m_buff[byte_index++]);
-            else
-                mvwprintw(m_screen, line + 1, col, "   ");
+            {
+                bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
+
+                if (m_mode == Mode::ASCII && byte_index == m_byte)
+                    wattron(m_screen, A_REVERSE);
+                else if (m_mode == Mode::ASCII && is_dirty)
+                    wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+
+                mvwprintw(m_screen, line + 1, col, "%02X", m_fdata->m_buff[byte_index]);
+
+                if (m_mode == Mode::ASCII && byte_index == m_byte)
+                    wattroff(m_screen, A_REVERSE);
+                else if (m_mode == Mode::ASCII && is_dirty)
+                    wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+            } else
+                mvwprintw(m_screen, line + 1, col, "  ");
+
+            mvwprintw(m_screen, line + 1, col+2, " ");
         }
 
         mvwprintw(m_screen, line + 1, col++, " ");
@@ -150,16 +178,16 @@ public:
             char c = m_fdata->m_buff[byte_index];
             bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
 
-            if (byte_index == m_byte)
+            if (m_mode == Mode::HEX && byte_index == m_byte)
                 wattron(m_screen, A_REVERSE);
-            else if (is_dirty)
+            else if (m_mode == Mode::HEX && is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
 
             mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
 
-            if (byte_index == m_byte)
+            if (m_mode == Mode::HEX &&  byte_index == m_byte)
                 wattroff(m_screen, A_REVERSE);
-            else if (is_dirty)
+            else if (m_mode == Mode::HEX && is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
         }
     }
@@ -177,7 +205,8 @@ public:
                       "%s", filename.c_str());
 
             int percentage  = static_cast<float>(m_fdata->m_last_line)/m_fdata->m_total_lines*100;
-            mvwprintw(m_screen, LINES-1, COLS - 5, "%d%%", percentage);
+            char mode = m_mode == Mode::ASCII ? 'A' : 'X';
+            mvwprintw(m_screen, LINES-1, COLS - 7, "%c/%d%%", mode, percentage);
             m_update = false;
         }else
         {
@@ -205,7 +234,10 @@ public:
     void resize()
     {
         m_cy = 1;
-        m_cx = FIRST_BYTE_PER_ROW;
+        if (m_mode == Mode::HEX)
+            m_cx = FIRST_HEX;
+        else
+            m_cx = FIRST_ASCII;
         m_byte = 0;
         m_byte_offset = 0;
         m_lines = std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines));
@@ -258,27 +290,39 @@ public:
         if (m_byte >= m_fdata->m_size)
         {
             m_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
-            m_cx = FIRST_BYTE_PER_ROW;
+            if (m_mode == Mode::HEX)
+                m_cx = FIRST_HEX;
+            else
+                m_cx = FIRST_ASCII;
             m_byte_offset = 0;
             m_update = true;
         }
-
     }
 
     void move_left()
     {
-        if (m_byte_offset == 0)
+        if (m_mode == Mode::HEX)
         {
-            if (m_byte%BYTES_PER_LINE > 0)
+            if (m_byte_offset == 0)
             {
-                m_byte--;
-                m_byte_offset = 1;
-                m_cx -= 2;
+                if (m_byte%BYTES_PER_LINE > 0)
+                {
+                    m_byte--;
+                    m_byte_offset = 1;
+                    m_cx -= 2;
+                }
+            }else
+            {
+                m_byte_offset--;
+                m_cx--;
             }
         }else
         {
-            m_byte_offset--;
-            m_cx--;
+            if (m_cx > FIRST_ASCII)
+            {
+                m_cx--;
+                m_byte--;
+            }
         }
     }
 
@@ -286,45 +330,63 @@ public:
     {
         auto group_id = m_byte/BYTES_PER_LINE;
         auto row_size = BYTES_PER_LINE;
+
         if (group_id == m_fdata->m_total_lines-1 &&
             (m_fdata->m_size % BYTES_PER_LINE))
         {
             row_size = m_fdata->m_size % BYTES_PER_LINE;
         }
 
-        if (m_byte_offset > 0)
+        if (m_mode == Mode::HEX)
         {
-            if (m_byte%BYTES_PER_LINE < row_size-1 &&
-                m_cx+1 <= m_cols)
+            if (m_byte_offset > 0)
             {
-                m_byte++;
-                m_byte_offset = 0;
-                m_cx += 2;
+                if (m_cx < m_cols &&
+                    m_byte%BYTES_PER_LINE < row_size-1)
+                {
+                    m_byte++;
+                    m_byte_offset = 0;
+                    m_cx += 2;
+                }
+            }else if (m_cx < m_cols)
+            {
+                m_byte_offset++;
+                m_cx++;
             }
-        }else if (m_cx <= m_cols)
+        }else
         {
-            m_byte_offset++;
-            m_cx++;
+            if (m_cx < m_cols &&
+                m_byte%BYTES_PER_LINE < row_size-1)
+            {
+                m_cx++;
+                m_byte++;
+            }
         }
     }
 
     void edit_byte(int c)
     {
-        if (c < '0' || c > 'f')
-            return;
+        if (m_mode == Mode::ASCII && std::isprint(c))
+        {
+            m_fdata->m_buff[m_byte] = c;
+        } else
+        {
+            if (c < '0' || c > 'f')
+                return;
 
-        uint8_t hex_digit = 0;
-        if (c - '0' <= 9)
-            hex_digit = c - '0';
-        else if (c >= 'A' && c - 'A' <= 5)
-            hex_digit = 10 + c - 'A';
-        else if (c >= 'a' && c - 'a' <= 5)
-            hex_digit = 10 + c - 'a';
-        else
-            return;
+            uint8_t hex_digit = 0;
+            if (c - '0' <= 9)
+                hex_digit = c - '0';
+            else if (c >= 'A' && c - 'A' <= 5)
+                hex_digit = 10 + c - 'A';
+            else if (c >= 'a' && c - 'a' <= 5)
+                hex_digit = 10 + c - 'a';
+            else
+                return;
 
-        m_fdata->m_buff[m_byte] &= 0xF0 >> (1-m_byte_offset)*4;
-        m_fdata->m_buff[m_byte] |= hex_digit << (1-m_byte_offset)*4;
+            m_fdata->m_buff[m_byte] &= 0xF0 >> (1-m_byte_offset)*4;
+            m_fdata->m_buff[m_byte] |= hex_digit << (1-m_byte_offset)*4;
+        }
 
         m_dirty_cache.insert(m_byte);
     }
@@ -335,13 +397,34 @@ public:
         m_dirty_cache.clear();
         m_update = true;
     }
+
+    void toggle_ascii_mode()
+    {
+        if (m_mode == Mode::ASCII)
+            return;
+
+        m_mode = Mode::ASCII;
+        m_update = true;
+        m_cx = FIRST_ASCII + m_byte % BYTES_PER_LINE;
+        m_byte_offset = 0;
+    }
+
+    void toggle_hex_mode()
+    {
+        if (m_mode == Mode::HEX)
+            return;
+
+        m_mode = Mode::HEX;
+        m_update = true;
+        m_cx = FIRST_HEX + (m_byte % BYTES_PER_LINE)*3;
+    }
 };
 
 static void init_curses()
 {
     /* Global curses initialization and setup */
     initscr();
-    cbreak();
+    raw();
     noecho();
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
@@ -389,13 +472,17 @@ int main(int argc, char **argv)
             case KEY_RESIZE:
                 win.resize();
                 break;
-            case ERR:
-                std::cerr << "Error: Invalid input!" << std::endl;
+            case CTRL_S:
+                win.save();
+                break;
+            case CTRL_Q:
                 end = true;
                 break;
-            case 'S':
-            case 's':
-                win.save();
+            case CTRL_X:
+                win.toggle_hex_mode();
+                break;
+            case CTRL_A:
+                win.toggle_ascii_mode();
                 break;
             default:
                 win.edit_byte(c);
