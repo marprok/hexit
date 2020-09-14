@@ -201,8 +201,7 @@ public:
                 draw_line(line);
 
             std::string filename = m_fdata->m_name.filename();
-            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1,
-                      "%s", filename.c_str());
+            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
 
             int percentage  = static_cast<float>(m_fdata->m_last_line)/m_fdata->m_total_lines*100;
             char mode = m_mode == Mode::ASCII ? 'A' : 'X';
@@ -234,10 +233,7 @@ public:
     void resize()
     {
         m_cy = 1;
-        if (m_mode == Mode::HEX)
-            m_cx = FIRST_HEX;
-        else
-            m_cx = FIRST_ASCII;
+        m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
         m_byte = 0;
         m_byte_offset = 0;
         m_lines = std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines));
@@ -290,10 +286,7 @@ public:
         if (m_byte >= m_fdata->m_size)
         {
             m_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
-            if (m_mode == Mode::HEX)
-                m_cx = FIRST_HEX;
-            else
-                m_cx = FIRST_ASCII;
+            m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
             m_byte_offset = 0;
             m_update = true;
         }
@@ -305,7 +298,7 @@ public:
         {
             if (m_byte_offset == 0)
             {
-                if (m_byte%BYTES_PER_LINE > 0)
+                if (m_cx < m_cols && m_byte%BYTES_PER_LINE > 0)
                 {
                     m_byte--;
                     m_byte_offset = 1;
@@ -318,7 +311,7 @@ public:
             }
         }else
         {
-            if (m_cx > FIRST_ASCII)
+            if (m_cx < m_cols && m_byte%BYTES_PER_LINE > 0)
             {
                 m_cx--;
                 m_byte--;
