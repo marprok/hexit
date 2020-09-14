@@ -6,7 +6,7 @@ HEX mode                   |  ASCII mode
 ![hex mode](hex_mode.png)  |  ![ascii mode](ascii_mode.png)
 
 
-#### Controls
+### Controls
 
 | Key                           | Function        |
 |-------------------------------|-----------------|
