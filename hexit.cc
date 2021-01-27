@@ -39,7 +39,8 @@ struct FileData
 
     ~FileData()
     {
-        delete[] m_buff;
+        if (m_buff)
+            delete[] m_buff;
     }
 
     bool read(const std::string& fname)
