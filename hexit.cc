@@ -270,6 +270,17 @@ public:
         }
     }
 
+    void page_up()
+    {
+        if (m_fdata->m_first_line >= static_cast<uint32_t>(m_lines-1))
+        {
+            m_fdata->m_first_line -= m_lines-1;
+            m_fdata->m_last_line -= m_lines-1;
+            m_byte -= (m_lines-1)*BYTES_PER_LINE;
+            m_update = true;
+        }
+    }
+
     void move_down()
     {
         if (m_cy-1 < m_lines - 1)
@@ -281,6 +292,25 @@ public:
             m_fdata->m_first_line++;
             m_fdata->m_last_line++;
             m_byte += BYTES_PER_LINE;
+            m_update = true;
+        }
+
+        if (m_byte >= m_fdata->m_size)
+        {
+            m_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
+            m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
+            m_byte_offset = 0;
+            m_update = true;
+        }
+    }
+
+    void page_down()
+    {
+        if (m_fdata->m_last_line + m_lines-1 < m_fdata->m_total_lines)
+        {
+            m_fdata->m_first_line += m_lines-1;
+            m_fdata->m_last_line += m_lines-1;
+            m_byte += (m_lines-1)*BYTES_PER_LINE;
             m_update = true;
         }
 
@@ -462,6 +492,12 @@ int main(int argc, char **argv)
                 break;
             case KEY_LEFT:
                 win.move_left();
+                break;
+            case KEY_PPAGE:
+                win.page_up();
+                break;
+            case KEY_NPAGE:
+                win.page_down();
                 break;
             case KEY_RESIZE:
                 win.resize();
