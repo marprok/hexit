@@ -201,7 +201,10 @@ public:
                 draw_line(line);
 
             std::string filename = m_fdata->m_name.filename();
-            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
+            if (m_dirty_cache.empty())
+                mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
+            else
+                mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
 
             int percentage  = static_cast<float>(m_fdata->m_last_line)/m_fdata->m_total_lines*100;
             char mode = m_mode == Mode::ASCII ? 'A' : 'X';
@@ -406,6 +409,9 @@ public:
             m_fdata->m_buff[m_current_byte] &= 0xF0 >> (1-m_current_byte_offset)*4;
             m_fdata->m_buff[m_current_byte] |= hex_digit << (1-m_current_byte_offset)*4;
         }
+
+        if (m_dirty_cache.empty())
+            m_update = true;
 
         m_dirty_cache.insert(m_current_byte);
     }
