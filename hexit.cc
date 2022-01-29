@@ -9,10 +9,10 @@
 namespace fs = std::filesystem;
 typedef std::unordered_set<std::uint32_t> IntCache;
 
-constexpr std::uint32_t   LEFT_PADDING =  8;
+constexpr std::uint32_t LEFT_PADDING =  8;
 constexpr std::uint32_t BYTES_PER_LINE = 16;
-constexpr std::uint32_t      FIRST_HEX = LEFT_PADDING + 2 + 1;
-constexpr std::uint32_t    FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
+constexpr std::uint32_t FIRST_HEX = LEFT_PADDING + 2 + 1;
+constexpr std::uint32_t FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
 
 constexpr int CTRL_Q = 'q' & 0x1F;
 constexpr int CTRL_S = 's' & 0x1F;
@@ -21,13 +21,13 @@ constexpr int CTRL_A = 'a' & 0x1F;
 
 struct FileData
 {
-    std::uint32_t         m_size;
-    std::uint32_t   m_first_line;
-    std::uint32_t    m_last_line;
-    std::uint32_t  m_total_lines;
-    fs::path              m_name;
-    std::ifstream         m_file;
-    std::uint8_t         *m_buff;
+    std::uint32_t m_size;
+    std::uint32_t m_first_line;
+    std::uint32_t m_last_line;
+    std::uint32_t m_total_lines;
+    fs::path      m_name;
+    std::ifstream m_file;
+    std::uint8_t *m_buff;
 
     FileData()
         :m_size(0),
@@ -109,12 +109,12 @@ private:
         ASCII,
     };
 
-    WINDOW*                          m_screen;
-    FileData*                         m_fdata;
-    bool                             m_update;
-    Mode                               m_mode;
-    IntCache                    m_dirty_cache;
-    std::uint32_t       m_current_byte, m_current_byte_offset;
+    WINDOW*       m_screen;
+    FileData*     m_fdata;
+    bool          m_update;
+    Mode          m_mode;
+    IntCache      m_dirty_cache;
+    std::uint32_t m_current_byte, m_current_byte_offset;
     int           m_cy, m_cx, m_visible_lines, m_cols;
 
 public:
@@ -135,39 +135,33 @@ public:
             m_cy += starting_byte_offset/BYTES_PER_LINE - m_fdata->m_first_line;
             m_cx += starting_byte_offset%BYTES_PER_LINE*3;
         }
+
         m_fdata->m_last_line = m_fdata->m_first_line + m_visible_lines;
         keypad(m_screen, true);
     }
 
     void draw_line(int line)
     {
+        int col = FIRST_HEX;
         auto group = m_fdata->m_first_line + line;
         std::uint32_t bytes_to_draw = BYTES_PER_LINE;
-
-        if (m_fdata->m_total_lines-1 == group &&
-            (m_fdata->m_size % BYTES_PER_LINE))
-        {
-            bytes_to_draw = m_fdata->m_size % BYTES_PER_LINE;
-        }
-
-        mvwprintw(m_screen, line + 1, 1, "%08X  ", group*BYTES_PER_LINE);
-
         std::uint32_t byte_index = group*BYTES_PER_LINE;
-        int col = FIRST_HEX;
 
+        if (m_fdata->m_total_lines-1 == group && (m_fdata->m_size % BYTES_PER_LINE))
+            bytes_to_draw = m_fdata->m_size % BYTES_PER_LINE;
+
+        mvwprintw(m_screen, line + 1, 1, "%08X  ", byte_index);
         for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
         {
             if (i < bytes_to_draw)
             {
                 bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
-
                 if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                     wattron(m_screen, A_REVERSE);
                 else if (m_mode == Mode::ASCII && is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
 
                 mvwprintw(m_screen, line + 1, col, "%02X", m_fdata->m_buff[byte_index]);
-
                 if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                     wattroff(m_screen, A_REVERSE);
                 else if (m_mode == Mode::ASCII && is_dirty)
@@ -185,14 +179,12 @@ public:
         {
             char c = m_fdata->m_buff[byte_index];
             bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
-
             if (m_mode == Mode::HEX && byte_index == m_current_byte)
                 wattron(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
 
             mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
-
             if (m_mode == Mode::HEX &&  byte_index == m_current_byte)
                 wattroff(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
@@ -362,11 +354,8 @@ public:
         auto group_id = m_current_byte/BYTES_PER_LINE;
         auto row_size = BYTES_PER_LINE;
 
-        if (group_id == m_fdata->m_total_lines-1 &&
-            (m_fdata->m_size % BYTES_PER_LINE))
-        {
+        if (group_id == m_fdata->m_total_lines-1 && (m_fdata->m_size % BYTES_PER_LINE))
             row_size = m_fdata->m_size % BYTES_PER_LINE;
-        }
 
         if (m_mode == Mode::HEX)
         {
@@ -386,8 +375,7 @@ public:
             }
         }else
         {
-            if (m_cx < m_cols &&
-                m_current_byte%BYTES_PER_LINE < row_size-1)
+            if (m_cx < m_cols && m_current_byte%BYTES_PER_LINE < row_size-1)
             {
                 m_cx++;
                 m_current_byte++;
@@ -453,7 +441,7 @@ public:
 
 static void init_curses()
 {
-    /* Global curses initialization and setup */
+    // Global ncurses initialization and setup
     initscr();
     raw();
     noecho();
