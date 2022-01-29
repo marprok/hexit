@@ -9,10 +9,10 @@
 namespace fs = std::filesystem;
 typedef std::unordered_set<std::uint32_t> IntCache;
 
-constexpr int               OFFSET_LEN =  8;
+constexpr std::uint32_t   LEFT_PADDING =  8;
 constexpr std::uint32_t BYTES_PER_LINE = 16;
-constexpr int                FIRST_HEX = OFFSET_LEN + 2 + 1;
-constexpr int              FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
+constexpr std::uint32_t      FIRST_HEX = LEFT_PADDING + 2 + 1;
+constexpr std::uint32_t    FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
 
 constexpr int CTRL_Q = 'q' & 0x1F;
 constexpr int CTRL_S = 's' & 0x1F;
@@ -114,21 +114,28 @@ private:
     bool                             m_update;
     Mode                               m_mode;
     IntCache                    m_dirty_cache;
-    std::uint32_t       m_byte, m_byte_offset;
-    int           m_cy, m_cx, m_lines, m_cols;
+    std::uint32_t       m_current_byte, m_current_byte_offset;
+    int           m_cy, m_cx, m_visible_lines, m_cols;
 
 public:
-    TScreen(WINDOW* win, FileData* fdata)
+    TScreen(WINDOW* win, FileData* fdata, std::uint32_t starting_byte_offset = 0)
         :m_screen(win),
          m_fdata(fdata),
          m_update(true),
          m_mode(Mode::HEX),
-         m_byte(0), m_byte_offset(0),
+         m_current_byte(0), m_current_byte_offset(0),
          m_cy(1), m_cx(FIRST_HEX),
-         m_lines(std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines))),
+         m_visible_lines(std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines))),
          m_cols(COLS-2)
     {
-        m_fdata->m_last_line = m_lines;
+        if (starting_byte_offset <= m_fdata->m_size)
+        {
+            m_fdata->m_first_line = starting_byte_offset/BYTES_PER_LINE/m_visible_lines*m_visible_lines;
+            m_current_byte =  starting_byte_offset;
+            m_cy += starting_byte_offset/BYTES_PER_LINE - m_fdata->m_first_line;
+            m_cx += starting_byte_offset%BYTES_PER_LINE*3;
+        }
+        m_fdata->m_last_line = m_fdata->m_first_line + m_visible_lines;
         keypad(m_screen, true);
     }
 
@@ -154,14 +161,14 @@ public:
             {
                 bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
 
-                if (m_mode == Mode::ASCII && byte_index == m_byte)
+                if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                     wattron(m_screen, A_REVERSE);
                 else if (m_mode == Mode::ASCII && is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
 
                 mvwprintw(m_screen, line + 1, col, "%02X", m_fdata->m_buff[byte_index]);
 
-                if (m_mode == Mode::ASCII && byte_index == m_byte)
+                if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                     wattroff(m_screen, A_REVERSE);
                 else if (m_mode == Mode::ASCII && is_dirty)
                     wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
@@ -179,14 +186,14 @@ public:
             char c = m_fdata->m_buff[byte_index];
             bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
 
-            if (m_mode == Mode::HEX && byte_index == m_byte)
+            if (m_mode == Mode::HEX && byte_index == m_current_byte)
                 wattron(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
 
             mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
 
-            if (m_mode == Mode::HEX &&  byte_index == m_byte)
+            if (m_mode == Mode::HEX &&  byte_index == m_current_byte)
                 wattroff(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
@@ -198,7 +205,7 @@ public:
         if (m_update)
         {
             erase();
-            for (int line = 0; line < m_lines; line++)
+            for (int line = 0; line < m_visible_lines; line++)
                 draw_line(line);
 
             std::string filename = m_fdata->m_name.filename();
@@ -215,7 +222,7 @@ public:
 
             draw_line(m_cy-1);
 
-            if (m_cy < m_lines)
+            if (m_cy < m_visible_lines)
                 draw_line(m_cy);
         }
     }
@@ -235,12 +242,12 @@ public:
     {
         m_cy = 1;
         m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-        m_byte = 0;
-        m_byte_offset = 0;
-        m_lines = std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines));
+        m_current_byte = 0;
+        m_current_byte_offset = 0;
+        m_visible_lines = std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines));
         m_cols = COLS-2;
         m_fdata->m_first_line = 0;
-        m_fdata->m_last_line = m_lines;
+        m_fdata->m_last_line = m_visible_lines;
         m_update = true;
     }
 
@@ -259,66 +266,66 @@ public:
         if (m_cy-1 > 0)
         {
             m_cy--;
-            m_byte -= BYTES_PER_LINE;
+            m_current_byte -= BYTES_PER_LINE;
         }
         else if (m_fdata->m_first_line > 0)
         {
             m_fdata->m_first_line--;
             m_fdata->m_last_line--;
-            m_byte -= BYTES_PER_LINE;
+            m_current_byte -= BYTES_PER_LINE;
             m_update = true;
         }
     }
 
     void page_up()
     {
-        if (m_fdata->m_first_line >= static_cast<uint32_t>(m_lines-1))
+        if (m_fdata->m_first_line >= static_cast<uint32_t>(m_visible_lines-1))
         {
-            m_fdata->m_first_line -= m_lines-1;
-            m_fdata->m_last_line -= m_lines-1;
-            m_byte -= (m_lines-1)*BYTES_PER_LINE;
+            m_fdata->m_first_line -= m_visible_lines-1;
+            m_fdata->m_last_line -= m_visible_lines-1;
+            m_current_byte -= (m_visible_lines-1)*BYTES_PER_LINE;
             m_update = true;
         }
     }
 
     void move_down()
     {
-        if (m_cy-1 < m_lines - 1)
+        if (m_cy-1 < m_visible_lines - 1)
         {
             m_cy++;
-            m_byte += BYTES_PER_LINE;
+            m_current_byte += BYTES_PER_LINE;
         }else if (m_fdata->m_last_line < m_fdata->m_total_lines)
         {
             m_fdata->m_first_line++;
             m_fdata->m_last_line++;
-            m_byte += BYTES_PER_LINE;
+            m_current_byte += BYTES_PER_LINE;
             m_update = true;
         }
 
-        if (m_byte >= m_fdata->m_size)
+        if (m_current_byte >= m_fdata->m_size)
         {
-            m_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
+            m_current_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
             m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-            m_byte_offset = 0;
+            m_current_byte_offset = 0;
             m_update = true;
         }
     }
 
     void page_down()
     {
-        if (m_fdata->m_last_line + m_lines-1 < m_fdata->m_total_lines)
+        if (m_fdata->m_last_line + m_visible_lines-1 < m_fdata->m_total_lines)
         {
-            m_fdata->m_first_line += m_lines-1;
-            m_fdata->m_last_line += m_lines-1;
-            m_byte += (m_lines-1)*BYTES_PER_LINE;
+            m_fdata->m_first_line += m_visible_lines-1;
+            m_fdata->m_last_line += m_visible_lines-1;
+            m_current_byte += (m_visible_lines-1)*BYTES_PER_LINE;
             m_update = true;
         }
 
-        if (m_byte >= m_fdata->m_size)
+        if (m_current_byte >= m_fdata->m_size)
         {
-            m_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
+            m_current_byte = (m_fdata->m_total_lines-1)*BYTES_PER_LINE;
             m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-            m_byte_offset = 0;
+            m_current_byte_offset = 0;
             m_update = true;
         }
     }
@@ -327,32 +334,32 @@ public:
     {
         if (m_mode == Mode::HEX)
         {
-            if (m_byte_offset == 0)
+            if (m_current_byte_offset == 0)
             {
-                if (m_cx < m_cols && m_byte%BYTES_PER_LINE > 0)
+                if (m_cx < m_cols && m_current_byte%BYTES_PER_LINE > 0)
                 {
-                    m_byte--;
-                    m_byte_offset = 1;
+                    m_current_byte--;
+                    m_current_byte_offset = 1;
                     m_cx -= 2;
                 }
             }else
             {
-                m_byte_offset--;
+                m_current_byte_offset--;
                 m_cx--;
             }
         }else
         {
-            if (m_cx < m_cols && m_byte%BYTES_PER_LINE > 0)
+            if (m_cx < m_cols && m_current_byte%BYTES_PER_LINE > 0)
             {
                 m_cx--;
-                m_byte--;
+                m_current_byte--;
             }
         }
     }
 
     void move_right()
     {
-        auto group_id = m_byte/BYTES_PER_LINE;
+        auto group_id = m_current_byte/BYTES_PER_LINE;
         auto row_size = BYTES_PER_LINE;
 
         if (group_id == m_fdata->m_total_lines-1 &&
@@ -363,27 +370,27 @@ public:
 
         if (m_mode == Mode::HEX)
         {
-            if (m_byte_offset > 0)
+            if (m_current_byte_offset > 0)
             {
                 if (m_cx < m_cols &&
-                    m_byte%BYTES_PER_LINE < row_size-1)
+                    m_current_byte%BYTES_PER_LINE < row_size-1)
                 {
-                    m_byte++;
-                    m_byte_offset = 0;
+                    m_current_byte++;
+                    m_current_byte_offset = 0;
                     m_cx += 2;
                 }
             }else if (m_cx < m_cols)
             {
-                m_byte_offset++;
+                m_current_byte_offset++;
                 m_cx++;
             }
         }else
         {
             if (m_cx < m_cols &&
-                m_byte%BYTES_PER_LINE < row_size-1)
+                m_current_byte%BYTES_PER_LINE < row_size-1)
             {
                 m_cx++;
-                m_byte++;
+                m_current_byte++;
             }
         }
     }
@@ -392,7 +399,7 @@ public:
     {
         if (m_mode == Mode::ASCII && std::isprint(c))
         {
-            m_fdata->m_buff[m_byte] = c;
+            m_fdata->m_buff[m_current_byte] = c;
         } else
         {
             if (c < '0' || c > 'f')
@@ -408,11 +415,11 @@ public:
             else
                 return;
 
-            m_fdata->m_buff[m_byte] &= 0xF0 >> (1-m_byte_offset)*4;
-            m_fdata->m_buff[m_byte] |= hex_digit << (1-m_byte_offset)*4;
+            m_fdata->m_buff[m_current_byte] &= 0xF0 >> (1-m_current_byte_offset)*4;
+            m_fdata->m_buff[m_current_byte] |= hex_digit << (1-m_current_byte_offset)*4;
         }
 
-        m_dirty_cache.insert(m_byte);
+        m_dirty_cache.insert(m_current_byte);
     }
 
     void save()
@@ -429,8 +436,8 @@ public:
 
         m_mode = Mode::ASCII;
         m_update = true;
-        m_cx = FIRST_ASCII + m_byte % BYTES_PER_LINE;
-        m_byte_offset = 0;
+        m_cx = FIRST_ASCII + m_current_byte % BYTES_PER_LINE;
+        m_current_byte_offset = 0;
     }
 
     void toggle_hex_mode()
@@ -440,7 +447,7 @@ public:
 
         m_mode = Mode::HEX;
         m_update = true;
-        m_cx = FIRST_HEX + (m_byte % BYTES_PER_LINE)*3;
+        m_cx = FIRST_HEX + (m_current_byte % BYTES_PER_LINE)*3;
     }
 };
 
