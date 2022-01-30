@@ -247,13 +247,25 @@ public:
     void resize()
     {
         m_cy = 1;
-        m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-        m_current_byte = 0;
-        m_current_byte_offset = 0;
+        m_cx = m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII;
         m_visible_lines = std::min(static_cast<std::uint32_t>(LINES-2), m_fdata->m_total_lines);
         m_cols = COLS-2;
-        m_fdata->m_first_line = 0;
-        m_fdata->m_last_line = m_visible_lines;
+
+        std::uint32_t current_line = m_current_byte/BYTES_PER_LINE;
+        if (m_fdata->m_total_lines < current_line + m_visible_lines)
+        {
+            m_fdata->m_first_line = current_line - m_visible_lines + 1;
+            m_fdata->m_last_line = current_line + 1;
+        }else
+        {
+            m_fdata->m_first_line = current_line/m_visible_lines*m_visible_lines;
+            m_fdata->m_last_line = m_fdata->m_first_line + m_visible_lines;
+        }
+
+        m_cy += current_line - m_fdata->m_first_line;
+        m_cx += m_current_byte%BYTES_PER_LINE*(m_mode == Mode::HEX ? 3 : 1);
+        m_current_byte_offset = 0;
+
         m_update = true;
     }
 
