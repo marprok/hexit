@@ -125,7 +125,7 @@ public:
          m_mode(Mode::HEX),
          m_current_byte(0), m_current_byte_offset(0),
          m_cy(1), m_cx(FIRST_HEX),
-         m_visible_lines(std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines))),
+         m_visible_lines(std::min(static_cast<std::uint32_t>(LINES-2), m_fdata->m_total_lines)),
          m_cols(COLS-2)
     {
         if (starting_byte_offset < m_fdata->m_size)
@@ -250,7 +250,7 @@ public:
         m_cx = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
         m_current_byte = 0;
         m_current_byte_offset = 0;
-        m_visible_lines = std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines));
+        m_visible_lines = std::min(static_cast<std::uint32_t>(LINES-2), m_fdata->m_total_lines);
         m_cols = COLS-2;
         m_fdata->m_first_line = 0;
         m_fdata->m_last_line = m_visible_lines;
@@ -285,7 +285,7 @@ public:
 
     void page_up()
     {
-        if (m_fdata->m_first_line >= static_cast<uint32_t>(m_visible_lines-1))
+        if (m_fdata->m_first_line >= static_cast<std::uint32_t>(m_visible_lines-1))
         {
             m_fdata->m_first_line -= m_visible_lines-1;
             m_fdata->m_last_line -= m_visible_lines-1;
