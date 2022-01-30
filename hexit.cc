@@ -128,15 +128,26 @@ public:
          m_visible_lines(std::min(LINES-2, static_cast<int>(m_fdata->m_total_lines))),
          m_cols(COLS-2)
     {
-        if (starting_byte_offset <= m_fdata->m_size)
+        if (starting_byte_offset < m_fdata->m_size)
         {
-            m_fdata->m_first_line = starting_byte_offset/BYTES_PER_LINE/m_visible_lines*m_visible_lines;
-            m_current_byte =  starting_byte_offset;
-            m_cy += starting_byte_offset/BYTES_PER_LINE - m_fdata->m_first_line;
-            m_cx += starting_byte_offset%BYTES_PER_LINE*3;
-        }
+            std::uint32_t starting_line = starting_byte_offset/BYTES_PER_LINE;
+            if (starting_line > static_cast<std::uint32_t>(m_visible_lines) &&
+                m_fdata->m_total_lines < starting_line + m_visible_lines)
+            {
+                m_fdata->m_first_line = starting_line - m_visible_lines + 1;
+                m_fdata->m_last_line = starting_line + 1;
+            }else
+            {
+                m_fdata->m_first_line = starting_line/m_visible_lines*m_visible_lines;
+                m_fdata->m_last_line = m_fdata->m_first_line + m_visible_lines;
+            }
 
-        m_fdata->m_last_line = m_fdata->m_first_line + m_visible_lines;
+            m_current_byte = starting_byte_offset;
+            m_cy += starting_line - m_fdata->m_first_line;
+            m_cx += starting_byte_offset%BYTES_PER_LINE*3;
+        }else
+            m_fdata->m_last_line = m_visible_lines;
+
         keypad(m_screen, true);
     }
 
