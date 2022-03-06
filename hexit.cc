@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include <unordered_set>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 typedef std::unordered_set<std::uint32_t> IntCache;
@@ -482,23 +483,48 @@ static void init_ncurses()
     std::sprintf(LEFT_PADDING_FORMAT, "%%0%dX  ", LEFT_PADDING_CHARS);
 }
 
-static void print_usage_and_exit(char **argv)
+static void print_usage_and_exit(char *bin)
 {
-    std::cerr << "USAGE: " << argv[0] << " file" << std::endl;
+    std::cerr << "USAGE: " << bin << " -f file [-o offset]" << std::endl;
     std::exit(1);
+}
+
+char* get_arg(int argc, char **argv, const std::string &arg)
+{
+    auto res = std::find(argv, argv + argc, arg);
+    if (res != argv + argc && ++res != argv + argc)
+        return *res;
+
+    return nullptr;
+}
+
+std::uint32_t get_starting_offset(const char* offset)
+{
+    if (!offset)
+        return 0;
+
+    std::string starting_offset(offset);
+    if (starting_offset.size() > 2 && starting_offset[0] == '0' &&
+        (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
+        return std::stoll(starting_offset, nullptr, 16);
+
+    return std::stoll(starting_offset, nullptr);
 }
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
-        print_usage_and_exit(argv);
+    auto input_file = get_arg(argc-1, argv + 1, "-f");
+    auto starting_offset = get_arg(argc-1, argv + 1, "-o");
+
+    if (!input_file)
+        print_usage_and_exit(*argv);
 
     FileData fData;
-    if (!fData.read(argv[1]))
+    if (!fData.read(input_file))
         std::exit(1);
 
     init_ncurses();
-    TScreen win(stdscr, &fData);
+    TScreen win(stdscr, &fData, get_starting_offset(starting_offset));
     bool end = false;
 
     while (!end)
