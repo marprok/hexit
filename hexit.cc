@@ -9,9 +9,11 @@
 namespace fs = std::filesystem;
 typedef std::unordered_set<std::uint32_t> IntCache;
 
-constexpr std::uint32_t LEFT_PADDING =  8;
+char LEFT_PADDING_FORMAT[sizeof("%%0%dX  ")];
+
+constexpr std::uint32_t LEFT_PADDING_CHARS =  sizeof(std::uint32_t)*2;
 constexpr std::uint32_t BYTES_PER_LINE = 16;
-constexpr std::uint32_t FIRST_HEX = LEFT_PADDING + 2 + 1;
+constexpr std::uint32_t FIRST_HEX = LEFT_PADDING_CHARS + 2 + 1;
 constexpr std::uint32_t FIRST_ASCII = FIRST_HEX + BYTES_PER_LINE*3 + 1;
 
 constexpr int CTRL_Q = 'q' & 0x1F;
@@ -161,7 +163,7 @@ public:
         if (m_fdata->m_total_lines-1 == group && (m_fdata->m_size % BYTES_PER_LINE))
             bytes_to_draw = m_fdata->m_size % BYTES_PER_LINE;
 
-        mvwprintw(m_screen, line + 1, 1, "%08X  ", byte_index);
+        mvwprintw(m_screen, line + 1, 1, LEFT_PADDING_FORMAT, byte_index);
         for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
         {
             if (i < bytes_to_draw)
@@ -468,7 +470,7 @@ public:
     }
 };
 
-static void init_curses()
+static void init_ncurses()
 {
     // Global ncurses initialization and setup
     initscr();
@@ -476,6 +478,8 @@ static void init_curses()
     noecho();
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
+
+    std::sprintf(LEFT_PADDING_FORMAT, "%%0%dX  ", LEFT_PADDING_CHARS);
 }
 
 static void print_usage_and_exit(char **argv)
@@ -493,7 +497,7 @@ int main(int argc, char **argv)
     if (!fData.read(argv[1]))
         std::exit(1);
 
-    init_curses();
+    init_ncurses();
     TScreen win(stdscr, &fData);
     bool end = false;
 
