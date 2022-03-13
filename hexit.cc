@@ -31,11 +31,13 @@ struct Data
     fs::path      m_name;
     std::ifstream m_file;
     std::vector<std::uint8_t> m_buff;
+    bool m_is_editable;
 
     Data()
         :m_first_line(0),
          m_last_line(0),
-         m_total_lines(0)
+         m_total_lines(0),
+         m_is_editable(false)
     { }
 
     bool read_from_file(const std::string& fname)
@@ -65,6 +67,7 @@ struct Data
         if (m_buff.size() % BYTES_PER_LINE)
             m_total_lines++;
 
+        m_is_editable = true;
         return true;
     }
 
@@ -88,6 +91,9 @@ struct Data
 
     void save()
     {
+        if (!m_is_editable)
+            return;
+
         std::ofstream out(m_name.string(), std::ios::out | std::ios::binary);
         if (!out)
         {
@@ -415,6 +421,9 @@ public:
 
     void edit_byte(int c)
     {
+        if (!m_data->m_is_editable)
+            return;
+
         if (m_mode == Mode::ASCII && std::isprint(c))
         {
             m_data->m_buff[m_current_byte] = c;
@@ -445,6 +454,9 @@ public:
 
     void save()
     {
+        if (!m_data->m_is_editable)
+            return;
+
         m_data->save();
         m_dirty_cache.clear();
         m_update = true;
