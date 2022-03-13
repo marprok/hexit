@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <iterator>
+#include <csignal>
 
 namespace fs = std::filesystem;
 typedef std::unordered_set<std::uint32_t> IntCache;
@@ -22,6 +23,7 @@ constexpr int CTRL_Q = 'q' & 0x1F;
 constexpr int CTRL_S = 's' & 0x1F;
 constexpr int CTRL_X = 'x' & 0x1F;
 constexpr int CTRL_A = 'a' & 0x1F;
+constexpr int CTRL_Z = 'z' & 0x1F;
 
 struct Data
 {
@@ -594,6 +596,10 @@ int main(int argc, char **argv)
                 break;
             case CTRL_A:
                 win.toggle_ascii_mode();
+                break;
+            case CTRL_Z:
+                endwin();
+                raise(SIGSTOP);
                 break;
             default:
                 win.edit_byte(c);
