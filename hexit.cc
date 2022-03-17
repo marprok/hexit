@@ -516,7 +516,7 @@ static void print_help_and_exit(char* bin)
     std::exit(EXIT_SUCCESS);
 }
 
-char* get_arg(int argc, char** argv, const std::string& arg)
+static char* get_arg(int argc, char** argv, const std::string& arg)
 {
     auto res = std::find(argv, argv + argc, arg);
     if (res != argv + argc && ++res != argv + argc)
@@ -525,13 +525,13 @@ char* get_arg(int argc, char** argv, const std::string& arg)
     return nullptr;
 }
 
-bool get_flag(int argc, char** argv, const std::string& flag)
+static bool get_flag(int argc, char** argv, const std::string& flag)
 {
     auto res = std::find(argv, argv + argc, flag);
     return res != (argv + argc);
 }
 
-std::uint32_t get_starting_offset(const char* offset)
+static std::uint32_t get_starting_offset(const char* offset)
 {
     if (!offset)
         return 0;
