@@ -27,19 +27,19 @@ constexpr int CTRL_Z = 'z' & 0x1F;
 
 struct Data
 {
+    bool                      m_is_editable;
+    fs::path                  m_name;
+    std::ifstream             m_file;
     std::uint32_t             m_first_line;
     std::uint32_t             m_last_line;
     std::uint32_t             m_total_lines;
-    fs::path                  m_name;
-    std::ifstream             m_file;
     std::vector<std::uint8_t> m_buff;
-    bool                      m_is_editable;
 
     Data()
-        : m_first_line(0),
+        : m_is_editable(false),
+          m_first_line(0),
           m_last_line(0),
-          m_total_lines(0),
-          m_is_editable(false)
+          m_total_lines(0)
     {
     }
 
@@ -47,7 +47,7 @@ struct Data
     {
         if (!fs::exists(fname))
         {
-            std::cerr << "File " << fname << " does not exist" << std::endl;
+            std::cerr << "File " << fname << " does not exist\n";
             return false;
         }
 
@@ -56,7 +56,7 @@ struct Data
 
         if (!m_file)
         {
-            std::cerr << "Failed to open " << m_name.string() << std::endl;
+            std::cerr << "Failed to open " << fname << '\n';
             return false;
         }
 
@@ -64,7 +64,7 @@ struct Data
         m_file.unsetf(std::ios_base::skipws);
         m_buff.insert(m_buff.begin(),
                       std::istream_iterator<std::uint8_t>(m_file),
-                      std::istream_iterator<std::uint8_t>());
+                      {});
 
         m_total_lines = m_buff.size() / BYTES_PER_LINE;
         if (m_buff.size() % BYTES_PER_LINE)
@@ -78,13 +78,11 @@ struct Data
     {
         std::cin.unsetf(std::ios_base::skipws);
         std::istream_iterator<std::uint8_t> instream(std::cin);
+
         m_name = "stdin";
-
-        m_buff.insert(m_buff.begin(),
-                      instream,
-                      std::istream_iterator<std::uint8_t>());
-
+        m_buff.insert(m_buff.begin(), instream, {});
         m_total_lines = m_buff.size() / BYTES_PER_LINE;
+
         if (m_buff.size() % BYTES_PER_LINE)
             m_total_lines++;
 
@@ -100,14 +98,14 @@ struct Data
         std::ofstream out(m_name.string(), std::ios::out | std::ios::binary);
         if (!out)
         {
-            std::cerr << "Cannot open " << m_name << std::endl;
+            std::cerr << "Cannot open " << m_name << '\n';
             std::exit(1);
         }
 
         out.write(reinterpret_cast<char*>(m_buff.data()), m_buff.size());
         if (out.fail())
         {
-            std::cerr << "Cannot save " << m_name << std::endl;
+            std::cerr << "Cannot save " << m_name << '\n';
             std::exit(1);
         }
     }
@@ -122,28 +120,30 @@ private:
         ASCII,
     };
 
-    WINDOW*       m_screen;
     Data*         m_data;
+    int           m_cy, m_cx;
+    int           m_visible_lines, m_cols;
     bool          m_update;
     Mode          m_mode;
+    WINDOW*       m_screen;
     IntCache      m_dirty_cache;
     std::uint32_t m_current_byte, m_current_byte_offset;
-    int           m_cy, m_cx, m_visible_lines, m_cols;
 
 public:
     TScreen(WINDOW* win, Data* data, std::uint32_t starting_byte_offset = 0)
-        : m_screen(win),
-          m_data(data),
-          m_update(true),
-          m_mode(Mode::HEX),
-          m_current_byte(0), m_current_byte_offset(0),
+        : m_data(data),
           m_cy(1), m_cx(FIRST_HEX),
           m_visible_lines(std::min(static_cast<std::uint32_t>(LINES - 2), m_data->m_total_lines)),
-          m_cols(COLS - 2)
+          m_cols(COLS - 2),
+          m_update(true),
+          m_mode(Mode::HEX),
+          m_screen(win),
+          m_current_byte(0),
+          m_current_byte_offset(0)
     {
         if (starting_byte_offset < m_data->m_buff.size())
         {
-            std::uint32_t starting_line = starting_byte_offset / BYTES_PER_LINE;
+            const std::uint32_t starting_line = starting_byte_offset / BYTES_PER_LINE;
             if (starting_line > static_cast<std::uint32_t>(m_visible_lines) && m_data->m_total_lines < starting_line + m_visible_lines)
             {
                 m_data->m_first_line = starting_line - m_visible_lines + 1;
@@ -165,10 +165,15 @@ public:
         keypad(m_screen, true);
     }
 
+    ~TScreen()
+    {
+        endwin();
+    }
+
     void draw_line(int line)
     {
         int           col           = FIRST_HEX;
-        auto          group         = m_data->m_first_line + line;
+        std::uint32_t group         = m_data->m_first_line + line;
         std::uint32_t byte_index    = group * BYTES_PER_LINE;
         std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
@@ -203,8 +208,8 @@ public:
 
         for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
         {
-            char c        = m_data->m_buff[byte_index];
-            bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
+            const char c        = m_data->m_buff[byte_index];
+            const bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
             if (m_mode == Mode::HEX && byte_index == m_current_byte)
                 wattron(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
@@ -226,14 +231,14 @@ public:
             for (int line = 0; line < m_visible_lines; line++)
                 draw_line(line);
 
-            std::string filename = m_data->m_name.filename();
+            const std::string filename = m_data->m_name.filename();
             if (m_dirty_cache.empty())
                 mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
             else
                 mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
 
-            char mode       = m_mode == Mode::ASCII ? 'A' : 'X';
-            int  percentage = static_cast<float>(m_data->m_last_line) / m_data->m_total_lines * 100;
+            const char mode       = m_mode == Mode::ASCII ? 'A' : 'X';
+            const int  percentage = static_cast<float>(m_data->m_last_line) / m_data->m_total_lines * 100;
             mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
             m_update = false;
         }
@@ -249,13 +254,13 @@ public:
         }
     }
 
-    void erase()
+    inline void erase() const
     {
         werase(m_screen);
         box(m_screen, 0, 0);
     }
 
-    void refresh()
+    inline void refresh() const
     {
         wrefresh(m_screen);
     }
@@ -267,7 +272,7 @@ public:
         m_cols          = COLS - 2;
         m_visible_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_data->m_total_lines);
 
-        std::uint32_t current_line = m_current_byte / BYTES_PER_LINE;
+        const std::uint32_t current_line = m_current_byte / BYTES_PER_LINE;
         if (m_data->m_total_lines < current_line + m_visible_lines)
         {
             m_data->m_first_line = current_line - m_visible_lines + 1;
@@ -286,12 +291,12 @@ public:
         m_update = true;
     }
 
-    void reset_cursor()
+    inline void reset_cursor() const
     {
         wmove(m_screen, m_cy, m_cx);
     }
 
-    int get_char()
+    inline int get_char() const
     {
         return wgetch(m_screen);
     }
@@ -397,7 +402,7 @@ public:
 
     void move_right()
     {
-        auto group_id = m_current_byte / BYTES_PER_LINE;
+        const auto group_id = m_current_byte / BYTES_PER_LINE;
         auto row_size = BYTES_PER_LINE;
 
         if (group_id == m_data->m_total_lines - 1 && (m_data->m_buff.size() % BYTES_PER_LINE))
@@ -436,15 +441,13 @@ public:
             return;
 
         if (m_mode == Mode::ASCII && std::isprint(c))
-        {
             m_data->m_buff[m_current_byte] = c;
-        }
         else
         {
             if (c < '0' || c > 'f')
                 return;
 
-            uint8_t hex_digit = 0;
+            std::uint8_t hex_digit = 0;
             if (c - '0' <= 9)
                 hex_digit = c - '0';
             else if (c >= 'A' && c - 'A' <= 5)
@@ -496,7 +499,7 @@ public:
     }
 };
 
-static void init_ncurses()
+static inline void init_ncurses()
 {
     // Global ncurses initialization and setup
     initscr();
@@ -509,7 +512,7 @@ static void init_ncurses()
 
 static void print_help_and_exit(char* bin)
 {
-    std::cerr << "USAGE: " << bin << " [-f file] [-o offset]" << std::endl;
+    std::cerr << "USAGE: " << bin << " [-f file] [-o offset]\n";
     std::exit(EXIT_SUCCESS);
 }
 
@@ -542,12 +545,12 @@ std::uint32_t get_starting_offset(const char* offset)
 
 int main(int argc, char** argv)
 {
-    auto help            = get_flag(argc - 1, argv + 1, "-h");
-    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
-    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
-
+    auto help = get_flag(argc - 1, argv + 1, "-h");
     if (help)
         print_help_and_exit(*argv);
+
+    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
+    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
 
     Data data;
     if (!input_file && !data.read_from_stdin())
@@ -557,7 +560,7 @@ int main(int argc, char** argv)
     }
     else if (input_file && !data.read_from_file(input_file))
     {
-        std::cerr << "Could not read from <" << input_file << ">\n";
+        std::cerr << "Could not read from " << input_file << '\n';
         std::exit(EXIT_FAILURE);
     }
 
@@ -616,6 +619,5 @@ int main(int argc, char** argv)
         }
     }
 
-    endwin();
     return 0;
 }
