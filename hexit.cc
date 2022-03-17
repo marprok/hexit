@@ -29,6 +29,7 @@ struct Data
 {
     bool                      m_is_editable;
     fs::path                  m_name;
+    IntCache                  m_dirty_cache;
     std::ifstream             m_file;
     std::uint32_t             m_first_line;
     std::uint32_t             m_last_line;
@@ -126,7 +127,6 @@ private:
     bool          m_update;
     Mode          m_mode;
     WINDOW*       m_screen;
-    IntCache      m_dirty_cache;
     std::uint32_t m_current_byte, m_current_byte_offset;
 
 public:
@@ -185,7 +185,7 @@ public:
         {
             if (i < bytes_to_draw)
             {
-                bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
+                bool is_dirty = m_data->m_dirty_cache.find(byte_index) != m_data->m_dirty_cache.end();
                 if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                     wattron(m_screen, A_REVERSE);
                 else if (m_mode == Mode::ASCII && is_dirty)
@@ -209,7 +209,7 @@ public:
         for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
         {
             const char c        = m_data->m_buff[byte_index];
-            const bool is_dirty = m_dirty_cache.find(byte_index) != m_dirty_cache.end();
+            const bool is_dirty = m_data->m_dirty_cache.find(byte_index) != m_data->m_dirty_cache.end();
             if (m_mode == Mode::HEX && byte_index == m_current_byte)
                 wattron(m_screen, A_REVERSE);
             else if (m_mode == Mode::HEX && is_dirty)
@@ -232,7 +232,7 @@ public:
                 draw_line(line);
 
             const std::string filename = m_data->m_name.filename();
-            if (m_dirty_cache.empty())
+            if (m_data->m_dirty_cache.empty())
                 mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
             else
                 mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
@@ -461,10 +461,10 @@ public:
             m_data->m_buff[m_current_byte] |= hex_digit << (1 - m_current_byte_offset) * 4;
         }
 
-        if (m_dirty_cache.empty())
+        if (m_data->m_dirty_cache.empty())
             m_update = true;
 
-        m_dirty_cache.insert(m_current_byte);
+        m_data->m_dirty_cache.insert(m_current_byte);
     }
 
     void save()
@@ -473,7 +473,7 @@ public:
             return;
 
         m_data->save();
-        m_dirty_cache.clear();
+        m_data->m_dirty_cache.clear();
         m_update = true;
     }
 
