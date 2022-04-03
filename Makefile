@@ -1,15 +1,18 @@
-CXXFLAGS = -Wall -Wextra -std=c++17 -O2
+CXXFLAGS = -Wall -Wextra -std=c++20 -O2
 CXXFLAGS += $(shell pkg-config ncurses --cflags)
 LDLIBS = $(shell pkg-config ncurses --libs)
 OUTFILE = hexit
-OBJFILE = hexit.o
+OBJFILES = hexit.o terminal_window.o
 CXX = g++
 
-hexit: hexit.o
-	$(CXX) -o $(OUTFILE) $(OBJFILE) $(LDLIBS)
+hexit: $(OBJFILES)
+	$(CXX) -o $(OUTFILE) $(OBJFILES) $(LDLIBS)
 
 hexit.o: hexit.cc
-	$(CXX) $(CXXFLAGS) -c hexit.cc -o $(OBJFILE)
+	$(CXX) $(CXXFLAGS) -c hexit.cc -o hexit.o
+
+terminal_window.o: terminal_window.cc terminal_window.h data_buffer.hpp
+	$(CXX) $(CXXFLAGS) -c terminal_window.cc -o terminal_window.o
 
 clean:
-	rm $(OUTFILE) $(OBJFILE)
+	rm -f $(OUTFILE) $(OBJFILES)
