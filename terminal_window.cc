@@ -71,7 +71,7 @@ void TerminalWindow::draw_line(int line)
     {
         if (i < bytes_to_draw)
         {
-            bool is_dirty = false; //m_data.m_dirty_cache.find(byte_index) != m_data.m_dirty_cache.end();
+            bool is_dirty = m_data.is_dirty(byte_index);
             if (m_mode == Mode::ASCII && byte_index == m_current_byte)
                 wattron(m_screen, A_REVERSE);
             else if (m_mode == Mode::ASCII && is_dirty)
@@ -95,7 +95,7 @@ void TerminalWindow::draw_line(int line)
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
     {
         const char c        = m_data[byte_index];
-        const bool is_dirty = false; //m_data.m_dirty_cache.find(byte_index) != m_data.m_dirty_cache.end();
+        const bool is_dirty = m_data.is_dirty(byte_index);
         if (m_mode == Mode::HEX && byte_index == m_current_byte)
             wattron(m_screen, A_REVERSE);
         else if (m_mode == Mode::HEX && is_dirty)
@@ -327,7 +327,7 @@ void TerminalWindow::edit_byte(int c)
     //        return;
 
     if (m_mode == Mode::ASCII && std::isprint(c))
-        ; //m_data.m_buff[m_current_byte] = c;
+        m_data.set_byte(m_current_byte, static_cast<std::uint8_t>(c));
     else
     {
         if (c < '0' || c > 'f')
@@ -343,14 +343,14 @@ void TerminalWindow::edit_byte(int c)
         else
             return;
 
-        //m_data.m_buff[m_current_byte] &= 0xF0 >> (1 - m_current_byte_offset) * 4;
-        //m_data.m_buff[m_current_byte] |= hex_digit << (1 - m_current_byte_offset) * 4;
+        std::uint8_t new_byte = m_data[m_current_byte];
+        //new_byte &= 0xF0 >> (1 - m_current_byte_offset) * 4;
+        new_byte |= hex_digit << (1 - m_current_byte_offset) * 4;
+        m_data.set_byte(m_current_byte, new_byte);
     }
 
-    if (false /*m_data.m_dirty_cache.empty()*/)
+    if (m_data.has_dirty())
         m_update = true;
-
-    //m_data.m_dirty_cache.insert(m_current_byte);
 }
 
 void TerminalWindow::TerminalWindow::save()
@@ -358,7 +358,7 @@ void TerminalWindow::TerminalWindow::save()
     //    if (!m_data.m_is_editable)
     //        return;
 
-    //m_data.save();
+    m_data.save();
     //m_data.m_dirty_cache.clear();
     m_update = true;
 }
