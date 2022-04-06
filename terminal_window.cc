@@ -118,11 +118,10 @@ void TerminalWindow::update_screen()
             draw_line(line);
 
         const std::string filename = m_data.name().filename();
-        // TODO<Marios> check if the buffer is dirty
-        if (true /*m_data.m_dirty_cache.empty()*/)
-            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
-        else
+        if (m_data.has_dirty())
             mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
+        else
+            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
 
         const char          mode       = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
