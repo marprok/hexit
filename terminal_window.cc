@@ -28,7 +28,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer<1024>& data, std::uint32_
     if (starting_byte_offset < m_data.size())
     {
         const std::uint32_t starting_line = starting_byte_offset / BYTES_PER_LINE;
-        if (starting_line > static_cast<std::uint32_t>(m_visible_lines) && m_scroller.m_total_lines < starting_line + m_visible_lines)
+        if (starting_line > m_visible_lines && m_scroller.m_total_lines < starting_line + m_visible_lines)
         {
             m_scroller.m_first_line = starting_line - m_visible_lines + 1;
             m_scroller.m_last_line  = starting_line + 1;
@@ -56,7 +56,7 @@ TerminalWindow::~TerminalWindow()
     endwin();
 }
 
-void TerminalWindow::draw_line(int line)
+void TerminalWindow::draw_line(std::uint32_t line)
 {
     int           col           = FIRST_HEX;
     std::uint32_t group         = m_scroller.m_first_line + line;
@@ -114,23 +114,24 @@ void TerminalWindow::update_screen()
     if (m_update)
     {
         erase();
-        for (int line = 0; line < m_visible_lines; line++)
+        for (std::uint32_t line = 0; line < m_visible_lines; line++)
             draw_line(line);
 
         const std::string filename = m_data.name().filename();
+        // TODO<Marios> check if the buffer is dirty
         if (true /*m_data.m_dirty_cache.empty()*/)
             mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
         else
             mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
 
-        const char mode       = m_mode == Mode::ASCII ? 'A' : 'X';
-        const int  percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
+        const char          mode       = m_mode == Mode::ASCII ? 'A' : 'X';
+        const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
         mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
         m_update = false;
     }
     else
     {
-        if (m_cy - 2 >= 0)
+        if (m_cy >= 2)
             draw_line(m_cy - 2);
 
         draw_line(m_cy - 1);
@@ -205,7 +206,7 @@ void TerminalWindow::move_up()
 
 void TerminalWindow::page_up()
 {
-    if (m_scroller.m_first_line >= static_cast<std::uint32_t>(m_visible_lines - 1))
+    if (m_scroller.m_first_line >= m_visible_lines - 1)
     {
         m_update = true;
         m_scroller.m_last_line -= m_visible_lines - 1;
@@ -288,8 +289,8 @@ void TerminalWindow::move_left()
 
 void TerminalWindow::move_right()
 {
-    const auto group_id = m_current_byte / BYTES_PER_LINE;
-    auto       row_size = BYTES_PER_LINE;
+    const std::uint32_t group_id = m_current_byte / BYTES_PER_LINE;
+    std::uint32_t       row_size = BYTES_PER_LINE;
 
     if (group_id == m_scroller.m_total_lines - 1 && (m_data.size() % BYTES_PER_LINE))
         row_size = m_data.size() % BYTES_PER_LINE;

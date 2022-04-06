@@ -21,8 +21,8 @@ private:
     };
 
     DataBuffer<1024> m_data;
-    int              m_cy, m_cx;
-    int              m_visible_lines, m_cols;
+    std::uint32_t    m_cy, m_cx;
+    std::uint32_t    m_visible_lines, m_cols;
     bool             m_update;
     Mode             m_mode;
     WINDOW*          m_screen;
@@ -35,7 +35,7 @@ public:
 
     ~TerminalWindow();
 
-    void draw_line(int line);
+    void draw_line(std::uint32_t line);
 
     void update_screen();
 
