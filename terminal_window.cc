@@ -344,7 +344,7 @@ void TerminalWindow::edit_byte(int c)
             return;
 
         std::uint8_t new_byte = m_data[m_current_byte];
-        //new_byte &= 0xF0 >> (1 - m_current_byte_offset) * 4;
+        new_byte &= 0xF0 >> (1 - m_current_byte_offset) * 4;
         new_byte |= hex_digit << (1 - m_current_byte_offset) * 4;
         m_data.set_byte(m_current_byte, new_byte);
     }

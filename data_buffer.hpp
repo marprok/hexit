@@ -6,17 +6,18 @@
 #include <fstream>
 #include <map>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
 namespace fs = std::filesystem;
-typedef std::set<std::uint32_t>                             DirtByteSet;
-typedef std::vector<std::pair<std::uint32_t, std::uint8_t>> ChunkChange;
-typedef std::map<std::uint32_t, ChunkChange>                DirtyChunkMap;
 
 template <std::uint32_t capacity = 1024>
 class DataBuffer
 {
 private:
+    typedef std::unordered_map<std::uint32_t, std::uint8_t>     DirtyByteMap;
+    typedef std::map<std::uint32_t, std::vector<std::uint32_t>> DirtyChunkMap;
+
     struct DataChunk
     {
         std::uint32_t m_id             = { 0 };
@@ -31,7 +32,7 @@ private:
     DataChunk     m_chunks[2];
     std::uint8_t  m_front_id;
     std::uint8_t  m_back_id;
-    DirtByteSet   m_dirty_bytes;
+    DirtyByteMap  m_dirty_bytes;
     DirtyChunkMap m_dirty_chunks;
 
 public:
@@ -73,10 +74,8 @@ public:
         std::uint32_t chunk_id    = byte_id / capacity;
         std::uint32_t relative_id = byte_id - capacity * chunk_id;
 
-        //if (is_dirty(byte_id))
-        // {
-        //    return the correct value
-        //}
+        if (is_dirty(byte_id))
+            return m_dirty_bytes[byte_id];
 
         if (m_chunks[m_front_id].m_id == chunk_id)
             return m_chunks[m_front_id].m_data[relative_id];
@@ -111,17 +110,20 @@ public:
 
     void set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
     {
-        std::uint32_t chunk_id      = byte_id / capacity;
-        std::uint32_t relative_id   = byte_id - capacity * chunk_id;
-        ChunkChange&  chunk_changes = m_dirty_chunks[chunk_id];
+        std::uint32_t chunk_id    = byte_id / capacity;
+        std::uint32_t relative_id = byte_id - capacity * chunk_id;
+        if (!m_dirty_bytes.contains(byte_id))
+        {
+            auto& chunk_changes = m_dirty_chunks[chunk_id];
+            chunk_changes.emplace_back(relative_id);
+        }
 
-        chunk_changes.emplace_back(relative_id, byte_value);
-        m_dirty_bytes.insert(byte_id);
+        m_dirty_bytes.insert_or_assign(byte_id, byte_value);
     }
 
     bool is_dirty(std::uint32_t byte_id) const
     {
-        return m_dirty_bytes.find(byte_id) != m_dirty_bytes.end();
+        return m_dirty_bytes.contains(byte_id);
     }
 
     bool has_dirty() const
@@ -139,12 +141,9 @@ public:
             load_chunk(chunk_id);
             DataChunk& chunk = m_chunks[m_front_id];
             for (auto& change : changes)
-            {
-                chunk.m_data[change.first] = change.second;
-            }
+                chunk.m_data[change] = m_dirty_bytes[chunk_id * capacity + change];
 
             m_stream.seekg(chunk_id * capacity);
-            //assert(!m_stream.fail());
             m_stream.write(reinterpret_cast<char*>(chunk.m_data), chunk.m_count);
         }
 
