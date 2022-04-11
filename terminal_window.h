@@ -1,7 +1,7 @@
 #ifndef TERMINAL_WINDOW_H
 #define TERMINAL_WINDOW_H
 
-#include "data_buffer.hpp"
+#include "data_buffer.h"
 #include <ncurses.h>
 
 class TerminalWindow
@@ -20,7 +20,7 @@ private:
         std::uint32_t m_total_lines = { 0 };
     };
 
-    DataBuffer<1024> m_data;
+    DataBuffer       m_data;
     std::uint32_t    m_cy, m_cx;
     std::uint32_t    m_visible_lines, m_cols;
     bool             m_update;
@@ -31,7 +31,7 @@ private:
     char             m_left_padding_format[sizeof("%%0%dX  ")];
 
 public:
-    TerminalWindow(WINDOW* win, DataBuffer<1024>& data, std::uint32_t starting_byte_offset = 0);
+    TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset = 0);
 
     ~TerminalWindow();
 

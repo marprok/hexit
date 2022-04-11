@@ -10,7 +10,7 @@ constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
 constexpr std::uint32_t CAPACITY           = 1024;
 };
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer<1024>& data, std::uint32_t starting_byte_offset)
+TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset)
     : m_data(std::move(data)),
       m_cy(1), m_cx(FIRST_HEX),
       m_cols(COLS - 2),
