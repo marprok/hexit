@@ -10,13 +10,12 @@ add_compile_options(-Wall -Wextra -Werror -O2)
 
 find_package(Curses REQUIRED)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CURSES_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE .)
+target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_sources(${PROJECT_NAME} PRIVATE
-	hexit.cc
-	terminal_window.cc
-	data_buffer.cc
+	src/hexit.cc
+	src/terminal_window.cc
+	src/data_buffer.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})
