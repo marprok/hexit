@@ -42,13 +42,16 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_current_byte = starting_byte_offset;
         m_cy += starting_line - m_scroller.m_first_line;
         m_cx += starting_byte_offset % BYTES_PER_LINE * 3;
+
+        m_data.load_chunk(starting_byte_offset / DataBuffer::capacity);
     }
     else
+    {
+        m_data.load_chunk(0);
         m_scroller.m_last_line = m_visible_lines;
+    }
 
     std::sprintf(m_left_padding_format, "%%0%dX  ", LEFT_PADDING_CHARS);
-    // TODO<Marios>: maybe move this to the ncurses initialization?
-    keypad(m_screen, true);
 }
 
 TerminalWindow::~TerminalWindow()
@@ -323,9 +326,6 @@ void TerminalWindow::move_right()
 
 void TerminalWindow::edit_byte(int c)
 {
-    //    if (!m_data.m_is_editable)
-    //        return;
-
     if (m_mode == Mode::ASCII && std::isprint(c))
         m_data.set_byte(m_current_byte, static_cast<std::uint8_t>(c));
     else
@@ -355,11 +355,7 @@ void TerminalWindow::edit_byte(int c)
 
 void TerminalWindow::TerminalWindow::save()
 {
-    //    if (!m_data.m_is_editable)
-    //        return;
-
     m_data.save();
-    //m_data.m_dirty_cache.clear();
     m_update = true;
 }
 

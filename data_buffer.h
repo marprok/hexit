@@ -12,30 +12,9 @@ namespace fs = std::filesystem;
 
 class DataBuffer
 {
-private:
+public:
     static constexpr std::uint32_t capacity = 1024;
 
-    typedef std::unordered_map<std::uint32_t, std::uint8_t>     DirtyByteMap;
-    typedef std::map<std::uint32_t, std::vector<std::uint32_t>> DirtyChunkMap;
-
-    struct DataChunk
-    {
-        std::uint32_t m_id             = { 0 };
-        std::uint32_t m_count          = { 0 };
-        std::uint8_t  m_data[capacity] = { 0 };
-    };
-
-    fs::path      m_name;
-    std::fstream  m_stream;
-    std::uint32_t m_size;
-    std::uint32_t m_total_chunks;
-    DataChunk     m_chunks[2];
-    std::uint8_t  m_front_id;
-    std::uint8_t  m_back_id;
-    DirtyByteMap  m_dirty_bytes;
-    DirtyChunkMap m_dirty_chunks;
-
-public:
     DataBuffer();
 
     const fs::path& name() const;
@@ -55,6 +34,27 @@ public:
     bool has_dirty() const;
 
     void save();
+
+private:
+    typedef std::unordered_map<std::uint32_t, std::uint8_t>     DirtyByteMap;
+    typedef std::map<std::uint32_t, std::vector<std::uint32_t>> DirtyChunkMap;
+
+    struct DataChunk
+    {
+        std::uint32_t m_id             = { 0 };
+        std::uint32_t m_count          = { 0 };
+        std::uint8_t  m_data[capacity] = { 0 };
+    };
+
+    fs::path      m_name;
+    std::fstream  m_stream;
+    std::uint32_t m_size;
+    std::uint32_t m_total_chunks;
+    DataChunk     m_chunks[2];
+    std::uint8_t  m_front_id;
+    std::uint8_t  m_back_id;
+    DirtyByteMap  m_dirty_bytes;
+    DirtyChunkMap m_dirty_chunks;
 };
 
 #endif // DATA_BUFFER_H

@@ -25,10 +25,6 @@ bool DataBuffer::open_file(const fs::path& file_name)
     if (m_size % capacity)
         m_total_chunks++;
 
-    // TODO<Marios>: maybe make this public so that we can
-    // support the variable begining offset
-    load_chunk(0);
-
     return true;
 }
 

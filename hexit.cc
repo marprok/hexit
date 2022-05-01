@@ -21,6 +21,7 @@ static inline void init_ncurses()
     noecho();
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
+    keypad(stdscr, true);
 }
 
 static void print_help_and_exit(char* bin)
