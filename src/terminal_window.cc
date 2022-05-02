@@ -327,8 +327,9 @@ void TerminalWindow::move_right()
 
 void TerminalWindow::edit_byte(int c)
 {
+    std::uint8_t new_byte;
     if (m_mode == Mode::ASCII && std::isprint(c))
-        m_data.set_byte(m_current_byte, static_cast<std::uint8_t>(c));
+        new_byte = static_cast<std::uint8_t>(c);
     else
     {
         if (c < '0' || c > 'f')
@@ -344,14 +345,15 @@ void TerminalWindow::edit_byte(int c)
         else
             return;
 
-        std::uint8_t new_byte = m_data[m_current_byte];
+        new_byte = m_data[m_current_byte];
         new_byte &= 0xF0 >> (1 - m_current_byte_offset) * 4;
         new_byte |= hex_digit << (1 - m_current_byte_offset) * 4;
-        m_data.set_byte(m_current_byte, new_byte);
     }
 
-    if (m_data.has_dirty())
+    if (!m_data.has_dirty())
         m_update = true;
+
+    m_data.set_byte(m_current_byte, new_byte);
 }
 
 void TerminalWindow::TerminalWindow::save()
