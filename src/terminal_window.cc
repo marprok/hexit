@@ -11,14 +11,15 @@ constexpr std::uint32_t CAPACITY           = 1024;
 };
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset)
-    : m_data(std::move(data)),
-      m_cy(1), m_cx(FIRST_HEX),
-      m_cols(COLS - 2),
-      m_update(true),
-      m_mode(Mode::HEX),
-      m_screen(win),
-      m_current_byte(0),
-      m_current_byte_offset(0)
+    : m_data(std::move(data))
+    , m_cy(1)
+    , m_cx(FIRST_HEX)
+    , m_cols(COLS - 2)
+    , m_update(true)
+    , m_mode(Mode::HEX)
+    , m_screen(win)
+    , m_current_byte(0)
+    , m_current_byte_offset(0)
 {
     m_scroller.m_total_lines = m_data.size() / BYTES_PER_LINE;
     if (m_data.size() % BYTES_PER_LINE)

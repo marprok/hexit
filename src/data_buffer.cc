@@ -1,9 +1,10 @@
 #include "data_buffer.h"
 
-DataBuffer::DataBuffer() : m_size(0),
-                           m_total_chunks(0),
-                           m_front_id(1),
-                           m_back_id(0)
+DataBuffer::DataBuffer()
+    : m_size(0)
+    , m_total_chunks(0)
+    , m_front_id(1)
+    , m_back_id(0)
 {
 }
 
