@@ -11,9 +11,15 @@ constexpr int CTRL_S = 's' & 0x1F;
 constexpr int CTRL_X = 'x' & 0x1F;
 constexpr int CTRL_A = 'a' & 0x1F;
 constexpr int CTRL_Z = 'z' & 0x1F;
+
+inline void print_help(const char* bin)
+{
+    std::cerr << "USAGE: " << bin << " -f FILE [OPTIONS]\n";
+    std::cerr << "\nOPTIONS:\n";
+    std::cerr << "-o OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
 }
 
-static inline void init_ncurses()
+inline void init_ncurses()
 {
     // Global ncurses initialization and setup
     initscr();
@@ -24,13 +30,7 @@ static inline void init_ncurses()
     keypad(stdscr, true);
 }
 
-static void print_help_and_exit(char* bin)
-{
-    std::cerr << "USAGE: " << bin << " [-f file] [-o offset]\n";
-    std::exit(EXIT_SUCCESS);
-}
-
-static char* get_arg(int argc, char** argv, const std::string& arg)
+char* get_arg(int argc, char** argv, const std::string& arg)
 {
     auto res = std::find(argv, argv + argc, arg);
     if (res != argv + argc && ++res != argv + argc)
@@ -39,13 +39,13 @@ static char* get_arg(int argc, char** argv, const std::string& arg)
     return nullptr;
 }
 
-static bool get_flag(int argc, char** argv, const std::string& flag)
+bool get_flag(int argc, char** argv, const std::string& flag)
 {
     auto res = std::find(argv, argv + argc, flag);
     return res != (argv + argc);
 }
 
-static std::uint32_t get_starting_offset(const char* offset)
+std::uint32_t get_starting_offset(const char* offset)
 {
     if (!offset)
         return 0;
@@ -56,15 +56,18 @@ static std::uint32_t get_starting_offset(const char* offset)
 
     return std::stoll(starting_offset, nullptr);
 }
+}
 
 int main(int argc, char** argv)
 {
-    auto help = get_flag(argc - 1, argv + 1, "-h");
-
+    auto help            = get_flag(argc - 1, argv + 1, "-h");
     auto input_file      = get_arg(argc - 1, argv + 1, "-f");
     auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
     if (help || !input_file)
-        print_help_and_exit(*argv);
+    {
+        print_help(*argv);
+        std::exit(EXIT_FAILURE);
+    }
 
     DataBuffer data;
     if (input_file && !data.open_file(input_file))
