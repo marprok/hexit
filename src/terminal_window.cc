@@ -358,6 +358,9 @@ void TerminalWindow::edit_byte(int c)
 
 void TerminalWindow::TerminalWindow::save()
 {
+    if (!m_data.has_dirty())
+        return;
+
     m_data.save();
     m_update = true;
 }
