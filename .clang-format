@@ -6,7 +6,7 @@ AlignConsecutiveDeclarations: 'true'
 BinPackArguments: 'false'
 BinPackParameters: 'false'
 BreakBeforeBraces: Allman
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: BeforeComma
 IncludeBlocks: Merge
 IndentPPDirectives: AfterHash
 Language: Cpp
