@@ -71,8 +71,8 @@ bool DataBuffer::load_chunk(std::uint32_t chunk_id)
 
 void DataBuffer::set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
 {
-    std::uint32_t chunk_id    = byte_id / capacity;
-    std::uint32_t relative_id = byte_id - capacity * chunk_id;
+    const std::uint32_t chunk_id    = byte_id / capacity;
+    const std::uint32_t relative_id = byte_id - capacity * chunk_id;
     if (!m_dirty_bytes.contains(byte_id))
     {
         auto& chunk_changes = m_dirty_chunks[chunk_id];
