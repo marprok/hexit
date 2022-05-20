@@ -13,6 +13,13 @@ private:
         ASCII,
     };
 
+    enum class Alert
+    {
+        NONE,
+        SAVE,
+        QUIT
+    };
+
     struct Scroller
     {
         std::uint32_t m_first_line  = { 0 };
@@ -25,10 +32,12 @@ private:
     std::uint32_t    m_visible_lines, m_cols;
     bool             m_update;
     Mode             m_mode;
+    Alert            m_alert;
     WINDOW*          m_screen;
     std::uint32_t    m_current_byte, m_current_byte_offset;
     Scroller         m_scroller;
     char             m_left_padding_format[sizeof("%%0%dX  ")];
+    bool             m_quit;
 
 public:
     TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset = 0);
@@ -61,12 +70,23 @@ public:
 
     void move_right();
 
-    void edit_byte(int c);
+    void consume_input(int c);
 
     void save();
+
+    void alert_and_save();
+
+    void alert_and_quit();
 
     void toggle_ascii_mode();
 
     void toggle_hex_mode();
+
+    bool quit() const;
+
+private:
+    void edit_byte(int c);
+
+    void handle_alert(int c);
 };
 #endif // TERMINAL_WINDOW_H
