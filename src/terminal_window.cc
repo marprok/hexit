@@ -17,9 +17,11 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     , m_cols(COLS - 2)
     , m_update(true)
     , m_mode(Mode::HEX)
+    , m_alert(Alert::NONE)
     , m_screen(win)
     , m_current_byte(0)
     , m_current_byte_offset(0)
+    , m_quit(false)
 {
     m_scroller.m_total_lines = m_data.size() / BYTES_PER_LINE;
     if (m_data.size() % BYTES_PER_LINE)
@@ -130,6 +132,12 @@ void TerminalWindow::update_screen()
         const char          mode       = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
         mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
+
+        if (m_alert == Alert::SAVE)
+            mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
+        else if (m_alert == Alert::QUIT)
+            mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
+
         m_update = false;
     }
     else
@@ -193,6 +201,9 @@ int TerminalWindow::get_char() const
 
 void TerminalWindow::move_up()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     if (m_cy - 1 > 0)
     {
         m_cy--;
@@ -209,6 +220,9 @@ void TerminalWindow::move_up()
 
 void TerminalWindow::page_up()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     if (m_scroller.m_first_line >= m_visible_lines - 1)
     {
         m_update = true;
@@ -220,6 +234,9 @@ void TerminalWindow::page_up()
 
 void TerminalWindow::move_down()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     if (m_cy - 1 < m_visible_lines - 1)
     {
         m_cy++;
@@ -244,6 +261,9 @@ void TerminalWindow::move_down()
 
 void TerminalWindow::page_down()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     if (m_scroller.m_last_line + m_visible_lines - 1 < m_scroller.m_total_lines)
     {
         m_update = true;
@@ -263,6 +283,9 @@ void TerminalWindow::page_down()
 
 void TerminalWindow::move_left()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     if (m_mode == Mode::HEX)
     {
         if (m_current_byte_offset == 0)
@@ -292,6 +315,9 @@ void TerminalWindow::move_left()
 
 void TerminalWindow::move_right()
 {
+    if (m_alert != Alert::NONE)
+        return;
+
     const std::uint32_t group_id = m_current_byte / BYTES_PER_LINE;
     std::uint32_t       row_size = BYTES_PER_LINE;
 
@@ -325,6 +351,71 @@ void TerminalWindow::move_right()
     }
 }
 
+void TerminalWindow::consume_input(int c)
+{
+    if (m_alert != Alert::NONE)
+        handle_alert(c);
+    else
+        edit_byte(c);
+}
+
+void TerminalWindow::TerminalWindow::save()
+{
+    if (!m_data.has_dirty())
+        return;
+
+    m_data.save();
+    m_update = true;
+}
+
+void TerminalWindow::alert_and_save()
+{
+    if (!m_data.has_dirty() || m_alert != Alert::NONE)
+        return;
+
+    m_alert  = Alert::SAVE;
+    m_update = true;
+}
+
+void TerminalWindow::alert_and_quit()
+{
+    if (!m_data.has_dirty())
+        m_quit = true;
+    else if (m_alert != Alert::NONE)
+        return;
+    else
+    {
+        m_alert  = Alert::QUIT;
+        m_update = true;
+    }
+}
+
+void TerminalWindow::toggle_ascii_mode()
+{
+    if (m_mode == Mode::ASCII)
+        return;
+
+    m_cx                  = FIRST_ASCII + m_current_byte % BYTES_PER_LINE;
+    m_mode                = Mode::ASCII;
+    m_update              = true;
+    m_current_byte_offset = 0;
+}
+
+void TerminalWindow::toggle_hex_mode()
+{
+    if (m_mode == Mode::HEX)
+        return;
+
+    m_cx     = FIRST_HEX + (m_current_byte % BYTES_PER_LINE) * 3;
+    m_mode   = Mode::HEX;
+    m_update = true;
+}
+
+bool TerminalWindow::quit() const
+{
+    return m_quit;
+}
+
 void TerminalWindow::edit_byte(int c)
 {
     std::uint8_t new_byte;
@@ -356,32 +447,34 @@ void TerminalWindow::edit_byte(int c)
     m_data.set_byte(m_current_byte, new_byte);
 }
 
-void TerminalWindow::TerminalWindow::save()
+void TerminalWindow::handle_alert(int c)
 {
-    if (!m_data.has_dirty())
-        return;
-
-    m_data.save();
-    m_update = true;
-}
-
-void TerminalWindow::toggle_ascii_mode()
-{
-    if (m_mode == Mode::ASCII)
-        return;
-
-    m_cx                  = FIRST_ASCII + m_current_byte % BYTES_PER_LINE;
-    m_mode                = Mode::ASCII;
-    m_update              = true;
-    m_current_byte_offset = 0;
-}
-
-void TerminalWindow::toggle_hex_mode()
-{
-    if (m_mode == Mode::HEX)
-        return;
-
-    m_cx     = FIRST_HEX + (m_current_byte % BYTES_PER_LINE) * 3;
-    m_mode   = Mode::HEX;
-    m_update = true;
+    if (std::isprint(c))
+    {
+        char choice = static_cast<char>(c);
+        switch (choice)
+        {
+        case 'y':
+        case 'Y':
+        {
+            if (m_alert == Alert::SAVE)
+            {
+                save();
+                m_update = true;
+            }
+            else if (m_alert == Alert::QUIT)
+                m_quit = true;
+            break;
+        }
+        case 'n':
+        case 'N':
+        {
+            m_alert  = Alert::NONE;
+            m_update = true;
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }

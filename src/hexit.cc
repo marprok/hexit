@@ -79,8 +79,7 @@ int main(int argc, char** argv)
     init_ncurses();
     TerminalWindow win(stdscr, data, get_starting_offset(starting_offset));
 
-    bool end = false;
-    while (!end)
+    while (!win.quit())
     {
         win.update_screen();
         win.reset_cursor();
@@ -110,10 +109,10 @@ int main(int argc, char** argv)
             win.resize();
             break;
         case CTRL_S:
-            win.save();
+            win.alert_and_save();
             break;
         case CTRL_Q:
-            end = true;
+            win.alert_and_quit();
             break;
         case CTRL_X:
             win.toggle_hex_mode();
@@ -126,7 +125,7 @@ int main(int argc, char** argv)
             raise(SIGSTOP);
             break;
         default:
-            win.edit_byte(c);
+            win.consume_input(c);
             break;
         }
     }
