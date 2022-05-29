@@ -17,7 +17,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     , m_cols(COLS - 2)
     , m_update(true)
     , m_mode(Mode::HEX)
-    , m_alert(Alert::NONE)
+    , m_prompt(Prompt::NONE)
     , m_screen(win)
     , m_current_byte(0)
     , m_current_byte_offset(0)
@@ -133,9 +133,9 @@ void TerminalWindow::update_screen()
         const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
         mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
 
-        if (m_alert == Alert::SAVE)
+        if (m_prompt == Prompt::SAVE)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
-        else if (m_alert == Alert::QUIT)
+        else if (m_prompt == Prompt::QUIT)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
 
         m_update = false;
@@ -201,7 +201,7 @@ int TerminalWindow::get_char() const
 
 void TerminalWindow::move_up()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_cy - 1 > 0)
@@ -220,7 +220,7 @@ void TerminalWindow::move_up()
 
 void TerminalWindow::page_up()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_scroller.m_first_line >= m_visible_lines - 1)
@@ -234,7 +234,7 @@ void TerminalWindow::page_up()
 
 void TerminalWindow::move_down()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_cy - 1 < m_visible_lines - 1)
@@ -261,7 +261,7 @@ void TerminalWindow::move_down()
 
 void TerminalWindow::page_down()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_scroller.m_last_line + m_visible_lines - 1 < m_scroller.m_total_lines)
@@ -283,7 +283,7 @@ void TerminalWindow::page_down()
 
 void TerminalWindow::move_left()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_mode == Mode::HEX)
@@ -315,7 +315,7 @@ void TerminalWindow::move_left()
 
 void TerminalWindow::move_right()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     const std::uint32_t group_id = m_current_byte / BYTES_PER_LINE;
@@ -353,8 +353,8 @@ void TerminalWindow::move_right()
 
 void TerminalWindow::consume_input(int c)
 {
-    if (m_alert != Alert::NONE)
-        handle_alert(c);
+    if (m_prompt != Prompt::NONE)
+        handle_prompt(c);
     else
         edit_byte(c);
 }
@@ -368,24 +368,24 @@ void TerminalWindow::TerminalWindow::save()
     m_update = true;
 }
 
-void TerminalWindow::alert_and_save()
+void TerminalWindow::prompt_save()
 {
-    if (!m_data.has_dirty() || m_alert != Alert::NONE)
+    if (!m_data.has_dirty() || m_prompt != Prompt::NONE)
         return;
 
-    m_alert  = Alert::SAVE;
+    m_prompt = Prompt::SAVE;
     m_update = true;
 }
 
-void TerminalWindow::alert_and_quit()
+void TerminalWindow::prompt_quit()
 {
     if (!m_data.has_dirty())
         m_quit = true;
-    else if (m_alert != Alert::NONE)
+    else if (m_prompt != Prompt::NONE)
         return;
     else
     {
-        m_alert  = Alert::QUIT;
+        m_prompt = Prompt::QUIT;
         m_update = true;
     }
 }
@@ -447,7 +447,7 @@ void TerminalWindow::edit_byte(int c)
     m_data.set_byte(m_current_byte, new_byte);
 }
 
-void TerminalWindow::handle_alert(int c)
+void TerminalWindow::handle_prompt(int c)
 {
     if (std::isprint(c))
     {
@@ -457,19 +457,19 @@ void TerminalWindow::handle_alert(int c)
         case 'y':
         case 'Y':
         {
-            if (m_alert == Alert::SAVE)
+            if (m_prompt == Prompt::SAVE)
             {
                 save();
                 m_update = true;
             }
-            else if (m_alert == Alert::QUIT)
+            else if (m_prompt == Prompt::QUIT)
                 m_quit = true;
             break;
         }
         case 'n':
         case 'N':
         {
-            m_alert  = Alert::NONE;
+            m_prompt = Prompt::NONE;
             m_update = true;
             break;
         }

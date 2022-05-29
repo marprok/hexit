@@ -13,7 +13,7 @@ private:
         ASCII,
     };
 
-    enum class Alert
+    enum class Prompt
     {
         NONE,
         SAVE,
@@ -32,7 +32,7 @@ private:
     std::uint32_t    m_visible_lines, m_cols;
     bool             m_update;
     Mode             m_mode;
-    Alert            m_alert;
+    Prompt           m_prompt;
     WINDOW*          m_screen;
     std::uint32_t    m_current_byte, m_current_byte_offset;
     Scroller         m_scroller;
@@ -74,9 +74,9 @@ public:
 
     void save();
 
-    void alert_and_save();
+    void prompt_save();
 
-    void alert_and_quit();
+    void prompt_quit();
 
     void toggle_ascii_mode();
 
@@ -87,6 +87,6 @@ public:
 private:
     void edit_byte(int c);
 
-    void handle_alert(int c);
+    void handle_prompt(int c);
 };
 #endif // TERMINAL_WINDOW_H

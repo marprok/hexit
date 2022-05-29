@@ -109,10 +109,10 @@ int main(int argc, char** argv)
             win.resize();
             break;
         case CTRL_S:
-            win.alert_and_save();
+            win.prompt_save();
             break;
         case CTRL_Q:
-            win.alert_and_quit();
+            win.prompt_quit();
             break;
         case CTRL_X:
             win.toggle_hex_mode();
