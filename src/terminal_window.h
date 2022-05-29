@@ -17,7 +17,8 @@ private:
     {
         NONE,
         SAVE,
-        QUIT
+        QUIT,
+        OFFSET
     };
 
     struct Scroller
@@ -38,6 +39,7 @@ private:
     Scroller         m_scroller;
     char             m_left_padding_format[sizeof("%%0%dX  ")];
     bool             m_quit;
+    std::string      m_input_buffer;
 
 public:
     TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset = 0);
@@ -77,6 +79,8 @@ public:
     void prompt_save();
 
     void prompt_quit();
+
+    void prompt_offset();
 
     void toggle_ascii_mode();
 

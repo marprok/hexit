@@ -55,6 +55,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     }
 
     std::sprintf(m_left_padding_format, "%%0%dX  ", LEFT_PADDING_CHARS);
+    m_input_buffer.reserve(LEFT_PADDING_CHARS);
 }
 
 TerminalWindow::~TerminalWindow()
@@ -137,7 +138,8 @@ void TerminalWindow::update_screen()
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
         else if (m_prompt == Prompt::QUIT)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
-
+        else if (m_prompt == Prompt::OFFSET)
+            mvwprintw(m_screen, LINES - 1, 1, "Byte offset: %s", m_input_buffer.c_str());
         m_update = false;
     }
     else
@@ -390,6 +392,15 @@ void TerminalWindow::prompt_quit()
     }
 }
 
+void TerminalWindow::prompt_offset()
+{
+    if (m_prompt != Prompt::NONE)
+        return;
+
+    m_prompt = Prompt::OFFSET;
+    m_input_buffer.clear();
+}
+
 void TerminalWindow::toggle_ascii_mode()
 {
     if (m_mode == Mode::ASCII)
@@ -449,10 +460,28 @@ void TerminalWindow::edit_byte(int c)
 
 void TerminalWindow::handle_prompt(int c)
 {
-    if (std::isprint(c))
+
+    if (m_prompt == Prompt::OFFSET)
     {
-        char choice = static_cast<char>(c);
-        switch (choice)
+        // TODO: check for bounds
+        switch (c)
+        {
+        case KEY_BACKSPACE:
+            m_input_buffer.pop_back();
+            break;
+        default:
+        {
+            if (std::isprint(c))
+                m_input_buffer.push_back(static_cast<char>(c));
+            break;
+        }
+        }
+        m_update = true;
+    }
+    else if (std::isprint(c))
+    {
+        char chr = static_cast<char>(c);
+        switch (chr)
         {
         case 'y':
         case 'Y':

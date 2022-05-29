@@ -11,6 +11,7 @@ constexpr int CTRL_S = 's' & 0x1F;
 constexpr int CTRL_X = 'x' & 0x1F;
 constexpr int CTRL_A = 'a' & 0x1F;
 constexpr int CTRL_Z = 'z' & 0x1F;
+constexpr int CTRL_O = 'o' & 0x1F;
 
 inline void print_help(const char* bin)
 {
@@ -123,6 +124,9 @@ int main(int argc, char** argv)
         case CTRL_Z:
             endwin();
             raise(SIGSTOP);
+            break;
+        case CTRL_O:
+            win.prompt_offset();
             break;
         default:
             win.consume_input(c);
