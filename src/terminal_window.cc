@@ -139,7 +139,7 @@ void TerminalWindow::update_screen()
         else if (m_prompt == Prompt::QUIT)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
         else if (m_prompt == Prompt::OFFSET)
-            mvwprintw(m_screen, LINES - 1, 1, "Byte offset: %s", m_input_buffer.c_str());
+            mvwprintw(m_screen, LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
         m_update = false;
     }
     else
@@ -381,10 +381,15 @@ void TerminalWindow::prompt_save()
 
 void TerminalWindow::prompt_quit()
 {
-    if (!m_data.has_dirty())
+    if (m_prompt != Prompt::NONE)
+    {
+        // Just remove any active prompt
+        m_prompt = Prompt::NONE;
+        m_update = true;
+        m_input_buffer.clear();
+    }
+    else if (!m_data.has_dirty())
         m_quit = true;
-    else if (m_prompt != Prompt::NONE)
-        return;
     else
     {
         m_prompt = Prompt::QUIT;
@@ -399,11 +404,12 @@ void TerminalWindow::prompt_offset()
 
     m_prompt = Prompt::OFFSET;
     m_input_buffer.clear();
+    m_update = true;
 }
 
 void TerminalWindow::toggle_ascii_mode()
 {
-    if (m_mode == Mode::ASCII)
+    if (m_mode == Mode::ASCII || m_prompt != Prompt::NONE)
         return;
 
     m_cx                  = FIRST_ASCII + m_current_byte % BYTES_PER_LINE;
@@ -414,7 +420,7 @@ void TerminalWindow::toggle_ascii_mode()
 
 void TerminalWindow::toggle_hex_mode()
 {
-    if (m_mode == Mode::HEX)
+    if (m_mode == Mode::HEX || m_prompt != Prompt::NONE)
         return;
 
     m_cx     = FIRST_HEX + (m_current_byte % BYTES_PER_LINE) * 3;
@@ -463,20 +469,21 @@ void TerminalWindow::handle_prompt(int c)
 
     if (m_prompt == Prompt::OFFSET)
     {
-        // TODO: check for bounds
-        switch (c)
+        if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
         {
-        case KEY_BACKSPACE:
             m_input_buffer.pop_back();
-            break;
-        default:
+            m_update = true;
+        }
+        else if (std::isprint(c)
+                 && m_input_buffer.size() < LEFT_PADDING_CHARS)
         {
-            if (std::isprint(c))
+            if (m_mode == Mode::ASCII && isdigit(c)
+                || m_mode == Mode::HEX && isxdigit(c))
+            {
                 m_input_buffer.push_back(static_cast<char>(c));
-            break;
+                m_update = true;
+            }
         }
-        }
-        m_update = true;
     }
     else if (std::isprint(c))
     {

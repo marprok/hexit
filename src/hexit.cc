@@ -6,12 +6,12 @@
 
 namespace
 {
-constexpr int CTRL_Q = 'q' & 0x1F;
-constexpr int CTRL_S = 's' & 0x1F;
-constexpr int CTRL_X = 'x' & 0x1F;
-constexpr int CTRL_A = 'a' & 0x1F;
-constexpr int CTRL_Z = 'z' & 0x1F;
-constexpr int CTRL_O = 'o' & 0x1F;
+constexpr int CTRL_Q = 'q' & 0x1F; // Quit
+constexpr int CTRL_S = 's' & 0x1F; // Save
+constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
+constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
+constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
+constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 
 inline void print_help(const char* bin)
 {
@@ -125,7 +125,8 @@ int main(int argc, char** argv)
             endwin();
             raise(SIGSTOP);
             break;
-        case CTRL_O:
+        case CTRL_G:
+            // rename to: go to byte
             win.prompt_offset();
             break;
         default:
