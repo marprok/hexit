@@ -18,7 +18,7 @@ private:
         NONE,
         SAVE,
         QUIT,
-        OFFSET
+        GO_TO_BYTE
     };
 
     struct Scroller
@@ -42,7 +42,7 @@ private:
     std::string      m_input_buffer;
 
 public:
-    TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset = 0);
+    TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t go_to_byte = 0);
 
     ~TerminalWindow();
 
@@ -80,7 +80,7 @@ public:
 
     void prompt_quit();
 
-    void prompt_offset();
+    void prompt_go_to_byte();
 
     void toggle_ascii_mode();
 

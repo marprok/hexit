@@ -10,7 +10,7 @@ constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
 constexpr std::uint32_t CAPACITY           = 1024;
 };
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset)
+TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
     : m_data(std::move(data))
     , m_cy(1)
     , m_cx(FIRST_HEX)
@@ -28,10 +28,11 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_scroller.m_total_lines++;
     m_visible_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.m_total_lines);
 
-    if (starting_byte_offset < m_data.size())
+    if (start_from_byte < m_data.size())
     {
-        const std::uint32_t starting_line = starting_byte_offset / BYTES_PER_LINE;
-        if (starting_line > m_visible_lines && m_scroller.m_total_lines < starting_line + m_visible_lines)
+        const std::uint32_t starting_line = start_from_byte / BYTES_PER_LINE;
+        if (starting_line > m_visible_lines
+            && m_scroller.m_total_lines < starting_line + m_visible_lines)
         {
             m_scroller.m_first_line = starting_line - m_visible_lines + 1;
             m_scroller.m_last_line  = starting_line + 1;
@@ -42,11 +43,11 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
             m_scroller.m_last_line  = m_scroller.m_first_line + m_visible_lines;
         }
 
-        m_current_byte = starting_byte_offset;
+        m_current_byte = start_from_byte;
         m_cy += starting_line - m_scroller.m_first_line;
-        m_cx += starting_byte_offset % BYTES_PER_LINE * 3;
+        m_cx += start_from_byte % BYTES_PER_LINE * 3;
 
-        m_data.load_chunk(starting_byte_offset / DataBuffer::capacity);
+        m_data.load_chunk(start_from_byte / DataBuffer::capacity);
     }
     else
     {
@@ -138,7 +139,7 @@ void TerminalWindow::update_screen()
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
         else if (m_prompt == Prompt::QUIT)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
-        else if (m_prompt == Prompt::OFFSET)
+        else if (m_prompt == Prompt::GO_TO_BYTE)
             mvwprintw(m_screen, LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
         m_update = false;
     }
@@ -397,12 +398,12 @@ void TerminalWindow::prompt_quit()
     }
 }
 
-void TerminalWindow::prompt_offset()
+void TerminalWindow::prompt_go_to_byte()
 {
     if (m_prompt != Prompt::NONE)
         return;
 
-    m_prompt = Prompt::OFFSET;
+    m_prompt = Prompt::GO_TO_BYTE;
     m_input_buffer.clear();
     m_update = true;
 }
@@ -467,7 +468,7 @@ void TerminalWindow::edit_byte(int c)
 void TerminalWindow::handle_prompt(int c)
 {
 
-    if (m_prompt == Prompt::OFFSET)
+    if (m_prompt == Prompt::GO_TO_BYTE)
     {
         if (c == '\n')
         {

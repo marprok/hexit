@@ -128,8 +128,7 @@ int main(int argc, char** argv)
             raise(SIGSTOP);
             break;
         case CTRL_G:
-            // rename to: go to byte
-            win.prompt_offset();
+            win.prompt_go_to_byte();
             break;
         default:
             win.consume_input(c);
