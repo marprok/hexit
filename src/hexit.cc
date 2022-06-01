@@ -52,7 +52,9 @@ std::uint32_t get_starting_offset(const char* offset)
         return 0;
 
     std::string starting_offset(offset);
-    if (starting_offset.size() > 2 && starting_offset[0] == '0' && (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
+    if (starting_offset.size() > 2
+        && starting_offset[0] == '0'
+        && (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
         return std::stoll(starting_offset, nullptr, 16);
 
     return std::stoll(starting_offset, nullptr);

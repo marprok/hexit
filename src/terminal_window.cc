@@ -469,6 +469,22 @@ void TerminalWindow::handle_prompt(int c)
 
     if (m_prompt == Prompt::OFFSET)
     {
+        if (c == '\n')
+        {
+            std::uint32_t go_to_byte;
+            if (m_mode == Mode::ASCII)
+                go_to_byte = std::stoll(m_input_buffer, nullptr);
+            else if (m_mode == Mode::HEX)
+                go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
+
+            if (go_to_byte < m_data.size())
+                m_current_byte = go_to_byte;
+            else
+                m_current_byte = m_data.size() - 1;
+            m_input_buffer.clear();
+            m_prompt = Prompt::NONE;
+            resize();
+        }
         if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
         {
             m_input_buffer.pop_back();
