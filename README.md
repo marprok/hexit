@@ -14,6 +14,7 @@ HEX mode                   |  ASCII mode
 | ctrl-x                        | Toggle HEX mode.|
 | ctrl-a                        | Toggle ASCII mode.|
 | ctrl-q                        | Exit the editor.|
+| ctrl-g                        | Go to byte.|
 | Arrows(up,down,left,right)    | Move the cursor.|
 | Page-up/Page-down             | Move the page up/down.|
 | Hexadecimal digits(HEX mode)  | Change the value of the nibble that the cursor points to.|

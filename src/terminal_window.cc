@@ -10,14 +10,14 @@ constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
 constexpr std::uint32_t CAPACITY           = 1024;
 };
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t starting_byte_offset)
+TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
     : m_data(std::move(data))
     , m_cy(1)
     , m_cx(FIRST_HEX)
     , m_cols(COLS - 2)
     , m_update(true)
     , m_mode(Mode::HEX)
-    , m_alert(Alert::NONE)
+    , m_prompt(Prompt::NONE)
     , m_screen(win)
     , m_current_byte(0)
     , m_current_byte_offset(0)
@@ -28,10 +28,11 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_scroller.m_total_lines++;
     m_visible_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.m_total_lines);
 
-    if (starting_byte_offset < m_data.size())
+    if (start_from_byte < m_data.size())
     {
-        const std::uint32_t starting_line = starting_byte_offset / BYTES_PER_LINE;
-        if (starting_line > m_visible_lines && m_scroller.m_total_lines < starting_line + m_visible_lines)
+        const std::uint32_t starting_line = start_from_byte / BYTES_PER_LINE;
+        if (starting_line > m_visible_lines
+            && m_scroller.m_total_lines < starting_line + m_visible_lines)
         {
             m_scroller.m_first_line = starting_line - m_visible_lines + 1;
             m_scroller.m_last_line  = starting_line + 1;
@@ -42,11 +43,11 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
             m_scroller.m_last_line  = m_scroller.m_first_line + m_visible_lines;
         }
 
-        m_current_byte = starting_byte_offset;
+        m_current_byte = start_from_byte;
         m_cy += starting_line - m_scroller.m_first_line;
-        m_cx += starting_byte_offset % BYTES_PER_LINE * 3;
+        m_cx += start_from_byte % BYTES_PER_LINE * 3;
 
-        m_data.load_chunk(starting_byte_offset / DataBuffer::capacity);
+        m_data.load_chunk(start_from_byte / DataBuffer::capacity);
     }
     else
     {
@@ -55,6 +56,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     }
 
     std::sprintf(m_left_padding_format, "%%0%dX  ", LEFT_PADDING_CHARS);
+    m_input_buffer.reserve(LEFT_PADDING_CHARS);
 }
 
 TerminalWindow::~TerminalWindow()
@@ -133,11 +135,12 @@ void TerminalWindow::update_screen()
         const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
         mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
 
-        if (m_alert == Alert::SAVE)
+        if (m_prompt == Prompt::SAVE)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
-        else if (m_alert == Alert::QUIT)
+        else if (m_prompt == Prompt::QUIT)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
-
+        else if (m_prompt == Prompt::GO_TO_BYTE)
+            mvwprintw(m_screen, LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
         m_update = false;
     }
     else
@@ -201,7 +204,7 @@ int TerminalWindow::get_char() const
 
 void TerminalWindow::move_up()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_cy - 1 > 0)
@@ -220,7 +223,7 @@ void TerminalWindow::move_up()
 
 void TerminalWindow::page_up()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_scroller.m_first_line >= m_visible_lines - 1)
@@ -234,7 +237,7 @@ void TerminalWindow::page_up()
 
 void TerminalWindow::move_down()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_cy - 1 < m_visible_lines - 1)
@@ -261,7 +264,7 @@ void TerminalWindow::move_down()
 
 void TerminalWindow::page_down()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_scroller.m_last_line + m_visible_lines - 1 < m_scroller.m_total_lines)
@@ -283,7 +286,7 @@ void TerminalWindow::page_down()
 
 void TerminalWindow::move_left()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     if (m_mode == Mode::HEX)
@@ -315,7 +318,7 @@ void TerminalWindow::move_left()
 
 void TerminalWindow::move_right()
 {
-    if (m_alert != Alert::NONE)
+    if (m_prompt != Prompt::NONE)
         return;
 
     const std::uint32_t group_id = m_current_byte / BYTES_PER_LINE;
@@ -353,8 +356,8 @@ void TerminalWindow::move_right()
 
 void TerminalWindow::consume_input(int c)
 {
-    if (m_alert != Alert::NONE)
-        handle_alert(c);
+    if (m_prompt != Prompt::NONE)
+        handle_prompt(c);
     else
         edit_byte(c);
 }
@@ -368,31 +371,46 @@ void TerminalWindow::TerminalWindow::save()
     m_update = true;
 }
 
-void TerminalWindow::alert_and_save()
+void TerminalWindow::prompt_save()
 {
-    if (!m_data.has_dirty() || m_alert != Alert::NONE)
+    if (!m_data.has_dirty() || m_prompt != Prompt::NONE)
         return;
 
-    m_alert  = Alert::SAVE;
+    m_prompt = Prompt::SAVE;
     m_update = true;
 }
 
-void TerminalWindow::alert_and_quit()
+void TerminalWindow::prompt_quit()
 {
-    if (!m_data.has_dirty())
+    if (m_prompt != Prompt::NONE)
+    {
+        // Just remove any active prompt
+        m_prompt = Prompt::NONE;
+        m_update = true;
+        m_input_buffer.clear();
+    }
+    else if (!m_data.has_dirty())
         m_quit = true;
-    else if (m_alert != Alert::NONE)
-        return;
     else
     {
-        m_alert  = Alert::QUIT;
+        m_prompt = Prompt::QUIT;
         m_update = true;
     }
 }
 
+void TerminalWindow::prompt_go_to_byte()
+{
+    if (m_prompt != Prompt::NONE)
+        return;
+
+    m_prompt = Prompt::GO_TO_BYTE;
+    m_input_buffer.clear();
+    m_update = true;
+}
+
 void TerminalWindow::toggle_ascii_mode()
 {
-    if (m_mode == Mode::ASCII)
+    if (m_mode == Mode::ASCII || m_prompt != Prompt::NONE)
         return;
 
     m_cx                  = FIRST_ASCII + m_current_byte % BYTES_PER_LINE;
@@ -403,7 +421,7 @@ void TerminalWindow::toggle_ascii_mode()
 
 void TerminalWindow::toggle_hex_mode()
 {
-    if (m_mode == Mode::HEX)
+    if (m_mode == Mode::HEX || m_prompt != Prompt::NONE)
         return;
 
     m_cx     = FIRST_HEX + (m_current_byte % BYTES_PER_LINE) * 3;
@@ -447,29 +465,64 @@ void TerminalWindow::edit_byte(int c)
     m_data.set_byte(m_current_byte, new_byte);
 }
 
-void TerminalWindow::handle_alert(int c)
+void TerminalWindow::handle_prompt(int c)
 {
-    if (std::isprint(c))
+
+    if (m_prompt == Prompt::GO_TO_BYTE)
     {
-        char choice = static_cast<char>(c);
-        switch (choice)
+        if (c == '\n')
+        {
+            std::uint32_t go_to_byte;
+            if (m_mode == Mode::ASCII)
+                go_to_byte = std::stoll(m_input_buffer, nullptr);
+            else if (m_mode == Mode::HEX)
+                go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
+
+            if (go_to_byte < m_data.size())
+                m_current_byte = go_to_byte;
+            else
+                m_current_byte = m_data.size() - 1;
+            m_input_buffer.clear();
+            m_prompt = Prompt::NONE;
+            resize();
+        }
+        if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
+        {
+            m_input_buffer.pop_back();
+            m_update = true;
+        }
+        else if (std::isprint(c)
+                 && m_input_buffer.size() < LEFT_PADDING_CHARS)
+        {
+            if (m_mode == Mode::ASCII && isdigit(c)
+                || m_mode == Mode::HEX && isxdigit(c))
+            {
+                m_input_buffer.push_back(static_cast<char>(c));
+                m_update = true;
+            }
+        }
+    }
+    else if (std::isprint(c))
+    {
+        char chr = static_cast<char>(c);
+        switch (chr)
         {
         case 'y':
         case 'Y':
         {
-            if (m_alert == Alert::SAVE)
+            if (m_prompt == Prompt::SAVE)
             {
                 save();
                 m_update = true;
             }
-            else if (m_alert == Alert::QUIT)
+            else if (m_prompt == Prompt::QUIT)
                 m_quit = true;
             break;
         }
         case 'n':
         case 'N':
         {
-            m_alert  = Alert::NONE;
+            m_prompt = Prompt::NONE;
             m_update = true;
             break;
         }

@@ -6,11 +6,12 @@
 
 namespace
 {
-constexpr int CTRL_Q = 'q' & 0x1F;
-constexpr int CTRL_S = 's' & 0x1F;
-constexpr int CTRL_X = 'x' & 0x1F;
-constexpr int CTRL_A = 'a' & 0x1F;
-constexpr int CTRL_Z = 'z' & 0x1F;
+constexpr int CTRL_Q = 'q' & 0x1F; // Quit
+constexpr int CTRL_S = 's' & 0x1F; // Save
+constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
+constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
+constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
+constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 
 inline void print_help(const char* bin)
 {
@@ -51,7 +52,9 @@ std::uint32_t get_starting_offset(const char* offset)
         return 0;
 
     std::string starting_offset(offset);
-    if (starting_offset.size() > 2 && starting_offset[0] == '0' && (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
+    if (starting_offset.size() > 2
+        && starting_offset[0] == '0'
+        && (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
         return std::stoll(starting_offset, nullptr, 16);
 
     return std::stoll(starting_offset, nullptr);
@@ -109,10 +112,10 @@ int main(int argc, char** argv)
             win.resize();
             break;
         case CTRL_S:
-            win.alert_and_save();
+            win.prompt_save();
             break;
         case CTRL_Q:
-            win.alert_and_quit();
+            win.prompt_quit();
             break;
         case CTRL_X:
             win.toggle_hex_mode();
@@ -123,6 +126,9 @@ int main(int argc, char** argv)
         case CTRL_Z:
             endwin();
             raise(SIGSTOP);
+            break;
+        case CTRL_G:
+            win.prompt_go_to_byte();
             break;
         default:
             win.consume_input(c);
