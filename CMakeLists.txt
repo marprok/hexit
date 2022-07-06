@@ -26,6 +26,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	src/hexit.cc
 	src/terminal_window.cc
 	src/data_buffer.cc
+	src/data_cache.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})

@@ -513,7 +513,7 @@ void TerminalWindow::handle_prompt(int c)
             if (m_prompt == Prompt::SAVE)
             {
                 save();
-                m_update = true;
+                m_prompt = Prompt::NONE;
             }
             else if (m_prompt == Prompt::QUIT)
                 m_quit = true;
