@@ -9,17 +9,14 @@ std::uint8_t DataBuffer::operator[](std::uint32_t byte_id)
     if (is_dirty(byte_id))
         return m_dirty_bytes[byte_id];
 
-    auto& recent   = recent_chunk();
-    auto& fallback = fallback_chunk();
-    if (recent.m_id == chunk_id)
-        return recent.m_data[relative_id];
-    else if (fallback.m_id == chunk_id)
-        return fallback.m_data[relative_id];
+    if (recent_chunk().m_id == chunk_id)
+        return recent_chunk().m_data[relative_id];
+    else if (fallback_chunk().m_id == chunk_id)
+        return fallback_chunk().m_data[relative_id];
 
     // chunk miss, load from disk...
     load_chunk(chunk_id);
-
-    return recent.m_data[relative_id];
+    return recent_chunk().m_data[relative_id];
 }
 
 void DataBuffer::set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
