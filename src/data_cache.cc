@@ -9,7 +9,10 @@ DataCache::DataCache()
 }
 
 const fs::path& DataCache::name() const { return m_name; }
-std::uint32_t   DataCache::size() const { return m_size; }
+
+std::uint32_t DataCache::size() const { return m_size; }
+
+std::uint32_t DataCache::total_chunks() const { return m_total_chunks; }
 
 bool DataCache::open_file(const fs::path& file_name)
 {

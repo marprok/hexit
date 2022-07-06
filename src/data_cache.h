@@ -25,6 +25,8 @@ public:
 
     std::uint32_t size() const;
 
+    std::uint32_t total_chunks() const;
+
     bool open_file(const fs::path& file_name);
 
     bool load_chunk(std::uint32_t chunk_id);

@@ -6,6 +6,7 @@ target_include_directories(data_buffer_test PRIVATE ../src)
 
 target_sources(data_buffer_test PRIVATE
 	data_buffer_test.cc
+        data_cache_test.cc
 	../src/data_buffer.cc
         ../src/data_cache.cc
 )
