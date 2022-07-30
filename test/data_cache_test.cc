@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-TEST(data_cache_test, LoadChunkTest)
+TEST(ChunkCacheTest, LoadChunkTest)
 {
     const std::string file_name("../hex_mode.png");
     EXPECT_TRUE(fs::exists(file_name));
@@ -19,7 +19,7 @@ TEST(data_cache_test, LoadChunkTest)
         if (in)
         {
             in.close();
-            DataCache cache;
+            ChunkCache cache;
             cache.open_file(file_name);
             EXPECT_EQ(cache.size(), fs::file_size(file_name));
             EXPECT_TRUE(cache.total_chunks() > 0);

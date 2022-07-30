@@ -1,6 +1,6 @@
 #include "data_cache.h"
 
-DataCache::DataCache()
+ChunkCache::ChunkCache()
     : m_size(0)
     , m_total_chunks(0)
     , m_recent_id(1)
@@ -8,13 +8,13 @@ DataCache::DataCache()
 {
 }
 
-const fs::path& DataCache::name() const { return m_name; }
+const fs::path& ChunkCache::name() const { return m_name; }
 
-std::uint32_t DataCache::size() const { return m_size; }
+std::uint32_t ChunkCache::size() const { return m_size; }
 
-std::uint32_t DataCache::total_chunks() const { return m_total_chunks; }
+std::uint32_t ChunkCache::total_chunks() const { return m_total_chunks; }
 
-bool DataCache::open_file(const fs::path& file_name)
+bool ChunkCache::open_file(const fs::path& file_name)
 {
     if (!fs::exists(file_name))
         return false;
@@ -32,7 +32,7 @@ bool DataCache::open_file(const fs::path& file_name)
     return true;
 }
 
-bool DataCache::load_chunk(std::uint32_t chunk_id)
+bool ChunkCache::load_chunk(std::uint32_t chunk_id)
 {
     m_stream.seekg(chunk_id * capacity);
     if (!m_stream)
@@ -52,18 +52,18 @@ bool DataCache::load_chunk(std::uint32_t chunk_id)
     return true;
 }
 
-void DataCache::save_chunk(const DataChunk& chunk)
+void ChunkCache::save_chunk(const DataChunk& chunk)
 {
-    m_stream.seekg(chunk.m_id * DataCache::capacity);
+    m_stream.seekg(chunk.m_id * ChunkCache::capacity);
     m_stream.write(reinterpret_cast<const char*>(chunk.m_data), chunk.m_count);
 }
 
-DataCache::DataChunk& DataCache::recent_chunk()
+ChunkCache::DataChunk& ChunkCache::recent_chunk()
 {
     return m_chunks[m_recent_id];
 }
 
-DataCache::DataChunk& DataCache::fallback_chunk()
+ChunkCache::DataChunk& ChunkCache::fallback_chunk()
 {
     return m_chunks[m_fallback_id];
 }

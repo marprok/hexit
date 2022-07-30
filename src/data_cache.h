@@ -1,5 +1,5 @@
-#ifndef DATA_CACHE_H
-#define DATA_CACHE_H
+#ifndef CHUNK_CACHE_H
+#define CHUNK_CACHE_H
 
 #include <cstdint>
 #include <filesystem>
@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 
-class DataCache
+class ChunkCache
 {
 public:
     static constexpr std::uint32_t capacity = 1024;
@@ -19,7 +19,7 @@ public:
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    DataCache();
+    ChunkCache();
 
     const fs::path& name() const;
 
@@ -46,4 +46,4 @@ private:
     std::uint8_t  m_recent_id;
     std::uint8_t  m_fallback_id;
 };
-#endif
+#endif // CHUNK_CACHE_H

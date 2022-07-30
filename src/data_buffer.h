@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-class DataBuffer : public DataCache
+class DataBuffer : public ChunkCache
 {
 public:
     DataBuffer() = default;
