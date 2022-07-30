@@ -1,4 +1,5 @@
-#include "terminal_window.h"
+#include "TerminalWindow.h"
+#include "DataBuffer.h"
 #include <cstdint>
 
 namespace
@@ -11,7 +12,7 @@ constexpr std::uint32_t CAPACITY           = 1024;
 };
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
-    : m_data(std::move(data))
+    : m_data(data)
     , m_cy(1)
     , m_cx(FIRST_HEX)
     , m_cols(COLS - 2)

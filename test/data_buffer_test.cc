@@ -1,4 +1,4 @@
-#include "data_buffer.h"
+#include "DataBuffer.h"
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-TEST(data_buffer_test, DataReadTest)
+TEST(DataBufferTest, DataReadTest)
 {
     const std::string file_name("../hex_mode.png");
     EXPECT_TRUE(fs::exists(file_name));

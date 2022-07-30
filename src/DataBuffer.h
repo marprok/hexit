@@ -1,7 +1,7 @@
 #ifndef DATA_BUFFER_H
 #define DATA_BUFFER_H
 
-#include "data_cache.h"
+#include "ChunkCache.h"
 #include <map>
 #include <unordered_map>
 #include <vector>

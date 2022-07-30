@@ -24,9 +24,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_sources(${PROJECT_NAME} PRIVATE
 	src/hexit.cc
-	src/terminal_window.cc
-	src/data_buffer.cc
-	src/data_cache.cc
+	src/TerminalWindow.cc
+	src/DataBuffer.cc
+	src/ChunkCache.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})
