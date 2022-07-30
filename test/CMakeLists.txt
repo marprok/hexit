@@ -1,5 +1,6 @@
 enable_testing()
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "&{CMAKE_BINARY_DIR}")
 add_executable(data_buffer_test)
 
 target_include_directories(data_buffer_test PRIVATE ../src)
