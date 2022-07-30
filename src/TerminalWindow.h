@@ -9,41 +9,6 @@ class DataBuffer;
 
 class TerminalWindow
 {
-private:
-    enum class Mode
-    {
-        HEX,
-        ASCII,
-    };
-
-    enum class Prompt
-    {
-        NONE,
-        SAVE,
-        QUIT,
-        GO_TO_BYTE
-    };
-
-    struct Scroller
-    {
-        std::uint32_t m_first_line  = { 0 };
-        std::uint32_t m_last_line   = { 0 };
-        std::uint32_t m_total_lines = { 0 };
-    };
-
-    DataBuffer&   m_data;
-    std::uint32_t m_cy, m_cx;
-    std::uint32_t m_visible_lines, m_cols;
-    bool          m_update;
-    Mode          m_mode;
-    Prompt        m_prompt;
-    WINDOW*       m_screen;
-    std::uint32_t m_current_byte, m_current_byte_offset;
-    Scroller      m_scroller;
-    char          m_left_padding_format[sizeof("%%0%dX  ")];
-    bool          m_quit;
-    std::string   m_input_buffer;
-
 public:
     TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t go_to_byte = 0);
 
@@ -92,6 +57,39 @@ public:
     bool quit() const;
 
 private:
+    enum class Mode
+    {
+        HEX,
+        ASCII,
+    };
+
+    enum class Prompt
+    {
+        NONE,
+        SAVE,
+        QUIT,
+        GO_TO_BYTE
+    };
+
+    struct Scroller
+    {
+        std::uint32_t m_first_line  = { 0 };
+        std::uint32_t m_last_line   = { 0 };
+        std::uint32_t m_total_lines = { 0 };
+    } m_scroller;
+
+    DataBuffer&   m_data;
+    std::uint32_t m_cy, m_cx;
+    std::uint32_t m_visible_lines, m_cols;
+    bool          m_update;
+    Mode          m_mode;
+    Prompt        m_prompt;
+    WINDOW*       m_screen;
+    std::uint32_t m_current_byte, m_current_byte_offset;
+    char          m_left_padding_format[sizeof("%%0%dX  ")];
+    bool          m_quit;
+    std::string   m_input_buffer;
+
     void edit_byte(int c);
 
     void handle_prompt(int c);
