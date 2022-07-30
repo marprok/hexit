@@ -1,4 +1,5 @@
-#include "terminal_window.h"
+#include "DataBuffer.h"
+#include "TerminalWindow.h"
 #include <csignal>
 #include <iostream>
 #include <ncurses.h>

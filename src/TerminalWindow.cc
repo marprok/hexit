@@ -1,4 +1,5 @@
-#include "terminal_window.h"
+#include "TerminalWindow.h"
+#include "DataBuffer.h"
 #include <cstdint>
 
 namespace
@@ -11,7 +12,7 @@ constexpr std::uint32_t CAPACITY           = 1024;
 };
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
-    : m_data(std::move(data))
+    : m_data(data)
     , m_cy(1)
     , m_cx(FIRST_HEX)
     , m_cols(COLS - 2)
@@ -472,17 +473,20 @@ void TerminalWindow::handle_prompt(int c)
     {
         if (c == '\n')
         {
-            std::uint32_t go_to_byte;
-            if (m_mode == Mode::ASCII)
-                go_to_byte = std::stoll(m_input_buffer, nullptr);
-            else if (m_mode == Mode::HEX)
-                go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
+            if (m_input_buffer.size() > 0)
+            {
+                std::uint32_t go_to_byte;
+                if (m_mode == Mode::ASCII)
+                    go_to_byte = std::stoll(m_input_buffer, nullptr);
+                else if (m_mode == Mode::HEX)
+                    go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
 
-            if (go_to_byte < m_data.size())
-                m_current_byte = go_to_byte;
-            else
-                m_current_byte = m_data.size() - 1;
-            m_input_buffer.clear();
+                if (go_to_byte < m_data.size())
+                    m_current_byte = go_to_byte;
+                else
+                    m_current_byte = m_data.size() - 1;
+                m_input_buffer.clear();
+            }
             m_prompt = Prompt::NONE;
             resize();
         }
@@ -513,7 +517,7 @@ void TerminalWindow::handle_prompt(int c)
             if (m_prompt == Prompt::SAVE)
             {
                 save();
-                m_update = true;
+                m_prompt = Prompt::NONE;
             }
             else if (m_prompt == Prompt::QUIT)
                 m_quit = true;
