@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-const std::string file_name("../hex_mode.png");
+const std::string file_name("data.test");
 }
 
 TEST(DataBufferTest, FileData)

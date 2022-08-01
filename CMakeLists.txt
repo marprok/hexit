@@ -5,6 +5,10 @@ project(hexit)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Uncomment to check the source and binary directories
+#message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
+#message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
 # Taken from https://google.github.io/googletest/quickstart-cmake.html
 include(FetchContent)
 FetchContent_Declare(
