@@ -1,4 +1,10 @@
 #include "DataBuffer.h"
+#include "IOHandler.h"
+
+DataBuffer::DataBuffer(IOHandler& handler)
+    : ChunkCache(handler)
+{
+}
 
 // No bounds checking is performed by the operator
 std::uint8_t DataBuffer::operator[](std::uint32_t byte_id)

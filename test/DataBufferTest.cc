@@ -1,4 +1,5 @@
 #include "DataBuffer.h"
+#include "IOHandlerImpl.h"
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -16,7 +17,8 @@ const std::string file_name("data.test");
 TEST(DataBufferTest, FileData)
 {
     EXPECT_TRUE(fs::exists(file_name));
-    DataBuffer buffer;
+    IOHandlerImpl handler;
+    DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
     EXPECT_EQ(buffer.name(), fs::canonical(file_name));
     EXPECT_EQ(buffer.size(), fs::file_size(file_name));
@@ -29,7 +31,8 @@ TEST(DataBufferTest, FileData)
 TEST(DataBufferTest, LoadChunk)
 {
     EXPECT_TRUE(fs::exists(file_name));
-    DataBuffer buffer;
+    IOHandlerImpl handler;
+    DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
     EXPECT_EQ(buffer.size(), fs::file_size(file_name));
     EXPECT_TRUE(buffer.total_chunks() > 0);
@@ -47,7 +50,8 @@ TEST(DataBufferTest, LoadChunk)
 TEST(DataBufferTest, LoadChunkReverse)
 {
     EXPECT_TRUE(fs::exists(file_name));
-    DataBuffer buffer;
+    IOHandlerImpl handler;
+    DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
     EXPECT_EQ(buffer.size(), fs::file_size(file_name));
     EXPECT_TRUE(buffer.total_chunks() > 2);
@@ -65,7 +69,8 @@ TEST(DataBufferTest, LoadChunkReverse)
 TEST(DataBufferTest, DataModification)
 {
     EXPECT_TRUE(fs::exists(file_name));
-    DataBuffer buffer;
+    IOHandlerImpl handler;
+    DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
     auto byte_id = buffer.size() - 1;
     EXPECT_NE(buffer[byte_id], 0xFF);
@@ -88,7 +93,8 @@ TEST(DataBufferTest, DataRead)
         if (in)
         {
             in.close();
-            DataBuffer buffer;
+            IOHandlerImpl handler;
+            DataBuffer    buffer(handler);
             EXPECT_TRUE(buffer.open_file(file_name));
             EXPECT_EQ(buffer.size(), fs::file_size(file_name));
             // start from the first byte
@@ -113,7 +119,8 @@ TEST(DataBufferTest, DataReadReverse)
         if (in)
         {
             in.close();
-            DataBuffer buffer;
+            IOHandlerImpl handler;
+            DataBuffer    buffer(handler);
             EXPECT_TRUE(buffer.open_file(file_name));
             EXPECT_EQ(buffer.size(), fs::file_size(file_name));
             // start from the first byte

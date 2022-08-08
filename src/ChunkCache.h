@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+class IOHandler;
+
 class ChunkCache
 {
 public:
@@ -19,7 +21,7 @@ public:
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    ChunkCache();
+    ChunkCache(IOHandler& handler);
 
     const fs::path& name() const;
 
@@ -38,8 +40,8 @@ public:
     DataChunk& fallback_chunk();
 
 private:
+    IOHandler&    m_handler;
     fs::path      m_name;
-    std::fstream  m_stream;
     std::uint32_t m_size;
     std::uint32_t m_total_chunks;
     DataChunk     m_chunks[2];
