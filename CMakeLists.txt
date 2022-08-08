@@ -31,6 +31,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 	src/TerminalWindow.cc
 	src/DataBuffer.cc
 	src/ChunkCache.cc
+	src/IOHandlerImpl.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})

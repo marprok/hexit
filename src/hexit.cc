@@ -1,5 +1,6 @@
 #include "DataBuffer.h"
 #include "TerminalWindow.h"
+#include <IOHandlerImpl.h>
 #include <csignal>
 #include <iostream>
 #include <ncurses.h>
@@ -73,7 +74,8 @@ int main(int argc, char** argv)
         std::exit(EXIT_FAILURE);
     }
 
-    DataBuffer data;
+    IOHandlerImpl handler;
+    DataBuffer    data(handler);
     if (input_file && !data.open_file(input_file))
     {
         std::cerr << "Could not read from " << input_file << '\n';

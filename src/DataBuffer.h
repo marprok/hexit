@@ -9,7 +9,7 @@
 class DataBuffer : public ChunkCache
 {
 public:
-    DataBuffer() = default;
+    DataBuffer(IOHandler& handler);
 
     std::uint8_t operator[](std::uint32_t byte_id);
 
