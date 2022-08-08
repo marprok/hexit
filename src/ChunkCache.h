@@ -41,8 +41,6 @@ public:
 
 private:
     IOHandler&    m_handler;
-    fs::path      m_name;
-    std::uint32_t m_size;
     std::uint32_t m_total_chunks;
     DataChunk     m_chunks[2];
     std::uint8_t  m_recent_id;

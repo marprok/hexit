@@ -21,8 +21,14 @@ public:
 
     void seek(std::uint32_t offset) override;
 
+    const fs::path& name() const override;
+
+    std::uint32_t size() const override;
+
 private:
-    std::fstream m_stream;
+    std::fstream  m_stream;
+    fs::path      m_name;
+    std::uint32_t m_size;
 };
 
 #endif
