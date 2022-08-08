@@ -32,7 +32,7 @@ bool ChunkCache::load_chunk(std::uint32_t chunk_id)
     m_handler.seek(chunk_id * capacity);
 
     std::uint32_t bytes_to_read = capacity;
-    if (chunk_id == m_total_chunks - 1)
+    if (chunk_id == m_total_chunks - 1 && m_handler.size() % capacity)
         bytes_to_read = m_handler.size() % capacity;
 
     auto& target_cache = m_chunks[m_fallback_id];

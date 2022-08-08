@@ -1,6 +1,7 @@
 #include "DataBuffer.h"
-#include "IOHandlerImpl.h"
+#include "IOHandler.h"
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -9,32 +10,94 @@
 
 namespace fs = std::filesystem;
 
+class IOHandlerMock : public IOHandler
+{
+public:
+    IOHandlerMock()
+        : m_id(0)
+    {
+    }
+
+    ~IOHandlerMock() = default;
+
+    bool open(const fs::path& path) override
+    {
+        m_name = path;
+        return true;
+    }
+
+    void close() override
+    {
+    }
+
+    bool read(std::uint8_t* o_buffer, std::size_t buffer_size) override
+    {
+        if (!o_buffer || buffer_size == 0
+            || buffer_size > ChunkCache::capacity)
+            return false;
+
+        std::memcpy(o_buffer, m_data[m_id], buffer_size);
+        m_id++;
+        return true;
+    }
+
+    void write(const std::uint8_t* i_buffer, std::size_t buffer_size) override
+    {
+        if (!i_buffer || buffer_size == 0
+            || buffer_size > ChunkCache::capacity)
+            return;
+
+        std::memcpy(m_data[m_id], i_buffer, buffer_size);
+    }
+
+    void seek(std::uint32_t offset) override
+    {
+        m_id = offset / ChunkCache::capacity;
+    }
+
+    const fs::path& name() const
+    {
+        return m_name;
+    }
+
+    std::uint32_t size() const
+    {
+        return m_size * ChunkCache::capacity;
+    }
+
+    std::uint8_t* Data() { return reinterpret_cast<std::uint8_t*>(m_data); }
+
+private:
+    fs::path      m_name;
+    std::uint32_t m_size = 255;
+    // Let the data uninitialized to simulate "real" data
+    std::uint8_t  m_data[255][ChunkCache::capacity];
+    std::uint32_t m_id;
+};
+
 namespace
 {
-const std::string file_name("data.test");
+const std::string file_name("test_path");
 }
 
-TEST(DataBufferTest, FileData)
+TEST(DataBufferTest, IOData)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    IOHandlerImpl handler;
+    IOHandlerMock handler;
     DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
-    EXPECT_EQ(buffer.name(), fs::canonical(file_name));
-    EXPECT_EQ(buffer.size(), fs::file_size(file_name));
-    std::uint32_t expected_chunks = fs::file_size(file_name) / DataBuffer::ChunkCache::capacity;
-    if (fs::file_size(file_name) / DataBuffer::ChunkCache::capacity)
+    EXPECT_EQ(buffer.name(), handler.name());
+    EXPECT_EQ(buffer.size(), handler.size());
+    std::uint32_t expected_chunks = handler.size() / DataBuffer::ChunkCache::capacity;
+    if (handler.size() % DataBuffer::ChunkCache::capacity)
         expected_chunks++;
     EXPECT_EQ(expected_chunks, buffer.total_chunks());
 }
 
 TEST(DataBufferTest, LoadChunk)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    IOHandlerImpl handler;
+    IOHandlerMock handler;
     DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
-    EXPECT_EQ(buffer.size(), fs::file_size(file_name));
     EXPECT_TRUE(buffer.total_chunks() > 0);
 
     EXPECT_TRUE(buffer.load_chunk(0));
@@ -49,11 +112,9 @@ TEST(DataBufferTest, LoadChunk)
 
 TEST(DataBufferTest, LoadChunkReverse)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    IOHandlerImpl handler;
+    IOHandlerMock handler;
     DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
-    EXPECT_EQ(buffer.size(), fs::file_size(file_name));
     EXPECT_TRUE(buffer.total_chunks() > 2);
 
     EXPECT_TRUE(buffer.load_chunk(buffer.total_chunks() - 1));
@@ -68,12 +129,13 @@ TEST(DataBufferTest, LoadChunkReverse)
 
 TEST(DataBufferTest, DataModification)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    IOHandlerImpl handler;
+    IOHandlerMock handler;
+    auto          expectation = handler.Data();
     DataBuffer    buffer(handler);
     EXPECT_TRUE(buffer.open_file(file_name));
-    auto byte_id = buffer.size() - 1;
-    EXPECT_NE(buffer[byte_id], 0xFF);
+    auto byte_id         = buffer.size() - 1;
+    expectation[byte_id] = 0x0F;
+    EXPECT_EQ(buffer[byte_id], 0x0F);
     EXPECT_FALSE(buffer.is_dirty(byte_id));
     EXPECT_FALSE(buffer.has_dirty());
     buffer.set_byte(byte_id, 0xFF);
@@ -84,52 +146,30 @@ TEST(DataBufferTest, DataModification)
 
 TEST(DataBufferTest, DataRead)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    std::fstream in(file_name, std::ios::in | std::ios::binary);
-    if (in.is_open())
-    {
-        auto expectation = std::make_unique<std::uint8_t[]>(fs::file_size(file_name));
-        in.read(reinterpret_cast<char*>(expectation.get()), fs::file_size(file_name));
-        if (in)
-        {
-            in.close();
-            IOHandlerImpl handler;
-            DataBuffer    buffer(handler);
-            EXPECT_TRUE(buffer.open_file(file_name));
-            EXPECT_EQ(buffer.size(), fs::file_size(file_name));
-            // start from the first byte
-            EXPECT_TRUE(buffer.load_chunk(0));
-            bool match = true;
-            for (std::uint32_t i = 0; i < buffer.size() && match; ++i)
-                match = buffer[i] == expectation[i];
+    IOHandlerMock handler;
+    auto          expectation = handler.Data();
+    DataBuffer    buffer(handler);
+    EXPECT_TRUE(buffer.open_file(file_name));
+    // start from the first byte
+    EXPECT_TRUE(buffer.load_chunk(0));
+    bool match = true;
+    for (std::uint32_t i = 0; i < buffer.size() && match; ++i)
+        match = buffer[i] == expectation[i];
 
-            EXPECT_TRUE(match);
-        }
-    }
+    EXPECT_TRUE(match);
 }
 
 TEST(DataBufferTest, DataReadReverse)
 {
-    EXPECT_TRUE(fs::exists(file_name));
-    std::fstream in(file_name, std::ios::in | std::ios::binary);
-    if (in.is_open())
-    {
-        auto expectation = std::make_unique<std::uint8_t[]>(fs::file_size(file_name));
-        in.read(reinterpret_cast<char*>(expectation.get()), fs::file_size(file_name));
-        if (in)
-        {
-            in.close();
-            IOHandlerImpl handler;
-            DataBuffer    buffer(handler);
-            EXPECT_TRUE(buffer.open_file(file_name));
-            EXPECT_EQ(buffer.size(), fs::file_size(file_name));
-            // start from the first byte
-            EXPECT_TRUE(buffer.load_chunk(buffer.total_chunks() - 1));
-            bool match = true;
-            for (std::uint32_t i = buffer.size() - 1; i > 0 && match; --i)
-                match = buffer[i] == expectation[i];
+    IOHandlerMock handler;
+    auto          expectation = handler.Data();
+    DataBuffer    buffer(handler);
+    EXPECT_TRUE(buffer.open_file(file_name));
+    // start from the first byte
+    EXPECT_TRUE(buffer.load_chunk(buffer.total_chunks() - 1));
+    bool match = true;
+    for (std::uint32_t i = buffer.size() - 1; i > 0 && match; --i)
+        match = buffer[i] == expectation[i];
 
-            EXPECT_TRUE(match);
-        }
-    }
+    EXPECT_TRUE(match);
 }
