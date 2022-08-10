@@ -101,8 +101,8 @@ TEST(DataBufferTest, IOData)
     EXPECT_TRUE(buffer.open_file(file_name));
     EXPECT_EQ(buffer.name(), handler.name());
     EXPECT_EQ(buffer.size(), handler.size());
-    std::uint32_t expected_chunks = handler.size() / DataBuffer::ChunkCache::capacity;
-    if (handler.size() % DataBuffer::ChunkCache::capacity)
+    std::uint32_t expected_chunks = handler.size() / ChunkCache::capacity;
+    if (handler.size() % ChunkCache::capacity)
         expected_chunks++;
     EXPECT_EQ(expected_chunks, buffer.total_chunks());
 }
@@ -207,7 +207,7 @@ TEST(DataBufferTest, SaveChunk)
     auto& data_chunk = buffer.recent_chunk();
     EXPECT_EQ(chunk_id, data_chunk.m_id);
     std::memset(data_chunk.m_data, 0xEF, data_chunk.m_count);
-    auto expectation = raw_data + (chunk_id * DataBuffer::capacity);
+    auto expectation = raw_data + (chunk_id * ChunkCache::capacity);
     EXPECT_NE(std::memcmp(expectation, data_chunk.m_data, data_chunk.m_count), 0);
     buffer.save_chunk(data_chunk);
     EXPECT_EQ(std::memcmp(expectation, data_chunk.m_data, data_chunk.m_count), 0);
@@ -228,11 +228,11 @@ TEST(DataBufferTest, SaveAllChunks)
         EXPECT_TRUE(buffer.load_chunk(id));
         auto data_chunk = buffer.recent_chunk();
         EXPECT_EQ(id, data_chunk.m_id);
-        auto expectation = raw_data + (id * DataBuffer::capacity);
+        auto expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
-            buffer.set_byte(id * DataBuffer::capacity + i, id + 1);
-            EXPECT_NE(expectation[i], buffer[id * DataBuffer::capacity + i]);
+            buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
+            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
         }
     }
     // save all the dirty bytes
@@ -242,10 +242,10 @@ TEST(DataBufferTest, SaveAllChunks)
         EXPECT_TRUE(buffer.load_chunk(id));
         auto data_chunk = buffer.recent_chunk();
         EXPECT_EQ(id, data_chunk.m_id);
-        auto expectation = raw_data + (id * DataBuffer::capacity);
+        auto expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
-            EXPECT_EQ(expectation[i], buffer[id * DataBuffer::capacity + i]);
+            EXPECT_EQ(expectation[i], buffer[id * ChunkCache::capacity + i]);
             EXPECT_EQ(expectation[i], id + 1);
         }
     }
