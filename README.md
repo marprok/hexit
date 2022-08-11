@@ -32,7 +32,7 @@ Make sure you have all of the following packages installed.
 1. git clone https://github.com/marprok/hexit.git
 2. cd hexit
 3. mkdir build && cd build
-4. cmake ..
+4. cmake -DCMAKE_BUILD_TYPE=Release ..
 5. make
 
 ### Limitations

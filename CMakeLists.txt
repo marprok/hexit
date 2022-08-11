@@ -17,9 +17,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+add_compile_options(-Wall -Wextra -Werror -pedantic)
 add_executable(${PROJECT_NAME})
-add_compile_options(-Wall -Wextra -Werror -O2)
-
 add_subdirectory(test)
 
 find_package(Curses REQUIRED)

@@ -9,7 +9,7 @@ constexpr std::uint32_t BYTES_PER_LINE     = 16;
 constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING_CHARS + 2 + 1;
 constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
 constexpr std::uint32_t CAPACITY           = 1024;
-};
+}
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
     : m_data(data)
@@ -475,7 +475,7 @@ void TerminalWindow::handle_prompt(int c)
         {
             if (m_input_buffer.size() > 0)
             {
-                std::uint32_t go_to_byte;
+                std::uint32_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
                     go_to_byte = std::stoll(m_input_buffer, nullptr);
                 else if (m_mode == Mode::HEX)
@@ -498,8 +498,8 @@ void TerminalWindow::handle_prompt(int c)
         else if (std::isprint(c)
                  && m_input_buffer.size() < LEFT_PADDING_CHARS)
         {
-            if (m_mode == Mode::ASCII && isdigit(c)
-                || m_mode == Mode::HEX && isxdigit(c))
+            if ((m_mode == Mode::ASCII && isdigit(c))
+                || (m_mode == Mode::HEX && isxdigit(c)))
             {
                 m_input_buffer.push_back(static_cast<char>(c));
                 m_update = true;
