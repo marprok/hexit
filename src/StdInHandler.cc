@@ -18,7 +18,6 @@ bool StdInHandler::open(const fs::path& path)
 }
 
 void StdInHandler::close()
-
 {
     m_offset = 0;
     m_name   = "";
