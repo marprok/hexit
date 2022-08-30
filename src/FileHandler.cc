@@ -1,6 +1,6 @@
-#include "IOHandlerImpl.h"
+#include "FileHandler.h"
 
-bool IOHandlerImpl::open(const fs::path& path)
+bool FileHandler::open(const fs::path& path)
 {
     if (!fs::exists(path))
         return false;
@@ -15,7 +15,7 @@ bool IOHandlerImpl::open(const fs::path& path)
     return true;
 }
 
-void IOHandlerImpl::close()
+void FileHandler::close()
 
 {
     if (m_stream.is_open())
@@ -26,7 +26,7 @@ void IOHandlerImpl::close()
     }
 }
 
-bool IOHandlerImpl::read(std::uint8_t* o_buffer, std::size_t buffer_size)
+bool FileHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
 {
     if (!o_buffer || !m_stream.is_open())
         return false;
@@ -39,7 +39,7 @@ bool IOHandlerImpl::read(std::uint8_t* o_buffer, std::size_t buffer_size)
     return true;
 }
 
-void IOHandlerImpl::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
+void FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
 {
     if (!m_stream.is_open())
         return;
@@ -47,7 +47,7 @@ void IOHandlerImpl::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
     m_stream.write(reinterpret_cast<const char*>(i_buffer), buffer_size);
 }
 
-void IOHandlerImpl::seek(std::uint32_t offset)
+void FileHandler::seek(std::uint32_t offset)
 {
     if (!m_stream.is_open())
         return;
@@ -55,12 +55,12 @@ void IOHandlerImpl::seek(std::uint32_t offset)
     m_stream.seekg(offset);
 }
 
-const fs::path& IOHandlerImpl::name() const
+const fs::path& FileHandler::name() const
 {
     return m_name;
 }
 
-std::uint32_t IOHandlerImpl::size() const
+std::uint32_t FileHandler::size() const
 {
     return m_size;
 }
