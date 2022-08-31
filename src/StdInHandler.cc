@@ -5,7 +5,6 @@
 
 bool StdInHandler::open(const fs::path& path)
 {
-    static_cast<void>(path);
     std::cin.unsetf(std::ios_base::skipws);
     m_data.insert(m_data.begin(),
                   std::istream_iterator<std::uint8_t>(std::cin),
