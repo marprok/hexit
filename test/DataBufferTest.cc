@@ -250,3 +250,41 @@ TEST(DataBufferTest, SaveAllChunks)
         }
     }
 }
+
+// Same as the previous test but this time the immutable flag is set to true
+TEST(DataBufferTest, SaveAllChunksImmutable)
+{
+    IOHandlerMock handler;
+    std::uint8_t* raw_data = handler.data();
+    // initialize the data to zero
+    std::memset(raw_data, 0, handler.size());
+    DataBuffer buffer(handler);
+    EXPECT_TRUE(buffer.open(file_name, true));
+    std::uint32_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
+    for (auto id : dirty_ids)
+    {
+        EXPECT_TRUE(buffer.load_chunk(id));
+        auto data_chunk = buffer.recent_chunk();
+        EXPECT_EQ(id, data_chunk.m_id);
+        auto expectation = raw_data + (id * ChunkCache::capacity);
+        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        {
+            buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
+            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
+        }
+    }
+    // save all the dirty bytes
+    buffer.save();
+    for (auto id : dirty_ids)
+    {
+        EXPECT_TRUE(buffer.load_chunk(id));
+        auto data_chunk = buffer.recent_chunk();
+        EXPECT_EQ(id, data_chunk.m_id);
+        auto expectation = raw_data + (id * ChunkCache::capacity);
+        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        {
+            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
+            EXPECT_NE(expectation[i], id + 1);
+        }
+    }
+}

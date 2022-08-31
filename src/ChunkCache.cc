@@ -7,6 +7,7 @@ ChunkCache::ChunkCache(IOHandler& handler)
     , m_total_chunks(0)
     , m_recent_id(1)
     , m_fallback_id(0)
+    , m_immutable(false)
 {
 }
 
@@ -16,7 +17,7 @@ std::uint32_t ChunkCache::size() const { return m_handler.size(); }
 
 std::uint32_t ChunkCache::total_chunks() const { return m_total_chunks; }
 
-bool ChunkCache::open(const fs::path& path)
+bool ChunkCache::open(const fs::path& path, bool immutable)
 {
     if (!m_handler.open(path))
         return false;
@@ -25,6 +26,7 @@ bool ChunkCache::open(const fs::path& path)
     if (m_handler.size() % capacity)
         m_total_chunks++;
 
+    m_immutable = immutable;
     return true;
 }
 
@@ -52,6 +54,9 @@ bool ChunkCache::load_chunk(std::uint32_t chunk_id)
 
 void ChunkCache::save_chunk(const DataChunk& chunk)
 {
+    if (m_immutable)
+        return;
+
     m_handler.seek(chunk.m_id * ChunkCache::capacity);
     m_handler.write(chunk.m_data, chunk.m_count);
 }
@@ -64,4 +69,9 @@ ChunkCache::DataChunk& ChunkCache::recent_chunk()
 ChunkCache::DataChunk& ChunkCache::fallback_chunk()
 {
     return m_chunks[m_fallback_id];
+}
+
+bool ChunkCache::immutable() const
+{
+    return m_immutable;
 }

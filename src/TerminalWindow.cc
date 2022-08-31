@@ -365,7 +365,7 @@ void TerminalWindow::consume_input(int c)
 
 void TerminalWindow::TerminalWindow::save()
 {
-    if (!m_data.has_dirty())
+    if (!m_data.has_dirty() || m_data.immutable())
         return;
 
     m_data.save();
@@ -374,7 +374,9 @@ void TerminalWindow::TerminalWindow::save()
 
 void TerminalWindow::prompt_save()
 {
-    if (!m_data.has_dirty() || m_prompt != Prompt::NONE)
+    if (!m_data.has_dirty()
+        || m_prompt != Prompt::NONE
+        || m_data.immutable())
         return;
 
     m_prompt = Prompt::SAVE;
@@ -390,7 +392,7 @@ void TerminalWindow::prompt_quit()
         m_update = true;
         m_input_buffer.clear();
     }
-    else if (!m_data.has_dirty())
+    else if (!m_data.has_dirty() || m_data.immutable())
         m_quit = true;
     else
     {

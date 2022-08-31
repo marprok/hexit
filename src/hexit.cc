@@ -63,10 +63,13 @@ std::uint32_t get_starting_offset(const char* offset)
     return std::stoll(starting_offset, nullptr);
 }
 
-void start_hexit(IOHandler& handler, const char* starting_offset, const char* input_path)
+void start_hexit(IOHandler&  handler,
+                 const char* starting_offset,
+                 const char* input_path,
+                 bool        immutable = false)
 {
     DataBuffer data(handler);
-    if (input_path && !data.open(input_path))
+    if (input_path && !data.open(input_path, immutable))
     {
         std::cerr << "Could not open " << input_path << '\n';
         std::exit(EXIT_FAILURE);
@@ -74,7 +77,6 @@ void start_hexit(IOHandler& handler, const char* starting_offset, const char* in
 
     init_ncurses();
     TerminalWindow win(stdscr, data, get_starting_offset(starting_offset));
-
     while (!win.quit())
     {
         win.update_screen();
@@ -145,7 +147,7 @@ int main(int argc, char** argv)
     if (!input_file)
     {
         StdInHandler handler;
-        start_hexit(handler, starting_offset, "stdin");
+        start_hexit(handler, starting_offset, "stdin", true);
     }
     else
     {
