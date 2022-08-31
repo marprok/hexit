@@ -36,7 +36,7 @@ bool FileHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
 
     m_stream.read(reinterpret_cast<char*>(o_buffer), buffer_size);
 
-    return true;
+    return static_cast<std::size_t>(m_stream.gcount()) == buffer_size;
 }
 
 void FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)

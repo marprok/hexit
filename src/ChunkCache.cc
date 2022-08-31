@@ -1,5 +1,6 @@
 #include "ChunkCache.h"
 #include "IOHandler.h"
+#include <stdexcept>
 
 ChunkCache::ChunkCache(IOHandler& handler)
     : m_handler(handler)
@@ -15,9 +16,9 @@ std::uint32_t ChunkCache::size() const { return m_handler.size(); }
 
 std::uint32_t ChunkCache::total_chunks() const { return m_total_chunks; }
 
-bool ChunkCache::open_file(const fs::path& file_name)
+bool ChunkCache::open(const fs::path& path)
 {
-    if (!m_handler.open(file_name))
+    if (!m_handler.open(path))
         return false;
 
     m_total_chunks = m_handler.size() / capacity;
@@ -32,11 +33,15 @@ bool ChunkCache::load_chunk(std::uint32_t chunk_id)
     m_handler.seek(chunk_id * capacity);
 
     std::uint32_t bytes_to_read = capacity;
-    if (chunk_id == m_total_chunks - 1 && m_handler.size() % capacity)
+    if (chunk_id == (m_total_chunks - 1) && m_handler.size() % capacity)
         bytes_to_read = m_handler.size() % capacity;
 
     auto& target_cache = m_chunks[m_fallback_id];
-    m_handler.read(target_cache.m_data, bytes_to_read);
+    if (!m_handler.read(target_cache.m_data, bytes_to_read))
+    {
+        // Should not happen but since we cannot recover, just panic...
+        throw std::runtime_error("Could not read from IO device!");
+    }
 
     target_cache.m_id    = chunk_id;
     target_cache.m_count = bytes_to_read;

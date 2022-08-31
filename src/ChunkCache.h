@@ -15,7 +15,7 @@ public:
 
     struct DataChunk
     {
-        std::uint32_t m_id             = { 0 };
+        std::uint32_t m_id             = { UINT32_MAX };
         std::uint32_t m_count          = { 0 };
         std::uint8_t  m_data[capacity] = { 0 };
     };
@@ -28,7 +28,7 @@ public:
 
     std::uint32_t total_chunks() const;
 
-    bool open_file(const fs::path& file_name);
+    bool open(const fs::path& name);
 
     bool load_chunk(std::uint32_t chunk_id);
 

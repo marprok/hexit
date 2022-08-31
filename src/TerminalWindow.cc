@@ -1,6 +1,7 @@
 #include "TerminalWindow.h"
 #include "DataBuffer.h"
 #include <cstdint>
+#include <iostream>
 
 namespace
 {
@@ -47,7 +48,6 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_current_byte = start_from_byte;
         m_cy += starting_line - m_scroller.m_first_line;
         m_cx += start_from_byte % BYTES_PER_LINE * 3;
-
         m_data.load_chunk(start_from_byte / DataBuffer::capacity);
     }
     else
