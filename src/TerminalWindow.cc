@@ -1,7 +1,6 @@
 #include "TerminalWindow.h"
 #include "DataBuffer.h"
 #include <cstdint>
-#include <iostream>
 
 namespace
 {
