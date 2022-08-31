@@ -6,10 +6,10 @@ add_executable(DataBufferTest)
 target_include_directories(DataBufferTest PRIVATE ../src)
 
 target_sources(DataBufferTest PRIVATE
-	DataBufferTest.cc
-	../src/DataBuffer.cc
+    DataBufferTest.cc
+    ../src/DataBuffer.cc
     ../src/ChunkCache.cc
-    ../src/IOHandlerImpl.cc
+    ../src/FileHandler.cc
 )
 
 target_link_libraries(DataBufferTest gtest_main)

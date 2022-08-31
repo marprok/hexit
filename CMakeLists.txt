@@ -26,11 +26,12 @@ find_package(Curses REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_sources(${PROJECT_NAME} PRIVATE
-	src/hexit.cc
-	src/TerminalWindow.cc
-	src/DataBuffer.cc
-	src/ChunkCache.cc
-	src/IOHandlerImpl.cc
+    src/hexit.cc
+    src/TerminalWindow.cc
+    src/DataBuffer.cc
+    src/ChunkCache.cc
+    src/FileHandler.cc
+    src/StdInHandler.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})

@@ -47,7 +47,6 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_current_byte = start_from_byte;
         m_cy += starting_line - m_scroller.m_first_line;
         m_cx += start_from_byte % BYTES_PER_LINE * 3;
-
         m_data.load_chunk(start_from_byte / DataBuffer::capacity);
     }
     else
@@ -365,7 +364,7 @@ void TerminalWindow::consume_input(int c)
 
 void TerminalWindow::TerminalWindow::save()
 {
-    if (!m_data.has_dirty())
+    if (!m_data.has_dirty() || m_data.immutable())
         return;
 
     m_data.save();
@@ -374,7 +373,9 @@ void TerminalWindow::TerminalWindow::save()
 
 void TerminalWindow::prompt_save()
 {
-    if (!m_data.has_dirty() || m_prompt != Prompt::NONE)
+    if (!m_data.has_dirty()
+        || m_prompt != Prompt::NONE
+        || m_data.immutable())
         return;
 
     m_prompt = Prompt::SAVE;
@@ -390,7 +391,7 @@ void TerminalWindow::prompt_quit()
         m_update = true;
         m_input_buffer.clear();
     }
-    else if (!m_data.has_dirty())
+    else if (!m_data.has_dirty() || m_data.immutable())
         m_quit = true;
     else
     {

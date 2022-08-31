@@ -1,6 +1,7 @@
 #include "DataBuffer.h"
+#include "FileHandler.h"
+#include "StdInHandler.h"
 #include "TerminalWindow.h"
-#include <IOHandlerImpl.h>
 #include <csignal>
 #include <iostream>
 #include <ncurses.h>
@@ -61,30 +62,21 @@ std::uint32_t get_starting_offset(const char* offset)
 
     return std::stoll(starting_offset, nullptr);
 }
-}
 
-int main(int argc, char** argv)
+void start_hexit(IOHandler&  handler,
+                 const char* starting_offset,
+                 const char* input_path,
+                 bool        immutable = false)
 {
-    auto help            = get_flag(argc - 1, argv + 1, "-h");
-    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
-    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
-    if (help || !input_file)
+    DataBuffer data(handler);
+    if (input_path && !data.open(input_path, immutable))
     {
-        print_help(*argv);
-        std::exit(EXIT_FAILURE);
-    }
-
-    IOHandlerImpl handler;
-    DataBuffer    data(handler);
-    if (input_file && !data.open_file(input_file))
-    {
-        std::cerr << "Could not read from " << input_file << '\n';
+        std::cerr << "Could not open " << input_path << '\n';
         std::exit(EXIT_FAILURE);
     }
 
     init_ncurses();
     TerminalWindow win(stdscr, data, get_starting_offset(starting_offset));
-
     while (!win.quit())
     {
         win.update_screen();
@@ -137,6 +129,30 @@ int main(int argc, char** argv)
             win.consume_input(c);
             break;
         }
+    }
+}
+}
+
+int main(int argc, char** argv)
+{
+    auto help            = get_flag(argc - 1, argv + 1, "-h");
+    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
+    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
+    if (help)
+    {
+        print_help(*argv);
+        std::exit(EXIT_FAILURE);
+    }
+
+    if (!input_file)
+    {
+        StdInHandler handler;
+        start_hexit(handler, starting_offset, "stdin", true);
+    }
+    else
+    {
+        FileHandler handler;
+        start_hexit(handler, starting_offset, input_file);
     }
 
     return 0;

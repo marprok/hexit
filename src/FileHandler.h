@@ -1,15 +1,15 @@
-#ifndef IO_HANDLER_IMPL_H
-#define IO_HANDLER_IMPL_H
+#ifndef FILE_HANDLER_H
+#define FILE_HANDLER_H
 
 #include "IOHandler.h"
 #include <fstream>
 
-class IOHandlerImpl : public IOHandler
+class FileHandler : public IOHandler
 {
 public:
-    IOHandlerImpl() = default;
+    FileHandler() = default;
 
-    ~IOHandlerImpl() = default;
+    ~FileHandler() = default;
 
     bool open(const fs::path& path) override;
 

@@ -50,7 +50,7 @@ bool DataBuffer::has_dirty() const
 
 void DataBuffer::save()
 {
-    if (m_dirty_bytes.size() == 0)
+    if (m_dirty_bytes.size() == 0 || immutable())
         return;
 
     for (const auto& [chunk_id, changes] : m_dirty_chunks)
