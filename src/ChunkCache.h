@@ -32,7 +32,7 @@ public:
 
     bool load_chunk(std::uint32_t chunk_id);
 
-    void save_chunk(const DataChunk& chunk);
+    bool save_chunk(const DataChunk& chunk);
 
     DataChunk& recent_chunk();
 

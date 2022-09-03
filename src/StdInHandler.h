@@ -17,7 +17,7 @@ public:
 
     bool read(std::uint8_t* o_buffer, std::size_t buffer_size) override;
 
-    void write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
+    bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
 
     void seek(std::uint32_t offset) override;
 

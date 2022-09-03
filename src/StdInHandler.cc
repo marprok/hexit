@@ -41,10 +41,11 @@ bool StdInHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
     return true;
 }
 
-void StdInHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
+bool StdInHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
 {
     static_cast<void>(i_buffer);
     static_cast<void>(buffer_size);
+    return true;
 }
 
 void StdInHandler::seek(std::uint32_t offset)

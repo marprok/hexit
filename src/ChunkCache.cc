@@ -40,10 +40,7 @@ bool ChunkCache::load_chunk(std::uint32_t chunk_id)
 
     auto& target_cache = m_chunks[m_fallback_id];
     if (!m_handler.read(target_cache.m_data, bytes_to_read))
-    {
-        // Should not happen but since we cannot recover, just panic...
-        throw std::runtime_error("Could not read from IO device!");
-    }
+        return false;
 
     target_cache.m_id    = chunk_id;
     target_cache.m_count = bytes_to_read;
@@ -52,13 +49,13 @@ bool ChunkCache::load_chunk(std::uint32_t chunk_id)
     return true;
 }
 
-void ChunkCache::save_chunk(const DataChunk& chunk)
+bool ChunkCache::save_chunk(const DataChunk& chunk)
 {
     if (m_immutable)
-        return;
+        return false;
 
     m_handler.seek(chunk.m_id * ChunkCache::capacity);
-    m_handler.write(chunk.m_data, chunk.m_count);
+    return m_handler.write(chunk.m_data, chunk.m_count);
 }
 
 ChunkCache::DataChunk& ChunkCache::recent_chunk()
