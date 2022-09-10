@@ -8,7 +8,6 @@ constexpr std::uint32_t LEFT_PADDING_CHARS = sizeof(std::uint32_t) * 2;
 constexpr std::uint32_t BYTES_PER_LINE     = 16;
 constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING_CHARS + 2 + 1;
 constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
-constexpr std::uint32_t CAPACITY           = 1024;
 }
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
