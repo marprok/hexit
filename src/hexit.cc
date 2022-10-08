@@ -39,9 +39,12 @@ char* get_arg(int argc, char** argv, const std::string& arg, const std::string& 
     auto res_arg = std::find(argv, argv + argc, arg);
     if (res_arg != argv + argc && ++res_arg != argv + argc)
         return *res_arg;
-    auto res_alt = std::find(argv, argv + argc, alt_arg);
-    if (res_alt != argv + argc && ++res_alt != argv + argc)
-        return *res_alt;
+    if (!alt_arg.empty())
+    {
+        auto res_alt = std::find(argv, argv + argc, alt_arg);
+        if (res_alt != argv + argc && ++res_alt != argv + argc)
+            return *res_alt;
+    }
 
     return nullptr;
 }
