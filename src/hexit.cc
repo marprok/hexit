@@ -18,9 +18,9 @@ constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 
 inline void print_help(const char* bin)
 {
-    std::cerr << "USAGE: " << bin << " -f FILE [OPTIONS]\n";
+    std::cerr << "USAGE: " << bin << " -f (--file) FILE [OPTIONS]\n";
     std::cerr << "\nOPTIONS:\n";
-    std::cerr << "-o OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
+    std::cerr << "-o (--offset) OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
 }
 
 inline void init_ncurses()
@@ -135,9 +135,9 @@ void start_hexit(IOHandler&  handler,
 
 int main(int argc, char** argv)
 {
-    auto help            = get_flag(argc - 1, argv + 1, "-h");
-    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
-    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
+    auto help            = get_flag(argc - 1, argv + 1, "-h") || get_flag(argc - 1, argv + 1, "--help");
+    auto input_file      = get_arg(argc - 1, argv + 1, "-f") != nullptr ? get_arg(argc - 1, argv + 1, "-f") : get_arg(argc - 1, argv + 1, "--file");
+    auto starting_offset = get_arg(argc - 1, argv + 1, "-o") != nullptr ?  get_arg(argc - 1, argv + 1, "-o") : get_arg(argc - 1, argv + 1, "--offset");
     if (help)
     {
         print_help(*argv);
