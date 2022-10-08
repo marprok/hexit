@@ -18,9 +18,9 @@ constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 
 inline void print_help(const char* bin)
 {
-    std::cerr << "USAGE: " << bin << " -f FILE [OPTIONS]\n";
+    std::cerr << "USAGE: " << bin << " -f (--file) FILE [OPTIONS]\n";
     std::cerr << "\nOPTIONS:\n";
-    std::cerr << "-o OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
+    std::cerr << "-o (--offset) OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
 }
 
 inline void init_ncurses()
@@ -34,11 +34,17 @@ inline void init_ncurses()
     keypad(stdscr, true);
 }
 
-char* get_arg(int argc, char** argv, const std::string& arg)
+char* get_arg(int argc, char** argv, const std::string& arg, const std::string& alt_arg = "")
 {
-    auto res = std::find(argv, argv + argc, arg);
-    if (res != argv + argc && ++res != argv + argc)
-        return *res;
+    auto res_arg = std::find(argv, argv + argc, arg);
+    if (res_arg != argv + argc && ++res_arg != argv + argc)
+        return *res_arg;
+    if (!alt_arg.empty())
+    {
+        auto res_alt = std::find(argv, argv + argc, alt_arg);
+        if (res_alt != argv + argc && ++res_alt != argv + argc)
+            return *res_alt;
+    }
 
     return nullptr;
 }
@@ -135,9 +141,9 @@ void start_hexit(IOHandler&  handler,
 
 int main(int argc, char** argv)
 {
-    auto help            = get_flag(argc - 1, argv + 1, "-h");
-    auto input_file      = get_arg(argc - 1, argv + 1, "-f");
-    auto starting_offset = get_arg(argc - 1, argv + 1, "-o");
+    auto help            = get_flag(argc - 1, argv + 1, "-h") || get_flag(argc - 1, argv + 1, "--help");
+    auto input_file      = get_arg(argc - 1, argv + 1, "-f", "--file");
+    auto starting_offset = get_arg(argc - 1, argv + 1, "-o", "--offset");
     if (help)
     {
         print_help(*argv);
