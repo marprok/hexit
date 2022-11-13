@@ -25,7 +25,7 @@ HEX mode                   |  ASCII mode
 Make sure you have all of the following packages installed.
 * gcc(c++-20 support is needed)
 * Make
-* CMake
+* CMake(3.23 or greater)
 * libncurses-dev
 
 ### Compile
