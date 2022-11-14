@@ -29,6 +29,7 @@ inline void init_ncurses()
     initscr();
     raw();
     noecho();
+    curs_set(0); // invisible cursor
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     keypad(stdscr, true);

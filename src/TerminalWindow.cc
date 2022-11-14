@@ -1,6 +1,7 @@
 #include "TerminalWindow.h"
 #include "DataBuffer.h"
 #include <cstdint>
+#include <cstdio>
 
 namespace
 {
@@ -73,46 +74,72 @@ void TerminalWindow::draw_line(std::uint32_t line)
     if (m_scroller.m_total_lines - 1 == group && (m_data.size() % BYTES_PER_LINE))
         bytes_to_draw = m_data.size() % BYTES_PER_LINE;
 
+    // Draw the byte index.
     mvwprintw(m_screen, line + 1, 1, m_left_padding_format, byte_index);
+    // Draw the HEX part.
     for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
     {
         if (i < bytes_to_draw)
         {
-            bool is_dirty = m_data.is_dirty(byte_index);
-            if (m_mode == Mode::ASCII && byte_index == m_current_byte)
-                wattron(m_screen, A_REVERSE);
-            else if (m_mode == Mode::ASCII && is_dirty)
-                wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-
-            mvwprintw(m_screen, line + 1, col, "%02X", m_data[byte_index]);
-            if (m_mode == Mode::ASCII && byte_index == m_current_byte)
-                wattroff(m_screen, A_REVERSE);
-            else if (m_mode == Mode::ASCII && is_dirty)
-                wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+            bool is_dirty     = m_data.is_dirty(byte_index);
+            char hexDigits[3] = { 0 };
+            std::sprintf(hexDigits, "%02X", m_data[byte_index]);
+            if (byte_index == m_current_byte)
+            {
+                if (m_mode == Mode::HEX)
+                {
+                    wattron(m_screen, A_REVERSE);
+                    mvwprintw(m_screen, line + 1, col + m_current_byte_offset, "%c", hexDigits[m_current_byte_offset]);
+                    wattroff(m_screen, A_REVERSE);
+                    mvwprintw(m_screen, line + 1, col + 1 - m_current_byte_offset, "%c", hexDigits[1 - m_current_byte_offset]);
+                }
+                else
+                {
+                    wattron(m_screen, A_REVERSE);
+                    mvwprintw(m_screen, line + 1, col, hexDigits);
+                    wattroff(m_screen, A_REVERSE);
+                }
+            }
+            else
+            {
+                if (is_dirty)
+                    wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+                mvwprintw(m_screen, line + 1, col, hexDigits);
+                if (is_dirty)
+                    wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+            }
         }
         else
+        {
+            // Pad the extra bytes with whitespace until we reach BYTES_PER_LINE.
             mvwprintw(m_screen, line + 1, col, "  ");
-
+        }
+        // Space to separate the hex from the ASCII part of each line.
         mvwprintw(m_screen, line + 1, col + 2, " ");
     }
 
     mvwprintw(m_screen, line + 1, col++, " ");
     byte_index = group * BYTES_PER_LINE;
 
+    // Draw the ASCII part.
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
     {
         const char c        = m_data[byte_index];
         const bool is_dirty = m_data.is_dirty(byte_index);
-        if (m_mode == Mode::HEX && byte_index == m_current_byte)
+        if (byte_index == m_current_byte)
+        {
             wattron(m_screen, A_REVERSE);
-        else if (m_mode == Mode::HEX && is_dirty)
-            wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-
-        mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
-        if (m_mode == Mode::HEX && byte_index == m_current_byte)
+            mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
             wattroff(m_screen, A_REVERSE);
-        else if (m_mode == Mode::HEX && is_dirty)
-            wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+        }
+        else
+        {
+            if (is_dirty)
+                wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+            mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
+            if (is_dirty)
+                wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+        }
     }
 }
 
