@@ -55,7 +55,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
         m_scroller.m_last_line = m_visible_lines;
     }
 
-    std::sprintf(m_left_padding_format, "%%0%dX  ", LEFT_PADDING_CHARS);
+    std::sprintf(m_left_padding_format, "%%0%dX", LEFT_PADDING_CHARS);
     m_input_buffer.reserve(LEFT_PADDING_CHARS);
 }
 
@@ -76,6 +76,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
 
     // Draw the byte index.
     mvwprintw(m_screen, line + 1, 1, m_left_padding_format, byte_index);
+    mvwprintw(m_screen, line + 1, 1 + LEFT_PADDING_CHARS, "  ");
     // Draw the HEX part.
     for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
     {
@@ -84,6 +85,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
             bool is_dirty     = m_data.is_dirty(byte_index);
             char hexDigits[3] = { 0 };
             std::sprintf(hexDigits, "%02X", m_data[byte_index]);
+
             if (byte_index == m_current_byte)
             {
                 if (m_mode == Mode::HEX)
@@ -179,6 +181,10 @@ void TerminalWindow::update_screen()
         if (m_cy < m_visible_lines)
             draw_line(m_cy);
     }
+
+    // Draw the current byte index
+    if (m_prompt == Prompt::NONE)
+        mvwprintw(m_screen, LINES - 1, 1, m_left_padding_format, m_current_byte);
 }
 
 void TerminalWindow::erase() const
