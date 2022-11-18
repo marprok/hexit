@@ -49,12 +49,12 @@ bool FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
         m_stream.write(reinterpret_cast<const char*>(i_buffer), buffer_size));
 }
 
-void FileHandler::seek(std::uint32_t offset)
+bool FileHandler::seek(std::uint32_t offset)
 {
     if (!m_stream.is_open())
-        return;
+        return false;
 
-    m_stream.seekg(offset);
+    return static_cast<bool>(m_stream.seekg(offset));
 }
 
 const fs::path& FileHandler::name() const
