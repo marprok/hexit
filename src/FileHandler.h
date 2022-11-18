@@ -19,7 +19,7 @@ public:
 
     bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
 
-    void seek(std::uint32_t offset) override;
+    bool seek(std::uint32_t offset) override;
 
     const fs::path& name() const override;
 

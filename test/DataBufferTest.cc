@@ -62,9 +62,10 @@ public:
         return true;
     }
 
-    void seek(std::uint32_t offset) override
+    bool seek(std::uint32_t offset) override
     {
         m_id = offset / ChunkCache::capacity;
+        return true;
     }
 
     const fs::path& name() const override

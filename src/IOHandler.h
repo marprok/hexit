@@ -19,7 +19,7 @@ public:
 
     virtual bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) = 0;
 
-    virtual void seek(std::uint32_t offset) = 0;
+    virtual bool seek(std::uint32_t offset) = 0;
 
     virtual const fs::path& name() const = 0;
 

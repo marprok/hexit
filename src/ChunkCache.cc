@@ -32,7 +32,8 @@ bool ChunkCache::open(const fs::path& path, bool immutable)
 
 bool ChunkCache::load_chunk(std::uint32_t chunk_id)
 {
-    m_handler.seek(chunk_id * capacity);
+    if (!m_handler.seek(chunk_id * capacity))
+        return false;
 
     std::uint32_t bytes_to_read = capacity;
     if (chunk_id == (m_total_chunks - 1) && m_handler.size() % capacity)
@@ -53,8 +54,9 @@ bool ChunkCache::save_chunk(const DataChunk& chunk)
 {
     if (m_immutable)
         return false;
+    if (!m_handler.seek(chunk.m_id * ChunkCache::capacity))
+        return false;
 
-    m_handler.seek(chunk.m_id * ChunkCache::capacity);
     return m_handler.write(chunk.m_data, chunk.m_count);
 }
 
