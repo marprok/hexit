@@ -27,36 +27,16 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     m_scroller.m_total_lines = m_data.size() / BYTES_PER_LINE;
     if (m_data.size() % BYTES_PER_LINE)
         m_scroller.m_total_lines++;
-    m_visible_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.m_total_lines);
 
     if (start_from_byte < m_data.size())
-    {
-        const std::uint32_t starting_line = start_from_byte / BYTES_PER_LINE;
-        if (starting_line > m_visible_lines
-            && m_scroller.m_total_lines < starting_line + m_visible_lines)
-        {
-            m_scroller.m_first_line = starting_line - m_visible_lines + 1;
-            m_scroller.m_last_line  = starting_line + 1;
-        }
-        else
-        {
-            m_scroller.m_first_line = starting_line / m_visible_lines * m_visible_lines;
-            m_scroller.m_last_line  = m_scroller.m_first_line + m_visible_lines;
-        }
-
         m_byte = start_from_byte;
-        m_cy += starting_line - m_scroller.m_first_line;
-        m_cx += start_from_byte % BYTES_PER_LINE * 3;
-        m_data.load_chunk(start_from_byte / DataBuffer::capacity);
-    }
     else
-    {
-        m_data.load_chunk(0);
-        m_scroller.m_last_line = m_visible_lines;
-    }
+        m_byte = m_data.size() - 1;
 
     std::sprintf(m_left_padding_format, "%%0%dX", LEFT_PADDING_CHARS);
     m_input_buffer.reserve(LEFT_PADDING_CHARS);
+    m_data.load_chunk(m_byte / DataBuffer::capacity);
+    resize();
 }
 
 TerminalWindow::~TerminalWindow()
@@ -138,6 +118,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
         {
             if (is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+
             mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
             if (is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
@@ -177,7 +158,6 @@ void TerminalWindow::update_screen()
             draw_line(m_cy - 2);
 
         draw_line(m_cy - 1);
-
         if (m_cy < m_visible_lines)
             draw_line(m_cy);
     }
@@ -200,6 +180,10 @@ void TerminalWindow::refresh() const
 
 void TerminalWindow::resize()
 {
+    // If the number of terminal lines is less than or equal to 2, we cannot display much :(
+    if (LINES <= 2)
+        return;
+
     m_cy            = 1;
     m_cx            = m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII;
     m_cols          = COLS - 2;
@@ -220,8 +204,7 @@ void TerminalWindow::resize()
     m_cy += current_line - m_scroller.m_first_line;
     m_cx += m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1);
     m_byte_offset = 0;
-
-    m_update = true;
+    m_update      = true;
 }
 
 void TerminalWindow::reset_cursor() const
