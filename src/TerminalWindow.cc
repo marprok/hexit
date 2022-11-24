@@ -87,15 +87,11 @@ void TerminalWindow::draw_line(std::uint32_t line)
             {
                 if (is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+
                 mvwprintw(m_screen, line + 1, col, hexDigits);
                 if (is_dirty)
                     wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
             }
-        }
-        else
-        {
-            // Pad the extra bytes with whitespace until we reach BYTES_PER_LINE.
-            mvwprintw(m_screen, line + 1, col, "  ");
         }
     }
 
@@ -319,13 +315,10 @@ void TerminalWindow::move_left()
             m_byte_offset--;
         }
     }
-    else
+    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
     {
-        if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
-        {
-            m_cx--;
-            m_byte--;
-        }
+        m_cx--;
+        m_byte--;
     }
 }
 
@@ -357,13 +350,10 @@ void TerminalWindow::move_right()
             m_byte_offset++;
         }
     }
-    else
+    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
     {
-        if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
-        {
-            m_cx++;
-            m_byte++;
-        }
+        m_cx++;
+        m_byte++;
     }
 }
 
@@ -504,7 +494,7 @@ void TerminalWindow::handle_prompt(int c)
             m_prompt = Prompt::NONE;
             resize();
         }
-        if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
+        else if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
         {
             m_input_buffer.pop_back();
             m_update = true;
