@@ -5,10 +5,12 @@
 
 namespace
 {
-constexpr std::uint32_t LEFT_PADDING_CHARS = sizeof(std::uint32_t) * 2;
 constexpr std::uint32_t BYTES_PER_LINE     = 16;
-constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING_CHARS + 2 + 1;
-constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 + 1;
+constexpr std::uint32_t LEFT_PADDING       = sizeof(std::uint32_t) * 2; // The number of digits of the byte offset.
+constexpr std::uint32_t ASCII_PADDING      = 2; // The distance between hex and ASCII digits.
+constexpr std::uint32_t HEX_PADDING        = 2; // The distatnce between the left padding and the ASCII digits.
+constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING + 1 + HEX_PADDING;
+constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 }
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
@@ -33,8 +35,8 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t star
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_left_padding_format, "%%0%dX", LEFT_PADDING_CHARS);
-    m_input_buffer.reserve(LEFT_PADDING_CHARS);
+    std::sprintf(m_left_padding_format, "%%0%dX", LEFT_PADDING);
+    m_input_buffer.reserve(LEFT_PADDING);
     m_data.load_chunk(m_byte / DataBuffer::capacity);
     resize();
 }
@@ -56,7 +58,6 @@ void TerminalWindow::draw_line(std::uint32_t line)
 
     // Draw the byte index.
     mvwprintw(m_screen, line + 1, 1, m_left_padding_format, byte_index);
-    mvwprintw(m_screen, line + 1, 1 + LEFT_PADDING_CHARS, "  ");
     // Draw the HEX part.
     for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
     {
@@ -86,23 +87,16 @@ void TerminalWindow::draw_line(std::uint32_t line)
             {
                 if (is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
+
                 mvwprintw(m_screen, line + 1, col, hexDigits);
                 if (is_dirty)
                     wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
             }
         }
-        else
-        {
-            // Pad the extra bytes with whitespace until we reach BYTES_PER_LINE.
-            mvwprintw(m_screen, line + 1, col, "  ");
-        }
-        // Space to separate the hex from the ASCII part of each line.
-        mvwprintw(m_screen, line + 1, col + 2, " ");
     }
 
-    mvwprintw(m_screen, line + 1, col++, " ");
     byte_index = group * BYTES_PER_LINE;
-
+    col        = FIRST_ASCII;
     // Draw the ASCII part.
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
     {
@@ -321,13 +315,10 @@ void TerminalWindow::move_left()
             m_byte_offset--;
         }
     }
-    else
+    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
     {
-        if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
-        {
-            m_cx--;
-            m_byte--;
-        }
+        m_cx--;
+        m_byte--;
     }
 }
 
@@ -359,13 +350,10 @@ void TerminalWindow::move_right()
             m_byte_offset++;
         }
     }
-    else
+    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
     {
-        if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
-        {
-            m_cx++;
-            m_byte++;
-        }
+        m_cx++;
+        m_byte++;
     }
 }
 
@@ -506,13 +494,13 @@ void TerminalWindow::handle_prompt(int c)
             m_prompt = Prompt::NONE;
             resize();
         }
-        if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
+        else if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
         {
             m_input_buffer.pop_back();
             m_update = true;
         }
         else if (std::isprint(c)
-                 && m_input_buffer.size() < LEFT_PADDING_CHARS)
+                 && m_input_buffer.size() < LEFT_PADDING)
         {
             if ((m_mode == Mode::ASCII && isdigit(c))
                 || (m_mode == Mode::HEX && isxdigit(c)))
