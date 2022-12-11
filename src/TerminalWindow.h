@@ -80,7 +80,7 @@ private:
 
     DataBuffer&   m_data;
     std::uint32_t m_cy, m_cx;
-    std::uint32_t m_visible_lines, m_cols;
+    std::uint32_t m_lines, m_cols;
     bool          m_update;
     Mode          m_mode;
     Prompt        m_prompt;
