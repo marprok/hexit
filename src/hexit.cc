@@ -145,7 +145,8 @@ int main(int argc, char** argv)
     auto help            = get_flag(argc - 1, argv + 1, "-h") || get_flag(argc - 1, argv + 1, "--help");
     auto input_file      = get_arg(argc - 1, argv + 1, "-f", "--file");
     auto starting_offset = get_arg(argc - 1, argv + 1, "-o", "--offset");
-    if (help)
+
+    if (help || (!input_file && !starting_offset && argc > 1))
     {
         print_help(*argv);
         std::exit(EXIT_FAILURE);
