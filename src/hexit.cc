@@ -1,7 +1,9 @@
 #include "DataBuffer.h"
 #include "FileHandler.h"
+#include "SignatureReader.h"
 #include "StdInHandler.h"
 #include "TerminalWindow.h"
+#include <algorithm>
 #include <csignal>
 #include <iostream>
 #include <ncurses.h>
@@ -70,6 +72,23 @@ std::uint32_t get_starting_offset(const char* offset)
     return std::stoll(starting_offset, nullptr);
 }
 
+std::string check_signature(DataBuffer& dataBuffer)
+{
+    if (dataBuffer.size() == 0)
+        return {};
+
+    SignatureReader                 reader;
+    SignatureReader::SignatureQuery query;
+    std::size_t                     bytes_to_copy = std::min(static_cast<std::size_t>(dataBuffer.size()),
+                                         query.m_buffer.max_size());
+
+    for (std::size_t i = 0u; i < bytes_to_copy; ++i)
+        query.m_buffer[i] = dataBuffer[i];
+    query.m_size = bytes_to_copy;
+
+    return reader.get_type(query);
+}
+
 void start_hexit(IOHandler&  handler,
                  const char* starting_offset,
                  const char* input_path,
@@ -82,8 +101,10 @@ void start_hexit(IOHandler&  handler,
         std::exit(EXIT_FAILURE);
     }
 
+    const auto file_type = check_signature(data);
+
     init_ncurses();
-    TerminalWindow win(stdscr, data, get_starting_offset(starting_offset));
+    TerminalWindow win(stdscr, data, file_type, get_starting_offset(starting_offset));
     while (!win.quit())
     {
         win.update_screen();
