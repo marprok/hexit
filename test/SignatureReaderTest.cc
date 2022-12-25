@@ -2,48 +2,52 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 
-namespace
-{
-SignatureReader::SignatureQuery make_query(const std::vector<std::uint8_t>& bytes)
-{
-    if (bytes.empty())
-        return {};
-
-    SignatureReader::SignatureQuery query;
-    std::size_t                     bytes_to_copy = std::min(bytes.size(), query.m_buffer.max_size());
-
-    for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.m_buffer[i] = bytes[i];
-
-    query.m_size = bytes_to_copy;
-
-    return query;
-}
-}
-
 TEST(SignatureReaderTest, SignatureMapping)
 {
     SignatureReader reader;
 
     // Empty query
-    {
-        auto query = make_query({});
-        EXPECT_EQ(reader.get_type(query), std::string(""));
-    }
+    EXPECT_EQ(reader.get_type({ {}, 0u }), std::string("UNK"));
+
+    // There are some extra query bytes at the end of the valid signature sequence
+    EXPECT_EQ(reader.get_type({ { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0xFF, 0x09, 0x43 }, 11 }), std::string("PNG"));
+
+    // There are extra query bytes at the beginning of a valid signature sequence
+    EXPECT_EQ(reader.get_type({ { 0x43, 0xDD, 0x76, 0x00, 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, 12 }), std::string("UNK"));
 
     // The query bytes match exactly with a signature
-    {
-        auto query = make_query({ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
-        EXPECT_EQ(reader.get_type(query), std::string("PNG"));
-    }
-    // There are some extra query bytes at the end of the valid signature sequence
-    {
-        auto query = make_query({ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0xFF, 0x09, 0x43 });
-        EXPECT_EQ(reader.get_type(query), std::string("PNG"));
-    }
-    // There are extra query bytes at the beginning of a valid signature sequence
-    {
-        auto query = make_query({ 0x43, 0xDD, 0x76, 0x00, 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
-        EXPECT_EQ(reader.get_type(query), std::string(""));
-    }
+    EXPECT_EQ(reader.get_type({ { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, 8 }), std::string("PNG"));
+    EXPECT_EQ(reader.get_type({ { 0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C }, 16 }), std::string("ASF"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01 }, 12 }), std::string("JPG"));
+    // Bytes 4, 5 will be skiped
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xD8, 0xFF, 0xE1, 0xFF, 0xFF, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 }, 12 }), std::string("JPG"));
+    EXPECT_EQ(reader.get_type({ { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }, 8 }), std::string("PNG"));
+    // Bytes 4, 5, 6, 7 will be skiped
+    EXPECT_EQ(reader.get_type({ { 0x52, 0x49, 0x46, 0x46, 0xBB, 0xEE, 0xEE, 0xFF, 0x57, 0x41, 0x56, 0x45 }, 12 }), std::string("WAV"));
+    EXPECT_EQ(reader.get_type({ { 0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A }, 8 }), std::string("DEB"));
+    EXPECT_EQ(reader.get_type({ { 0x42, 0x4C, 0x45, 0x4E, 0x44, 0x45, 0x52 }, 7 }), std::string("BLEND"));
+    EXPECT_EQ(reader.get_type({ { 0x47, 0x49, 0x46, 0x38, 0x37, 0x61 }, 6 }), std::string("GIF"));
+    EXPECT_EQ(reader.get_type({ { 0x47, 0x49, 0x46, 0x38, 0x39, 0x61 }, 6 }), std::string("GIF"));
+    EXPECT_EQ(reader.get_type({ { 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C }, 6 }), std::string("7z"));
+    EXPECT_EQ(reader.get_type({ { 0x25, 0x50, 0x44, 0x46, 0x2D }, 5 }), std::string("PDF"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xD8, 0xFF, 0xDB }, 4 }), std::string("JPG"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xD8, 0xFF, 0xDB }, 4 }), std::string("JPG"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xD8, 0xFF, 0xE0 }, 4 }), std::string("JPG"));
+    EXPECT_EQ(reader.get_type({ { 0x50, 0x4B, 0x03, 0x04 }, 4 }), std::string("ZIP"));
+    EXPECT_EQ(reader.get_type({ { 0x50, 0x4B, 0x05, 0x06 }, 4 }), std::string("ZIP"));
+    EXPECT_EQ(reader.get_type({ { 0x50, 0x4B, 0x07, 0x08 }, 4 }), std::string("ZIP"));
+    EXPECT_EQ(reader.get_type({ { 0x4F, 0x67, 0x67, 0x53 }, 4 }), std::string("OGG"));
+    EXPECT_EQ(reader.get_type({ { 0x66, 0x4C, 0x61, 0x43 }, 4 }), std::string("FLAC"));
+    EXPECT_EQ(reader.get_type({ { 0x1A, 0x45, 0xDF, 0xA3 }, 4 }), std::string("MKV"));
+    EXPECT_EQ(reader.get_type({ { 0x00, 0x61, 0x73, 0x6D }, 4 }), std::string("WASM"));
+    EXPECT_EQ(reader.get_type({ { 0x00, 0x00, 0x01, 0xBA }, 4 }), std::string("MPEG"));
+    EXPECT_EQ(reader.get_type({ { 0x00, 0x00, 0x01, 0xB3 }, 4 }), std::string("MPEG"));
+    EXPECT_EQ(reader.get_type({ { 0x4E, 0x45, 0x53, 0x1A }, 4 }), std::string("NES"));
+    EXPECT_EQ(reader.get_type({ { 0x49, 0x44, 0x33 }, 3 }), std::string("MP3"));
+    EXPECT_EQ(reader.get_type({ { 0x4E, 0x45, 0x53 }, 3 }), std::string("NES"));
+    EXPECT_EQ(reader.get_type({ { 0x1F, 0x8B }, 2 }), std::string("GZ"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xFB }, 2 }), std::string("MP3"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xF3 }, 2 }), std::string("MP3"));
+    EXPECT_EQ(reader.get_type({ { 0xFF, 0xF2 }, 2 }), std::string("MP3"));
+    EXPECT_EQ(reader.get_type({ { 0x42, 0x4D }, 2 }), std::string("BMP"));
 }
