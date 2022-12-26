@@ -1,5 +1,4 @@
 #include "SignatureReader.h"
-#include <algorithm>
 #include <gtest/gtest.h>
 
 TEST(SignatureReaderTest, SignatureMapping)
