@@ -4,7 +4,6 @@
 #include <array>
 #include <cstdint>
 #include <set>
-#include <utility>
 #include <vector>
 
 class SignatureReader
