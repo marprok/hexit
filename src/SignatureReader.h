@@ -10,16 +10,10 @@
 class SignatureReader
 {
 public:
-    struct SignatureQuery
-    {
-        std::array<std::uint8_t, 32> m_buffer = {}; // Bytes to compare.
-        std::size_t                  m_size; // The number of valid bytes in the buffer.
-    };
-
     SignatureReader();
     ~SignatureReader() = default;
 
-    std::string get_type(const SignatureQuery& query);
+    std::string get_type(const std::vector<std::uint8_t>& query);
 
 private:
     struct Signature

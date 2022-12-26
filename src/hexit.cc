@@ -77,14 +77,13 @@ std::string check_signature(DataBuffer& dataBuffer)
     if (dataBuffer.size() == 0)
         return {};
 
-    SignatureReader                 reader;
-    SignatureReader::SignatureQuery query;
-    std::size_t                     bytes_to_copy = std::min(static_cast<std::size_t>(dataBuffer.size()),
-                                         query.m_buffer.max_size());
+    std::vector<std::uint8_t> query;
+    SignatureReader           reader;
+    std::size_t               bytes_to_copy = std::min(dataBuffer.size(), 32u);
+    query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.m_buffer[i] = dataBuffer[i];
-    query.m_size = bytes_to_copy;
+        query.push_back(dataBuffer[i]);
 
     return reader.get_type(query);
 }
