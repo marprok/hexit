@@ -86,8 +86,8 @@ private:
     Mode              m_mode;
     Prompt            m_prompt;
     WINDOW*           m_screen;
-    std::uint32_t     m_byte, m_byte_offset;
-    char              m_left_padding_format[sizeof("%%0%dX  ")];
+    std::uint32_t     m_byte, m_nibble;
+    char              m_line_offset_format[sizeof("%%0%dX  ")];
     bool              m_quit;
     std::string       m_input_buffer;
 

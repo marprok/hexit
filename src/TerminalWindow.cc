@@ -6,10 +6,10 @@
 namespace
 {
 constexpr std::uint32_t BYTES_PER_LINE     = 16;
-constexpr std::uint32_t LEFT_PADDING       = sizeof(std::uint32_t) * 2; // The number of digits of the byte offset.
+constexpr std::uint32_t LINE_OFFSET_LEN    = sizeof(std::uint32_t) * 2; // The number of digits of the line byte offset.
 constexpr std::uint32_t ASCII_PADDING      = 2; // The distance between hex and ASCII digits.
 constexpr std::uint32_t HEX_PADDING        = 2; // The distatnce between the left padding and the ASCII digits.
-constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING + 1 + HEX_PADDING;
+constexpr std::uint32_t FIRST_HEX          = LINE_OFFSET_LEN + 1 + HEX_PADDING;
 constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 }
 
@@ -24,7 +24,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
     , m_prompt(Prompt::NONE)
     , m_screen(win)
     , m_byte(0)
-    , m_byte_offset(0)
+    , m_nibble(0)
     , m_quit(false)
 {
     m_scroller.m_total_lines = m_data.size() / BYTES_PER_LINE;
@@ -36,8 +36,8 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_left_padding_format, "%%0%dX", LEFT_PADDING);
-    m_input_buffer.reserve(LEFT_PADDING);
+    std::sprintf(m_line_offset_format, "%%0%dX", LINE_OFFSET_LEN);
+    m_input_buffer.reserve(LINE_OFFSET_LEN);
     m_data.load_chunk(m_byte / DataBuffer::capacity);
     resize();
 }
@@ -50,37 +50,38 @@ TerminalWindow::~TerminalWindow()
 void TerminalWindow::draw_line(std::uint32_t line)
 {
     int           col           = FIRST_HEX;
-    std::uint32_t group         = m_scroller.m_first_line + line;
-    std::uint32_t byte_index    = group * BYTES_PER_LINE;
+    std::uint32_t line_abs      = m_scroller.m_first_line + line;
+    std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
-    if (m_scroller.m_total_lines - 1 == group && (m_data.size() % BYTES_PER_LINE))
+    if ((m_scroller.m_total_lines - 1) == line_abs && (m_data.size() % BYTES_PER_LINE))
         bytes_to_draw = m_data.size() % BYTES_PER_LINE;
-
-    // Draw the byte index.
-    mvwprintw(m_screen, line + 1, 1, m_left_padding_format, byte_index);
+    // Skip the first box border line.
+    line++;
+    // Draw the line byte offset.
+    mvwprintw(m_screen, line, 1, m_line_offset_format, line_byte);
     // Draw the HEX part.
-    for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, byte_index++)
+    for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, line_byte++)
     {
         if (i < bytes_to_draw)
         {
-            bool is_dirty     = m_data.is_dirty(byte_index);
+            bool is_dirty     = m_data.is_dirty(line_byte);
             char hexDigits[3] = { 0 };
-            std::sprintf(hexDigits, "%02X", m_data[byte_index]);
+            std::sprintf(hexDigits, "%02X", m_data[line_byte]);
 
-            if (byte_index == m_byte)
+            if (line_byte == m_byte)
             {
                 if (m_mode == Mode::HEX)
                 {
                     wattron(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line + 1, col + m_byte_offset, "%c", hexDigits[m_byte_offset]);
+                    mvwprintw(m_screen, line, col + m_nibble, "%c", hexDigits[m_nibble]);
                     wattroff(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line + 1, col + 1 - m_byte_offset, "%c", hexDigits[1 - m_byte_offset]);
+                    mvwprintw(m_screen, line, col + 1 - m_nibble, "%c", hexDigits[1 - m_nibble]);
                 }
                 else
                 {
                     wattron(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line + 1, col, hexDigits);
+                    mvwprintw(m_screen, line, col, hexDigits);
                     wattroff(m_screen, A_REVERSE);
                 }
             }
@@ -88,33 +89,31 @@ void TerminalWindow::draw_line(std::uint32_t line)
             {
                 if (is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-
-                mvwprintw(m_screen, line + 1, col, hexDigits);
+                mvwprintw(m_screen, line, col, hexDigits);
                 if (is_dirty)
                     wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
             }
         }
     }
 
-    byte_index = group * BYTES_PER_LINE;
-    col        = FIRST_ASCII;
+    line_byte = line_abs * BYTES_PER_LINE;
+    col       = FIRST_ASCII;
     // Draw the ASCII part.
-    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, byte_index++)
+    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, line_byte++)
     {
-        const char c        = m_data[byte_index];
-        const bool is_dirty = m_data.is_dirty(byte_index);
-        if (byte_index == m_byte)
+        const char c        = m_data[line_byte];
+        const bool is_dirty = m_data.is_dirty(line_byte);
+        if (line_byte == m_byte)
         {
             wattron(m_screen, A_REVERSE);
-            mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, col, "%c", std::isprint(c) ? c : '.');
             wattroff(m_screen, A_REVERSE);
         }
         else
         {
             if (is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-
-            mvwprintw(m_screen, line + 1, col, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, col, "%c", std::isprint(c) ? c : '.');
             if (is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
         }
@@ -129,11 +128,11 @@ void TerminalWindow::update_screen()
         for (std::uint32_t line = 0; line < m_lines; line++)
             draw_line(line);
 
-        const std::string filename = m_data.name().filename();
+        const std::string file_name = m_data.name().filename();
         if (m_data.has_dirty())
-            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "*%s", filename.c_str());
+            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "*%s", file_name.c_str());
         else
-            mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
+            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "%s", file_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage  = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
@@ -158,9 +157,9 @@ void TerminalWindow::update_screen()
             draw_line(m_cy);
     }
 
-    // Draw the current byte index
+    // Draw the current byte offset.
     if (m_prompt == Prompt::NONE)
-        mvwprintw(m_screen, LINES - 1, 1, m_left_padding_format, m_byte);
+        mvwprintw(m_screen, LINES - 1, 1, m_line_offset_format, m_byte);
 }
 
 void TerminalWindow::erase() const
@@ -199,8 +198,8 @@ void TerminalWindow::resize()
 
     m_cy += current_line - m_scroller.m_first_line;
     m_cx += m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1);
-    m_byte_offset = 0;
-    m_update      = true;
+    m_nibble = 0;
+    m_update = true;
 }
 
 void TerminalWindow::reset_cursor() const
@@ -266,10 +265,10 @@ void TerminalWindow::move_down()
 
     if (m_byte >= m_data.size())
     {
-        m_cx          = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-        m_update      = true;
-        m_byte        = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
-        m_byte_offset = 0;
+        m_cx     = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
+        m_update = true;
+        m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
+        m_nibble = 0;
     }
 }
 
@@ -288,10 +287,10 @@ void TerminalWindow::page_down()
 
     if (m_byte >= m_data.size())
     {
-        m_cx          = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
-        m_update      = true;
-        m_byte        = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
-        m_byte_offset = 0;
+        m_cx     = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
+        m_update = true;
+        m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
+        m_nibble = 0;
     }
 }
 
@@ -302,19 +301,19 @@ void TerminalWindow::move_left()
 
     if (m_mode == Mode::HEX)
     {
-        if (m_byte_offset == 0)
+        if (m_nibble == 0)
         {
             if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
             {
                 m_cx -= 2;
                 m_byte--;
-                m_byte_offset = 1;
+                m_nibble = 1;
             }
         }
         else
         {
             m_cx--;
-            m_byte_offset--;
+            m_nibble--;
         }
     }
     else if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
@@ -337,19 +336,19 @@ void TerminalWindow::move_right()
 
     if (m_mode == Mode::HEX)
     {
-        if (m_byte_offset > 0)
+        if (m_nibble > 0)
         {
             if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
             {
                 m_cx += 2;
                 m_byte++;
-                m_byte_offset = 0;
+                m_nibble = 0;
             }
         }
         else if (m_cx < m_cols)
         {
             m_cx++;
-            m_byte_offset++;
+            m_nibble++;
         }
     }
     else if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
@@ -420,10 +419,10 @@ void TerminalWindow::toggle_ascii_mode()
     if (m_mode == Mode::ASCII || m_prompt != Prompt::NONE)
         return;
 
-    m_cx          = FIRST_ASCII + m_byte % BYTES_PER_LINE;
-    m_mode        = Mode::ASCII;
-    m_update      = true;
-    m_byte_offset = 0;
+    m_cx     = FIRST_ASCII + m_byte % BYTES_PER_LINE;
+    m_mode   = Mode::ASCII;
+    m_update = true;
+    m_nibble = 0;
 }
 
 void TerminalWindow::toggle_hex_mode()
@@ -462,8 +461,8 @@ void TerminalWindow::edit_byte(int c)
             return;
 
         new_byte = m_data[m_byte];
-        new_byte &= 0xF0 >> (1 - m_byte_offset) * 4;
-        new_byte |= hex_digit << (1 - m_byte_offset) * 4;
+        new_byte &= 0xF0 >> (1 - m_nibble) * 4;
+        new_byte |= hex_digit << (1 - m_nibble) * 4;
     }
 
     if (!m_data.has_dirty())
@@ -502,7 +501,7 @@ void TerminalWindow::handle_prompt(int c)
             m_update = true;
         }
         else if (std::isprint(c)
-                 && m_input_buffer.size() < LEFT_PADDING)
+                 && m_input_buffer.size() < LINE_OFFSET_LEN)
         {
             if ((m_mode == Mode::ASCII && isdigit(c))
                 || (m_mode == Mode::HEX && isxdigit(c)))
