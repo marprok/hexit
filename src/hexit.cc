@@ -72,7 +72,7 @@ std::uint32_t get_starting_offset(const char* offset)
     return std::stoll(starting_offset, nullptr);
 }
 
-std::string check_signature(DataBuffer& dataBuffer)
+std::string get_type(DataBuffer& dataBuffer)
 {
     if (dataBuffer.size() == 0)
         return {};
@@ -100,10 +100,8 @@ void start_hexit(IOHandler&  handler,
         std::exit(EXIT_FAILURE);
     }
 
-    const auto file_type = check_signature(data);
-
     init_ncurses();
-    TerminalWindow win(stdscr, data, file_type, get_starting_offset(starting_offset));
+    TerminalWindow win(stdscr, data, get_type(data), get_starting_offset(starting_offset));
     while (!win.quit())
     {
         win.update_screen();
