@@ -1,18 +1,20 @@
 enable_testing()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "&{CMAKE_BINARY_DIR}")
-add_executable(DataBufferTest)
+add_executable(HexitTest)
 
-target_include_directories(DataBufferTest PRIVATE ../src)
+target_include_directories(HexitTest PRIVATE ../src)
 
-target_sources(DataBufferTest PRIVATE
+target_sources(HexitTest PRIVATE
     DataBufferTest.cc
+	SignatureReaderTest.cc
     ../src/DataBuffer.cc
     ../src/ChunkCache.cc
     ../src/FileHandler.cc
+	../src/SignatureReader.cc
 )
 
-target_link_libraries(DataBufferTest gtest_main)
+target_link_libraries(HexitTest gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(DataBufferTest)
+gtest_discover_tests(HexitTest)

@@ -13,8 +13,9 @@ constexpr std::uint32_t FIRST_HEX          = LEFT_PADDING + 1 + HEX_PADDING;
 constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 }
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t start_from_byte)
+TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
     : m_data(data)
+    , m_type(file_type)
     , m_cy(1)
     , m_cx(FIRST_HEX)
     , m_cols(COLS - 2)
@@ -134,9 +135,10 @@ void TerminalWindow::update_screen()
         else
             mvwprintw(m_screen, 0, (COLS - filename.size()) / 2 - 1, "%s", filename.c_str());
 
-        const char          mode       = m_mode == Mode::ASCII ? 'A' : 'X';
-        const std::uint32_t percentage = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
-        mvwprintw(m_screen, LINES - 1, COLS - 7, "%c/%d%%", mode, percentage);
+        const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
+        const std::uint32_t percentage  = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
+        const int           info_column = COLS - 8 - m_type.size();
+        mvwprintw(m_screen, LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
         if (m_prompt == Prompt::SAVE)
             mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");

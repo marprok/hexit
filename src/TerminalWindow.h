@@ -10,7 +10,7 @@ class DataBuffer;
 class TerminalWindow
 {
 public:
-    TerminalWindow(WINDOW* win, DataBuffer& data, std::uint32_t go_to_byte = 0);
+    TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t go_to_byte = 0);
 
     ~TerminalWindow();
 
@@ -78,17 +78,18 @@ private:
         std::uint32_t m_total_lines = { 0 };
     } m_scroller;
 
-    DataBuffer&   m_data;
-    std::uint32_t m_cy, m_cx;
-    std::uint32_t m_lines, m_cols;
-    bool          m_update;
-    Mode          m_mode;
-    Prompt        m_prompt;
-    WINDOW*       m_screen;
-    std::uint32_t m_byte, m_byte_offset;
-    char          m_left_padding_format[sizeof("%%0%dX  ")];
-    bool          m_quit;
-    std::string   m_input_buffer;
+    DataBuffer&       m_data;
+    const std::string m_type;
+    std::uint32_t     m_cy, m_cx;
+    std::uint32_t     m_lines, m_cols;
+    bool              m_update;
+    Mode              m_mode;
+    Prompt            m_prompt;
+    WINDOW*           m_screen;
+    std::uint32_t     m_byte, m_byte_offset;
+    char              m_left_padding_format[sizeof("%%0%dX  ")];
+    bool              m_quit;
+    std::string       m_input_buffer;
 
     void edit_byte(int c);
 

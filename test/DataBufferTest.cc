@@ -20,7 +20,8 @@ public:
     static constexpr std::uint32_t chunk_count = 255;
 
     IOHandlerMock()
-        : m_id(0)
+        : m_id(0u)
+        , m_load_count(0u)
     {
         randomize();
     }
@@ -46,6 +47,7 @@ public:
             return false;
 
         std::memcpy(o_buffer, m_data[m_id], buffer_size);
+        m_load_count++;
         m_id++;
         return true;
     }
@@ -80,6 +82,8 @@ public:
 
     std::uint8_t* data() { return reinterpret_cast<std::uint8_t*>(m_data); }
 
+    std::uint32_t load_count() const { return m_load_count; }
+
 private:
     inline void randomize()
     {
@@ -92,6 +96,7 @@ private:
     fs::path      m_name;
     std::uint8_t  m_data[chunk_count][ChunkCache::capacity];
     std::uint32_t m_id;
+    std::uint32_t m_load_count;
 };
 
 const std::string       file_name("test/path/to/somewhere");
@@ -114,6 +119,34 @@ TEST(DataBufferTest, IOHandlerInformation)
     ASSERT_EQ(buffer.name(), file_name);
     ASSERT_EQ(buffer.size(), expected_size_bytes);
     ASSERT_EQ(expected_chunks(), buffer.total_chunks());
+}
+
+// Accessing bytes from a chunk that already is in memory
+// should not cause any more loading to happen in the underlying IOHandler.
+TEST(DataBufferTest, ChunkCaching)
+{
+    IOHandlerMock handler;
+    DataBuffer    buffer(handler);
+    ASSERT_TRUE(buffer.open(file_name));
+    ASSERT_EQ(buffer.total_chunks(), expected_chunks());
+    constexpr std::uint32_t first_chunk_id = 2, last_chunkc_id = 3;
+    for (std::uint32_t i = DataBuffer::capacity * first_chunk_id;
+         (i < DataBuffer::capacity * (last_chunkc_id + 1)) && (i < buffer.size());
+         ++i)
+    {
+        // Access each byte to trigger the caching mechanism.
+        buffer[i];
+    }
+    // Accessing again the bytes from the first chunk, should not cause any loading.
+    for (std::uint32_t i = DataBuffer::capacity * first_chunk_id;
+         (i < DataBuffer::capacity * last_chunkc_id) && (i < buffer.size());
+         ++i)
+    {
+        buffer[i];
+    }
+    EXPECT_EQ(handler.load_count(), 2);
+    EXPECT_EQ(buffer.recent_chunk().m_id, last_chunkc_id);
+    EXPECT_EQ(buffer.fallback_chunk().m_id, first_chunk_id);
 }
 
 // When load_chunk(chunk_id) gets called, the chunk returned by recent_chunk()
