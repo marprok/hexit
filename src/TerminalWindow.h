@@ -80,7 +80,7 @@ private:
 
     DataBuffer&       m_data;
     const std::string m_type;
-    std::uint32_t     m_cy, m_cx;
+    std::uint32_t     m_active_line;
     std::uint32_t     m_lines, m_cols;
     bool              m_update;
     Mode              m_mode;

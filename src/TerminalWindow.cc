@@ -16,8 +16,7 @@ constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
     : m_data(data)
     , m_type(file_type)
-    , m_cy(1)
-    , m_cx(FIRST_HEX)
+    , m_active_line(0)
     , m_cols(COLS - 2)
     , m_update(true)
     , m_mode(Mode::HEX)
@@ -149,12 +148,12 @@ void TerminalWindow::update_screen()
     }
     else
     {
-        if (m_cy >= 2)
-            draw_line(m_cy - 2);
+        if (m_active_line > 0)
+            draw_line(m_active_line - 1);
 
-        draw_line(m_cy - 1);
-        if (m_cy < m_lines)
-            draw_line(m_cy);
+        draw_line(m_active_line);
+        if (m_active_line + 1 < m_lines)
+            draw_line(m_active_line + 1);
     }
 
     // Draw the current byte offset.
@@ -179,8 +178,6 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_cy    = 1;
-    m_cx    = m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII;
     m_cols  = COLS - 2;
     m_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.m_total_lines);
 
@@ -196,15 +193,14 @@ void TerminalWindow::resize()
         m_scroller.m_last_line  = m_scroller.m_first_line + m_lines;
     }
 
-    m_cy += current_line - m_scroller.m_first_line;
-    m_cx += m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1);
-    m_nibble = 0;
-    m_update = true;
+    m_active_line = current_line - m_scroller.m_first_line;
+    m_nibble      = 0;
+    m_update      = true;
 }
 
 void TerminalWindow::reset_cursor() const
 {
-    wmove(m_screen, m_cy, m_cx);
+    wmove(m_screen, m_active_line + 1, (m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII) + m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1));
 }
 
 int TerminalWindow::get_char() const
@@ -217,9 +213,9 @@ void TerminalWindow::move_up()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_cy - 1 > 0)
+    if (m_active_line > 0)
     {
-        m_cy--;
+        m_active_line--;
         m_byte -= BYTES_PER_LINE;
     }
     else if (m_scroller.m_first_line > 0)
@@ -250,9 +246,9 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_cy - 1 < m_lines - 1)
+    if (m_active_line < m_lines - 1)
     {
-        m_cy++;
+        m_active_line++;
         m_byte += BYTES_PER_LINE;
     }
     else if (m_scroller.m_last_line < m_scroller.m_total_lines)
@@ -265,7 +261,6 @@ void TerminalWindow::move_down()
 
     if (m_byte >= m_data.size())
     {
-        m_cx     = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
         m_update = true;
         m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
         m_nibble = 0;
@@ -287,7 +282,6 @@ void TerminalWindow::page_down()
 
     if (m_byte >= m_data.size())
     {
-        m_cx     = (m_mode == Mode::HEX) ? FIRST_HEX : FIRST_ASCII;
         m_update = true;
         m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
         m_nibble = 0;
@@ -303,22 +297,19 @@ void TerminalWindow::move_left()
     {
         if (m_nibble == 0)
         {
-            if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
+            if (m_byte % BYTES_PER_LINE > 0)
             {
-                m_cx -= 2;
                 m_byte--;
                 m_nibble = 1;
             }
         }
         else
         {
-            m_cx--;
             m_nibble--;
         }
     }
-    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE > 0)
+    else if (m_byte % BYTES_PER_LINE > 0)
     {
-        m_cx--;
         m_byte--;
     }
 }
@@ -338,22 +329,19 @@ void TerminalWindow::move_right()
     {
         if (m_nibble > 0)
         {
-            if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
+            if (m_byte % BYTES_PER_LINE < row_size - 1)
             {
-                m_cx += 2;
                 m_byte++;
                 m_nibble = 0;
             }
         }
-        else if (m_cx < m_cols)
+        else
         {
-            m_cx++;
             m_nibble++;
         }
     }
-    else if (m_cx < m_cols && m_byte % BYTES_PER_LINE < row_size - 1)
+    else if (m_byte % BYTES_PER_LINE < row_size - 1)
     {
-        m_cx++;
         m_byte++;
     }
 }
@@ -419,7 +407,6 @@ void TerminalWindow::toggle_ascii_mode()
     if (m_mode == Mode::ASCII || m_prompt != Prompt::NONE)
         return;
 
-    m_cx     = FIRST_ASCII + m_byte % BYTES_PER_LINE;
     m_mode   = Mode::ASCII;
     m_update = true;
     m_nibble = 0;
@@ -430,7 +417,6 @@ void TerminalWindow::toggle_hex_mode()
     if (m_mode == Mode::HEX || m_prompt != Prompt::NONE)
         return;
 
-    m_cx     = FIRST_HEX + (m_byte % BYTES_PER_LINE) * 3;
     m_mode   = Mode::HEX;
     m_update = true;
 }
