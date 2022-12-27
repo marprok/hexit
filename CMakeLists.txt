@@ -32,7 +32,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     src/ChunkCache.cc
     src/FileHandler.cc
     src/StdInHandler.cc
-	src/SignatureReader.cc
+    src/SignatureReader.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})
