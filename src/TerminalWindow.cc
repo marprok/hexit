@@ -14,9 +14,9 @@ constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 
 }
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
-    : m_data(data)
+    : m_scroller(data.size(), BYTES_PER_LINE)
+    , m_data(data)
     , m_type(file_type)
-    , m_active_line(0)
     , m_update(true)
     , m_mode(Mode::HEX)
     , m_prompt(Prompt::NONE)
@@ -25,9 +25,6 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
     , m_nibble(0)
     , m_quit(false)
 {
-    m_scroller.m_total_lines = m_data.size() / BYTES_PER_LINE;
-    if (m_data.size() % BYTES_PER_LINE)
-        m_scroller.m_total_lines++;
 
     if (start_from_byte < m_data.size())
         m_byte = start_from_byte;
@@ -48,11 +45,11 @@ TerminalWindow::~TerminalWindow()
 void TerminalWindow::draw_line(std::uint32_t line)
 {
     int           col           = FIRST_HEX;
-    std::uint32_t line_abs      = m_scroller.m_first_line + line;
+    std::uint32_t line_abs      = m_scroller.first() + line;
     std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
-    if ((m_scroller.m_total_lines - 1) == line_abs && (m_data.size() % BYTES_PER_LINE))
+    if ((m_scroller.total() - 1) == line_abs && (m_data.size() % BYTES_PER_LINE))
         bytes_to_draw = m_data.size() % BYTES_PER_LINE;
     // Skip the first box border line.
     line++;
@@ -123,7 +120,7 @@ void TerminalWindow::update_screen()
     if (m_update)
     {
         erase();
-        for (std::uint32_t line = 0; line < m_visible_lines; line++)
+        for (std::uint32_t line = 0; line < m_scroller.visible(); line++)
             draw_line(line);
 
         const std::string file_name = m_data.name().filename();
@@ -133,7 +130,7 @@ void TerminalWindow::update_screen()
             mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "%s", file_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
-        const std::uint32_t percentage  = static_cast<float>(m_scroller.m_last_line) / m_scroller.m_total_lines * 100;
+        const std::uint32_t percentage  = static_cast<float>(m_scroller.last()) / m_scroller.total() * 100;
         const int           info_column = COLS - 8 - m_type.size();
         mvwprintw(m_screen, LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
@@ -147,12 +144,12 @@ void TerminalWindow::update_screen()
     }
     else
     {
-        if (m_active_line > 0)
-            draw_line(m_active_line - 1);
+        if (m_scroller.active() > 0)
+            draw_line(m_scroller.active() - 1);
 
-        draw_line(m_active_line);
-        if (m_active_line + 1 < m_visible_lines)
-            draw_line(m_active_line + 1);
+        draw_line(m_scroller.active());
+        if (m_scroller.active() + 1 < m_scroller.visible())
+            draw_line(m_scroller.active() + 1);
     }
 
     // Draw the current byte offset.
@@ -177,28 +174,14 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_visible_lines = std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.m_total_lines);
-
-    const std::uint32_t current_line = m_byte / BYTES_PER_LINE;
-    if (m_scroller.m_total_lines < current_line + m_visible_lines)
-    {
-        m_scroller.m_first_line = current_line - m_visible_lines + 1;
-        m_scroller.m_last_line  = current_line + 1;
-    }
-    else
-    {
-        m_scroller.m_first_line = current_line / m_visible_lines * m_visible_lines;
-        m_scroller.m_last_line  = m_scroller.m_first_line + m_visible_lines;
-    }
-
-    m_active_line = current_line - m_scroller.m_first_line;
-    m_nibble      = 0;
-    m_update      = true;
+    m_scroller.resize(std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.total()), m_byte);
+    //m_nibble = 0;
+    m_update = true;
 }
 
 void TerminalWindow::reset_cursor() const
 {
-    wmove(m_screen, m_active_line + 1, (m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII) + m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1));
+    wmove(m_screen, m_scroller.active() + 1, (m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII) + m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1));
 }
 
 int TerminalWindow::get_char() const
@@ -211,18 +194,9 @@ void TerminalWindow::move_up()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_active_line > 0)
-    {
-        m_active_line--;
+    m_update = m_scroller.move_up();
+    if (m_byte >= BYTES_PER_LINE)
         m_byte -= BYTES_PER_LINE;
-    }
-    else if (m_scroller.m_first_line > 0)
-    {
-        m_update = true;
-        m_scroller.m_last_line--;
-        m_scroller.m_first_line--;
-        m_byte -= BYTES_PER_LINE;
-    }
 }
 
 void TerminalWindow::page_up()
@@ -230,13 +204,7 @@ void TerminalWindow::page_up()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_scroller.m_first_line >= m_visible_lines - 1)
-    {
-        m_update = true;
-        m_scroller.m_last_line -= m_visible_lines - 1;
-        m_scroller.m_first_line -= m_visible_lines - 1;
-        m_byte -= (m_visible_lines - 1) * BYTES_PER_LINE;
-    }
+    m_update = m_scroller.page_up();
 }
 
 void TerminalWindow::move_down()
@@ -244,23 +212,13 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_active_line < m_visible_lines - 1)
-    {
-        m_active_line++;
+    m_update = m_scroller.move_down();
+    if ((m_data.size() - m_byte) >= BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
-    }
-    else if (m_scroller.m_last_line < m_scroller.m_total_lines)
+    else
     {
         m_update = true;
-        m_scroller.m_last_line++;
-        m_scroller.m_first_line++;
-        m_byte += BYTES_PER_LINE;
-    }
-
-    if (m_byte >= m_data.size())
-    {
-        m_update = true;
-        m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
+        m_byte   = (m_scroller.total() - 1) * BYTES_PER_LINE;
         m_nibble = 0;
     }
 }
@@ -270,18 +228,12 @@ void TerminalWindow::page_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_scroller.m_last_line + m_visible_lines - 1 < m_scroller.m_total_lines)
-    {
-        m_update = true;
-        m_scroller.m_last_line += m_visible_lines - 1;
-        m_scroller.m_first_line += m_visible_lines - 1;
-        m_byte += (m_visible_lines - 1) * BYTES_PER_LINE;
-    }
+    m_update = m_scroller.page_down();
 
     if (m_byte >= m_data.size())
     {
         m_update = true;
-        m_byte   = (m_scroller.m_total_lines - 1) * BYTES_PER_LINE;
+        m_byte   = (m_scroller.total() - 1) * BYTES_PER_LINE;
         m_nibble = 0;
     }
 }
@@ -320,7 +272,7 @@ void TerminalWindow::move_right()
     const std::uint32_t group_id = m_byte / BYTES_PER_LINE;
     std::uint32_t       row_size = BYTES_PER_LINE;
 
-    if (group_id == m_scroller.m_total_lines - 1 && (m_data.size() % BYTES_PER_LINE))
+    if (group_id == m_scroller.total() - 1 && (m_data.size() % BYTES_PER_LINE))
         row_size = m_data.size() % BYTES_PER_LINE;
 
     if (m_mode == Mode::HEX)

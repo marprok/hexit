@@ -1,6 +1,7 @@
 #ifndef TERMINAL_WINDOW_H
 #define TERMINAL_WINDOW_H
 
+#include "Scroller.h"
 #include <cstdint>
 #include <ncurses.h>
 #include <string>
@@ -71,17 +72,9 @@ private:
         GO_TO_BYTE
     };
 
-    struct Scroller
-    {
-        std::uint32_t m_first_line  = { 0 };
-        std::uint32_t m_last_line   = { 0 };
-        std::uint32_t m_total_lines = { 0 };
-    } m_scroller;
-
+    Scroller          m_scroller;
     DataBuffer&       m_data;
     const std::string m_type;
-    std::uint32_t     m_active_line;
-    std::uint32_t     m_visible_lines;
     bool              m_update;
     Mode              m_mode;
     Prompt            m_prompt;
