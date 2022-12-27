@@ -81,7 +81,7 @@ private:
     DataBuffer&       m_data;
     const std::string m_type;
     std::uint32_t     m_active_line;
-    std::uint32_t     m_lines, m_cols;
+    std::uint32_t     m_visible_lines;
     bool              m_update;
     Mode              m_mode;
     Prompt            m_prompt;
