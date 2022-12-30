@@ -21,8 +21,8 @@ void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_b
 
     if (m_total_lines - current_line < m_visible_lines)
     {
-        m_first_line = m_last_line - m_visible_lines + 1;
         m_last_line  = m_total_lines - 1;
+        m_first_line = m_last_line - m_visible_lines + 1;
     }
     else
     {

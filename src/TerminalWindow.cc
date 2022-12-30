@@ -216,10 +216,11 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    m_update = m_scroller.move_down();
-    if ((m_data.size() - m_byte) > BYTES_PER_LINE)
+    const std::uint32_t distance = m_data.size() - m_byte;
+    m_update                     = m_scroller.move_down();
+    if (distance > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
-    else
+    else if (distance > (m_data.size() % BYTES_PER_LINE))
     {
         m_byte   = m_data.size() - 1;
         m_nibble = 0;
