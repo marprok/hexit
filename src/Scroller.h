@@ -8,15 +8,11 @@ class Scroller
 public:
     Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line);
 
-    void resize(std::uint32_t visible_lines, std::uint32_t current_byte);
+    void adjust_lines(std::uint32_t visible_lines, std::uint32_t current_byte);
 
     bool move_down();
 
-    bool page_down();
-
     bool move_up();
-
-    bool page_up();
 
     inline std::uint32_t first() const { return m_first_line; }
 

@@ -14,12 +14,11 @@ Scroller::Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line)
         m_total_lines++;
 }
 
-// LINES - 2
-void Scroller::resize(std::uint32_t visible_lines, std::uint32_t current_byte)
+void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_byte)
 {
     const std::uint32_t current_line = current_byte / m_bytes_per_line;
     m_visible_lines                  = std::min(visible_lines, m_total_lines);
-    if (m_total_lines < current_line + m_visible_lines)
+    if (m_total_lines < (current_line + m_visible_lines))
     {
         m_first_line = current_line - m_visible_lines + 1;
         m_last_line  = current_line + 1;
@@ -36,32 +35,15 @@ bool Scroller::move_down()
 {
     bool scrolled = false;
 
-    if (m_active_line < m_visible_lines - 1)
-    {
+    if (m_active_line < (m_visible_lines - 1))
         m_active_line++;
-    }
     else if (m_last_line < m_total_lines)
     {
         m_last_line++;
         m_first_line++;
         scrolled = true;
     }
-
     return scrolled;
-}
-
-bool Scroller::page_down()
-{
-    bool ret = false;
-
-    if (m_last_line + m_visible_lines - 1 < m_total_lines)
-    {
-        ret = true;
-        m_last_line += m_visible_lines - 1;
-        m_first_line += m_visible_lines - 1;
-    }
-
-    return ret;
 }
 
 bool Scroller::move_up()
@@ -69,29 +51,12 @@ bool Scroller::move_up()
     bool scrolled = false;
 
     if (m_active_line > 0)
-    {
         m_active_line--;
-    }
     else if (m_first_line > 0)
     {
         m_last_line--;
         m_first_line--;
         scrolled = true;
     }
-
     return scrolled;
-}
-
-bool Scroller::page_up()
-{
-    bool ret = false;
-
-    if (m_first_line >= m_visible_lines - 1)
-    {
-        ret = true;
-        m_last_line -= m_visible_lines - 1;
-        m_first_line -= m_visible_lines - 1;
-    }
-
-    return ret;
 }

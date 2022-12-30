@@ -174,8 +174,7 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_scroller.resize(std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.total()), m_byte);
-    //m_nibble = 0;
+    m_scroller.adjust_lines(std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.total()), m_byte);
     m_update = true;
 }
 
@@ -204,7 +203,12 @@ void TerminalWindow::page_up()
     if (m_prompt != Prompt::NONE)
         return;
 
-    m_update = m_scroller.page_up();
+    if (m_byte >= BYTES_PER_LINE * m_scroller.visible())
+        m_byte -= BYTES_PER_LINE * m_scroller.visible();
+    else
+        m_byte = 0;
+
+    resize();
 }
 
 void TerminalWindow::move_down()
@@ -218,7 +222,7 @@ void TerminalWindow::move_down()
     else
     {
         m_update = true;
-        m_byte   = (m_scroller.total() - 1) * BYTES_PER_LINE;
+        m_byte   = m_data.size() - 1;
         m_nibble = 0;
     }
 }
@@ -228,14 +232,12 @@ void TerminalWindow::page_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    m_update = m_scroller.page_down();
+    if (m_data.size() - m_byte >= BYTES_PER_LINE * m_scroller.visible())
+        m_byte += BYTES_PER_LINE * m_scroller.visible();
+    else
+        m_byte = m_data.size() - 1;
 
-    if (m_byte >= m_data.size())
-    {
-        m_update = true;
-        m_byte   = (m_scroller.total() - 1) * BYTES_PER_LINE;
-        m_nibble = 0;
-    }
+    resize();
 }
 
 void TerminalWindow::move_left()
