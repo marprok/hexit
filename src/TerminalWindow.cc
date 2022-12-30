@@ -130,7 +130,7 @@ void TerminalWindow::update_screen()
             mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "%s", file_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
-        const std::uint32_t percentage  = static_cast<float>(m_scroller.last()) / m_scroller.total() * 100;
+        const std::uint32_t percentage  = static_cast<float>(m_scroller.last() + 1) / m_scroller.total() * 100;
         const int           info_column = COLS - 8 - m_type.size();
         mvwprintw(m_screen, LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
@@ -217,11 +217,10 @@ void TerminalWindow::move_down()
         return;
 
     m_update = m_scroller.move_down();
-    if ((m_data.size() - m_byte) >= BYTES_PER_LINE)
+    if ((m_data.size() - m_byte) > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
     else
     {
-        m_update = true;
         m_byte   = m_data.size() - 1;
         m_nibble = 0;
     }
@@ -232,7 +231,7 @@ void TerminalWindow::page_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_data.size() - m_byte >= BYTES_PER_LINE * m_scroller.visible())
+    if (m_data.size() - m_byte > BYTES_PER_LINE * m_scroller.visible())
         m_byte += BYTES_PER_LINE * m_scroller.visible();
     else
         m_byte = m_data.size() - 1;

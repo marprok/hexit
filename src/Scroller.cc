@@ -18,15 +18,16 @@ void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_b
 {
     const std::uint32_t current_line = current_byte / m_bytes_per_line;
     m_visible_lines                  = std::min(visible_lines, m_total_lines);
-    if (m_total_lines < (current_line + m_visible_lines))
+
+    if (m_total_lines - current_line < m_visible_lines)
     {
-        m_first_line = current_line - m_visible_lines + 1;
-        m_last_line  = current_line + 1;
+        m_first_line = m_last_line - m_visible_lines + 1;
+        m_last_line  = m_total_lines - 1;
     }
     else
     {
         m_first_line = current_line / m_visible_lines * m_visible_lines;
-        m_last_line  = m_first_line + m_visible_lines;
+        m_last_line  = m_first_line + m_visible_lines - 1;
     }
     m_active_line = current_line - m_first_line;
 }
@@ -37,7 +38,7 @@ bool Scroller::move_down()
 
     if (m_active_line < (m_visible_lines - 1))
         m_active_line++;
-    else if (m_last_line < m_total_lines)
+    else if (m_last_line < (m_total_lines - 1))
     {
         m_last_line++;
         m_first_line++;
