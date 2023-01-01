@@ -174,7 +174,7 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_scroller.adjust_lines(std::min(static_cast<std::uint32_t>(LINES - 2), m_scroller.total()), m_byte);
+    m_scroller.adjust_lines(static_cast<std::uint32_t>(LINES - 2), m_byte);
     m_update = true;
 }
 
