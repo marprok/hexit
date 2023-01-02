@@ -11,13 +11,6 @@
 
 namespace
 {
-constexpr int CTRL_Q = 'q' & 0x1F; // Quit
-constexpr int CTRL_S = 's' & 0x1F; // Save
-constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
-constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
-constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
-constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
-
 inline void print_help(const char* bin)
 {
     std::cerr << "USAGE: " << bin << " -f (--file) FILE [OPTIONS]\n";
@@ -102,59 +95,7 @@ void start_hexit(IOHandler&  handler,
 
     init_ncurses();
     TerminalWindow win(stdscr, data, get_type(data), get_starting_offset(starting_offset));
-    while (!win.quit())
-    {
-        win.update_screen();
-        win.reset_cursor();
-        win.refresh();
-        auto c = win.get_char();
-        switch (c)
-        {
-        case KEY_UP:
-            win.move_up();
-            break;
-        case KEY_DOWN:
-            win.move_down();
-            break;
-        case KEY_RIGHT:
-            win.move_right();
-            break;
-        case KEY_LEFT:
-            win.move_left();
-            break;
-        case KEY_PPAGE:
-            win.page_up();
-            break;
-        case KEY_NPAGE:
-            win.page_down();
-            break;
-        case KEY_RESIZE:
-            win.resize();
-            break;
-        case CTRL_S:
-            win.prompt_save();
-            break;
-        case CTRL_Q:
-            win.prompt_quit();
-            break;
-        case CTRL_X:
-            win.toggle_hex_mode();
-            break;
-        case CTRL_A:
-            win.toggle_ascii_mode();
-            break;
-        case CTRL_Z:
-            endwin();
-            raise(SIGSTOP);
-            break;
-        case CTRL_G:
-            win.prompt_go_to_byte();
-            break;
-        default:
-            win.consume_input(c);
-            break;
-        }
-    }
+    win.run();
 }
 }
 

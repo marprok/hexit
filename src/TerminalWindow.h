@@ -15,19 +15,16 @@ public:
 
     ~TerminalWindow();
 
+    void run();
+
+private:
     void draw_line(std::uint32_t line);
 
     void update_screen();
 
-    void erase() const;
-
-    void refresh() const;
-
     void resize();
 
     void reset_cursor() const;
-
-    int get_char() const;
 
     void move_up();
 
@@ -55,9 +52,10 @@ public:
 
     void toggle_hex_mode();
 
-    bool quit() const;
+    void edit_byte(int c);
 
-private:
+    void handle_prompt(int c);
+
     enum class Mode
     {
         HEX,
@@ -83,9 +81,5 @@ private:
     char              m_line_offset_format[sizeof("%%0%dX") + 2];
     bool              m_quit;
     std::string       m_input_buffer;
-
-    void edit_byte(int c);
-
-    void handle_prompt(int c);
 };
 #endif // TERMINAL_WINDOW_H

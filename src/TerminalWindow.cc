@@ -1,5 +1,6 @@
 #include "TerminalWindow.h"
 #include "DataBuffer.h"
+#include <csignal>
 #include <cstdint>
 #include <cstdio>
 
@@ -11,6 +12,13 @@ constexpr std::uint32_t HEX_PADDING     = 2;                         // The dist
 constexpr std::uint32_t LINE_OFFSET_LEN = sizeof(std::uint32_t) * 2; // The number of hex digits used for the line byte offset.
 constexpr std::uint32_t FIRST_HEX       = LINE_OFFSET_LEN + 1 + HEX_PADDING;
 constexpr std::uint32_t FIRST_ASCII     = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
+// Special key sequences.
+constexpr int CTRL_Q = 'q' & 0x1F; // Quit
+constexpr int CTRL_S = 's' & 0x1F; // Save
+constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
+constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
+constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
+constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 }
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
@@ -40,6 +48,63 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
 TerminalWindow::~TerminalWindow()
 {
     endwin();
+}
+
+void TerminalWindow::run()
+{
+    while (!m_quit)
+    {
+        update_screen();
+        reset_cursor();
+        wrefresh(m_screen);
+        auto c = wgetch(m_screen);
+        switch (c)
+        {
+        case KEY_UP:
+            move_up();
+            break;
+        case KEY_DOWN:
+            move_down();
+            break;
+        case KEY_RIGHT:
+            move_right();
+            break;
+        case KEY_LEFT:
+            move_left();
+            break;
+        case KEY_PPAGE:
+            page_up();
+            break;
+        case KEY_NPAGE:
+            page_down();
+            break;
+        case KEY_RESIZE:
+            resize();
+            break;
+        case CTRL_S:
+            prompt_save();
+            break;
+        case CTRL_Q:
+            prompt_quit();
+            break;
+        case CTRL_X:
+            toggle_hex_mode();
+            break;
+        case CTRL_A:
+            toggle_ascii_mode();
+            break;
+        case CTRL_Z:
+            endwin();
+            raise(SIGSTOP);
+            break;
+        case CTRL_G:
+            prompt_go_to_byte();
+            break;
+        default:
+            consume_input(c);
+            break;
+        }
+    }
 }
 
 void TerminalWindow::draw_line(std::uint32_t line)
@@ -119,7 +184,9 @@ void TerminalWindow::update_screen()
 {
     if (m_update)
     {
-        erase();
+        werase(m_screen);
+        box(m_screen, 0, 0);
+
         for (std::uint32_t line = 0; line < m_scroller.visible(); line++)
             draw_line(line);
 
@@ -157,17 +224,6 @@ void TerminalWindow::update_screen()
         mvwprintw(m_screen, LINES - 1, 1, m_line_offset_format, m_byte);
 }
 
-void TerminalWindow::erase() const
-{
-    werase(m_screen);
-    box(m_screen, 0, 0);
-}
-
-void TerminalWindow::refresh() const
-{
-    wrefresh(m_screen);
-}
-
 void TerminalWindow::resize()
 {
     // If the number of terminal lines is less than or equal to 2, we cannot display much :(
@@ -187,11 +243,6 @@ void TerminalWindow::reset_cursor() const
         col += FIRST_ASCII + m_byte % BYTES_PER_LINE;
 
     wmove(m_screen, m_scroller.active() + 1, col);
-}
-
-int TerminalWindow::get_char() const
-{
-    return wgetch(m_screen);
 }
 
 void TerminalWindow::move_up()
@@ -369,11 +420,6 @@ void TerminalWindow::toggle_hex_mode()
 
     m_mode   = Mode::HEX;
     m_update = true;
-}
-
-bool TerminalWindow::quit() const
-{
-    return m_quit;
 }
 
 void TerminalWindow::edit_byte(int c)
