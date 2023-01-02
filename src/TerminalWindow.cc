@@ -5,12 +5,12 @@
 
 namespace
 {
-constexpr std::uint32_t BYTES_PER_LINE     = 16;
-constexpr std::uint32_t LINE_OFFSET_LEN    = sizeof(std::uint32_t) * 2; // The number of digits of the line byte offset.
-constexpr std::uint32_t ASCII_PADDING      = 2; // The distance between hex and ASCII digits.
-constexpr std::uint32_t HEX_PADDING        = 2; // The distatnce between the left padding and the ASCII digits.
-constexpr std::uint32_t FIRST_HEX          = LINE_OFFSET_LEN + 1 + HEX_PADDING;
-constexpr std::uint32_t FIRST_ASCII        = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
+constexpr std::uint32_t BYTES_PER_LINE  = 16;
+constexpr std::uint32_t ASCII_PADDING   = 2;                         // The distance between hex and ASCII digits.
+constexpr std::uint32_t HEX_PADDING     = 2;                         // The distatnce between the line byte offset and the ASCII digits.
+constexpr std::uint32_t LINE_OFFSET_LEN = sizeof(std::uint32_t) * 2; // The number of hex digits used for the line byte offset.
+constexpr std::uint32_t FIRST_HEX       = LINE_OFFSET_LEN + 1 + HEX_PADDING;
+constexpr std::uint32_t FIRST_ASCII     = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 }
 
 TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
@@ -44,12 +44,12 @@ TerminalWindow::~TerminalWindow()
 
 void TerminalWindow::draw_line(std::uint32_t line)
 {
-    int           col           = FIRST_HEX;
+    std::uint32_t col           = FIRST_HEX;
     std::uint32_t line_abs      = m_scroller.first() + line;
     std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
-    if ((m_scroller.total() - 1) == line_abs && (m_data.size() % BYTES_PER_LINE))
+    if (((m_scroller.total() - 1) == line_abs) && (m_data.size() % BYTES_PER_LINE) > 0)
         bytes_to_draw = m_data.size() % BYTES_PER_LINE;
     // Skip the first box border line.
     line++;
@@ -144,11 +144,11 @@ void TerminalWindow::update_screen()
     }
     else
     {
+        // We have to update the lines above and below in case we have modified a byte contained in them.
         if (m_scroller.active() > 0)
             draw_line(m_scroller.active() - 1);
-
         draw_line(m_scroller.active());
-        if (m_scroller.active() + 1 < m_scroller.visible())
+        if ((m_scroller.active() + 1) < m_scroller.visible())
             draw_line(m_scroller.active() + 1);
     }
 
@@ -180,7 +180,13 @@ void TerminalWindow::resize()
 
 void TerminalWindow::reset_cursor() const
 {
-    wmove(m_screen, m_scroller.active() + 1, (m_mode == Mode::HEX ? FIRST_HEX : FIRST_ASCII) + m_byte % BYTES_PER_LINE * (m_mode == Mode::HEX ? 3 : 1));
+    std::uint32_t col = 0u;
+    if (m_mode == Mode::HEX)
+        col += FIRST_HEX + (m_byte % BYTES_PER_LINE) * 3;
+    else
+        col += FIRST_ASCII + m_byte % BYTES_PER_LINE;
+
+    wmove(m_screen, m_scroller.active() + 1, col);
 }
 
 int TerminalWindow::get_char() const
@@ -203,7 +209,7 @@ void TerminalWindow::page_up()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_byte >= BYTES_PER_LINE * m_scroller.visible())
+    if (m_byte >= (BYTES_PER_LINE * m_scroller.visible()))
         m_byte -= BYTES_PER_LINE * m_scroller.visible();
     else
         m_byte = 0;
@@ -232,7 +238,7 @@ void TerminalWindow::page_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if (m_data.size() - m_byte > BYTES_PER_LINE * m_scroller.visible())
+    if ((m_data.size() - m_byte) > (BYTES_PER_LINE * m_scroller.visible()))
         m_byte += BYTES_PER_LINE * m_scroller.visible();
     else
         m_byte = m_data.size() - 1;
@@ -249,21 +255,17 @@ void TerminalWindow::move_left()
     {
         if (m_nibble == 0)
         {
-            if (m_byte % BYTES_PER_LINE > 0)
+            if ((m_byte % BYTES_PER_LINE) > 0)
             {
                 m_byte--;
                 m_nibble = 1;
             }
         }
         else
-        {
             m_nibble--;
-        }
     }
-    else if (m_byte % BYTES_PER_LINE > 0)
-    {
+    else if ((m_byte % BYTES_PER_LINE) > 0)
         m_byte--;
-    }
 }
 
 void TerminalWindow::move_right()
@@ -271,31 +273,27 @@ void TerminalWindow::move_right()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint32_t group_id = m_byte / BYTES_PER_LINE;
-    std::uint32_t       row_size = BYTES_PER_LINE;
+    const std::uint32_t line_abs   = m_byte / BYTES_PER_LINE;
+    std::uint32_t       line_bytes = BYTES_PER_LINE;
 
-    if (group_id == m_scroller.total() - 1 && (m_data.size() % BYTES_PER_LINE))
-        row_size = m_data.size() % BYTES_PER_LINE;
+    if ((line_abs == m_scroller.total() - 1) && (m_data.size() % BYTES_PER_LINE) > 0)
+        line_bytes = m_data.size() % BYTES_PER_LINE;
 
     if (m_mode == Mode::HEX)
     {
         if (m_nibble > 0)
         {
-            if (m_byte % BYTES_PER_LINE < row_size - 1)
+            if ((m_byte % BYTES_PER_LINE) < (line_bytes - 1))
             {
                 m_byte++;
                 m_nibble = 0;
             }
         }
         else
-        {
             m_nibble++;
-        }
     }
-    else if (m_byte % BYTES_PER_LINE < row_size - 1)
-    {
+    else if ((m_byte % BYTES_PER_LINE) < (line_bytes - 1))
         m_byte++;
-    }
 }
 
 void TerminalWindow::consume_input(int c)
@@ -391,16 +389,16 @@ void TerminalWindow::edit_byte(int c)
         std::uint8_t hex_digit = 0;
         if (c - '0' <= 9)
             hex_digit = c - '0';
-        else if (c >= 'A' && c - 'A' <= 5)
+        else if (c >= 'A' && (c - 'A') <= 5)
             hex_digit = 10 + c - 'A';
-        else if (c >= 'a' && c - 'a' <= 5)
+        else if (c >= 'a' && (c - 'a') <= 5)
             hex_digit = 10 + c - 'a';
         else
             return;
 
         new_byte = m_data[m_byte];
-        new_byte &= 0xF0 >> (1 - m_nibble) * 4;
-        new_byte |= hex_digit << (1 - m_nibble) * 4;
+        new_byte &= 0xF0 >> ((1 - m_nibble) * 4);
+        new_byte |= hex_digit << ((1 - m_nibble) * 4);
     }
 
     if (!m_data.has_dirty())
