@@ -1,6 +1,7 @@
 ﻿---
 BasedOnStyle: WebKit
 AlignAfterOpenBracket: Align
+AlignTrailingComments: 'true'
 AlignConsecutiveAssignments: 'true'
 AlignConsecutiveDeclarations: 'true'
 BinPackArguments: 'false'
