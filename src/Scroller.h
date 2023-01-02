@@ -6,10 +6,10 @@
 class Scroller
 {
 public:
-    Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line);
+    Scroller(std::uint32_t bytes_chars, std::uint32_t bytes_per_line);
 
     // No checks are performed by the method, the caller should make sure that the parameters are valid.
-    void adjust_lines(std::uint32_t visible_lines, std::uint32_t current_byte);
+    void adjust_lines(std::uint32_t visible_lines, std::uint32_t current_line);
 
     bool move_down();
 
@@ -31,7 +31,6 @@ private:
     std::uint32_t m_total_lines;
     std::uint32_t m_visible_lines;
     std::uint32_t m_active_line;
-    std::uint32_t m_bytes_per_line;
 };
 
 #endif // SCROLLER_H

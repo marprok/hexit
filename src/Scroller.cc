@@ -7,21 +7,18 @@ Scroller::Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line)
     , m_total_lines(0u)
     , m_visible_lines(0u)
     , m_active_line(0u)
-    , m_bytes_per_line(0u)
 {
     if (total_bytes > 0 && bytes_per_line > 0)
     {
-        m_bytes_per_line = bytes_per_line;
-        m_total_lines    = total_bytes / m_bytes_per_line;
-        if (total_bytes % m_bytes_per_line)
+        m_total_lines = total_bytes / bytes_per_line;
+        if ((total_bytes % bytes_per_line) > 0)
             m_total_lines++;
     }
 }
 
-void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_byte)
+void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_line)
 {
-    const std::uint32_t current_line = current_byte / m_bytes_per_line;
-    m_visible_lines                  = std::min(visible_lines, m_total_lines);
+    m_visible_lines = std::min(visible_lines, m_total_lines);
 
     if ((m_total_lines - current_line) < m_visible_lines)
     {

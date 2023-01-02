@@ -20,7 +20,7 @@ TEST(ScrollerTest, AutoScrolling)
 
     std::uint32_t current_byte = 0u, visible_lines = 31u;
     {
-        scroller.adjust_lines(visible_lines, current_byte);
+        scroller.adjust_lines(visible_lines, current_byte / BYTES_PER_LINE);
         EXPECT_EQ(scroller.first(), 0u);
         EXPECT_EQ(scroller.last(), visible_lines - 1);
         EXPECT_EQ(scroller.active(), 0u);
@@ -38,7 +38,7 @@ TEST(ScrollerTest, AutoScrolling)
 
     current_byte = TOTAL_BYTES - 1;
     {
-        scroller.adjust_lines(visible_lines, TOTAL_BYTES - 1);
+        scroller.adjust_lines(visible_lines, (TOTAL_BYTES - 1) / BYTES_PER_LINE);
         EXPECT_EQ(scroller.first(), EXPECTED_LINES - visible_lines);
         EXPECT_EQ(scroller.last(), EXPECTED_LINES - 1);
         EXPECT_EQ(scroller.active(), visible_lines - 1);
@@ -59,7 +59,7 @@ TEST(ScrollerTest, AutoScrolling)
     current_byte  = 0;
     visible_lines = EXPECTED_LINES;
     {
-        scroller.adjust_lines(visible_lines, current_byte);
+        scroller.adjust_lines(visible_lines, current_byte / BYTES_PER_LINE);
         EXPECT_EQ(scroller.first(), 0u);
         EXPECT_EQ(scroller.last(), visible_lines - 1);
         EXPECT_EQ(scroller.active(), 0u);
@@ -74,7 +74,7 @@ TEST(ScrollerTest, AutoScrolling)
     current_byte  = 0u;
     visible_lines = 2 * EXPECTED_LINES;
     {
-        scroller.adjust_lines(visible_lines, current_byte);
+        scroller.adjust_lines(visible_lines, current_byte / BYTES_PER_LINE);
         EXPECT_EQ(scroller.first(), 0u);
         // The last line should never be greater than the total number of lines.
         EXPECT_EQ(scroller.last(), EXPECTED_LINES - 1);
