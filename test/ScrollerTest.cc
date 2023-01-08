@@ -24,6 +24,7 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.first(), 0u);
         EXPECT_EQ(scroller.last(), visible_lines - 1);
         EXPECT_EQ(scroller.active(), 0u);
+        EXPECT_EQ(scroller.visible(), visible_lines);
 
         for (std::uint32_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
         {
@@ -42,6 +43,7 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.first(), EXPECTED_LINES - visible_lines);
         EXPECT_EQ(scroller.last(), EXPECTED_LINES - 1);
         EXPECT_EQ(scroller.active(), visible_lines - 1);
+        EXPECT_EQ(scroller.visible(), visible_lines);
 
         for (std::uint32_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
         {
@@ -63,6 +65,7 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.first(), 0u);
         EXPECT_EQ(scroller.last(), visible_lines - 1);
         EXPECT_EQ(scroller.active(), 0u);
+        EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
         for (std::uint32_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
             EXPECT_FALSE(scroller.move_down());
@@ -79,6 +82,7 @@ TEST(ScrollerTest, AutoScrolling)
         // The last line should never be greater than the total number of lines.
         EXPECT_EQ(scroller.last(), EXPECTED_LINES - 1);
         EXPECT_EQ(scroller.active(), 0u);
+        EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
         for (std::uint32_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
             EXPECT_FALSE(scroller.move_down());
