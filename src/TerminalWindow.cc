@@ -1,5 +1,6 @@
 #include "TerminalWindow.h"
 #include "DataBuffer.h"
+#include "Utilities.h"
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
@@ -351,8 +352,8 @@ void TerminalWindow::consume_input(int c)
 {
     if (m_prompt != Prompt::NONE)
         handle_prompt(c);
-    else
-        edit_byte(c);
+    else if (c >= 0 && c <= 0xFF)
+        edit_byte(static_cast<std::uint8_t>(c));
 }
 
 void TerminalWindow::TerminalWindow::save()
@@ -422,35 +423,20 @@ void TerminalWindow::toggle_hex_mode()
     m_update = true;
 }
 
-void TerminalWindow::edit_byte(int c)
+void TerminalWindow::edit_byte(std::uint8_t chr)
 {
-    std::uint8_t new_byte;
-    if (m_mode == Mode::ASCII && std::isprint(c))
-        new_byte = static_cast<std::uint8_t>(c);
+    std::uint8_t new_value;
+    if (m_mode == Mode::ASCII && std::isprint(chr))
+        new_value = chr;
+    else if (m_mode == Mode::HEX && std::isxdigit(chr))
+        new_value = update_nibble(m_nibble, chr, m_data[m_byte]);
     else
-    {
-        if (c < '0' || c > 'f')
-            return;
-
-        std::uint8_t hex_digit = 0;
-        if (c - '0' <= 9)
-            hex_digit = c - '0';
-        else if (c >= 'A' && (c - 'A') <= 5)
-            hex_digit = 10 + c - 'A';
-        else if (c >= 'a' && (c - 'a') <= 5)
-            hex_digit = 10 + c - 'a';
-        else
-            return;
-
-        new_byte = m_data[m_byte];
-        new_byte &= 0xF0 >> ((1 - m_nibble) * 4);
-        new_byte |= hex_digit << ((1 - m_nibble) * 4);
-    }
+        return;
 
     if (!m_data.has_dirty())
         m_update = true;
 
-    m_data.set_byte(m_byte, new_byte);
+    m_data.set_byte(m_byte, new_value);
 }
 
 void TerminalWindow::handle_prompt(int c)

@@ -9,6 +9,7 @@ target_sources(HexitTest PRIVATE
     DataBufferTest.cc
     SignatureReaderTest.cc
     ScrollerTest.cc
+    UtilitiesTest.cc
     ../src/DataBuffer.cc
     ../src/ChunkCache.cc
     ../src/FileHandler.cc

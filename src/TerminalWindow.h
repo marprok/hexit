@@ -52,7 +52,7 @@ private:
 
     void toggle_hex_mode();
 
-    void edit_byte(int c);
+    void edit_byte(std::uint8_t chr);
 
     void handle_prompt(int c);
 
