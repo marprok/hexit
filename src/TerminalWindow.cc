@@ -348,12 +348,12 @@ void TerminalWindow::move_right()
         m_byte++;
 }
 
-void TerminalWindow::consume_input(int c)
+void TerminalWindow::consume_input(int key)
 {
     if (m_prompt != Prompt::NONE)
-        handle_prompt(c);
-    else if (c >= 0 && c <= 0xFF)
-        edit_byte(static_cast<std::uint8_t>(c));
+        handle_prompt(key);
+    else if (key >= 0 && key <= 0xFF)
+        edit_byte(static_cast<std::uint8_t>(key));
 }
 
 void TerminalWindow::TerminalWindow::save()
@@ -439,14 +439,13 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
     m_data.set_byte(m_byte, new_value);
 }
 
-void TerminalWindow::handle_prompt(int c)
+void TerminalWindow::handle_prompt(int key)
 {
-
     if (m_prompt == Prompt::GO_TO_BYTE)
     {
-        if (c == '\n')
+        if (key == '\n')
         {
-            if (m_input_buffer.size() > 0)
+            if (!m_input_buffer.empty())
             {
                 std::uint32_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
@@ -463,26 +462,26 @@ void TerminalWindow::handle_prompt(int c)
             m_prompt = Prompt::NONE;
             resize();
         }
-        else if (c == KEY_BACKSPACE && m_input_buffer.size() > 0)
+        else if ((key == KEY_BACKSPACE) && !m_input_buffer.empty())
         {
             m_input_buffer.pop_back();
             m_update = true;
         }
-        else if (std::isprint(c)
-                 && m_input_buffer.size() < LINE_OFFSET_LEN)
+        else if ((m_input_buffer.size() < LINE_OFFSET_LEN)
+                 && (key >= 0 && key <= 0xFF))
         {
-            if ((m_mode == Mode::ASCII && isdigit(c))
-                || (m_mode == Mode::HEX && isxdigit(c)))
+
+            if ((m_mode == Mode::ASCII && isdigit(key))
+                || (m_mode == Mode::HEX && isxdigit(key)))
             {
-                m_input_buffer.push_back(static_cast<char>(c));
+                m_input_buffer.push_back(static_cast<char>(key));
                 m_update = true;
             }
         }
     }
-    else if (std::isprint(c))
+    else
     {
-        char chr = static_cast<char>(c);
-        switch (chr)
+        switch (key)
         {
         case 'y':
         case 'Y':

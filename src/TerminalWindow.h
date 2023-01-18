@@ -38,7 +38,7 @@ private:
 
     void move_right();
 
-    void consume_input(int c);
+    void consume_input(int key);
 
     void save();
 
@@ -54,7 +54,7 @@ private:
 
     void edit_byte(std::uint8_t chr);
 
-    void handle_prompt(int c);
+    void handle_prompt(int key);
 
     enum class Mode
     {
