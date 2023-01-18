@@ -1,6 +1,7 @@
 #ifndef TERMINAL_WINDOW_H
 #define TERMINAL_WINDOW_H
 
+#include "Scroller.h"
 #include <cstdint>
 #include <ncurses.h>
 #include <string>
@@ -14,19 +15,16 @@ public:
 
     ~TerminalWindow();
 
+    void run();
+
+private:
     void draw_line(std::uint32_t line);
 
     void update_screen();
 
-    void erase() const;
-
-    void refresh() const;
-
     void resize();
 
     void reset_cursor() const;
-
-    int get_char() const;
 
     void move_up();
 
@@ -40,7 +38,7 @@ public:
 
     void move_right();
 
-    void consume_input(int c);
+    void consume_input(int key);
 
     void save();
 
@@ -54,9 +52,10 @@ public:
 
     void toggle_hex_mode();
 
-    bool quit() const;
+    void edit_byte(std::uint8_t chr);
 
-private:
+    void handle_prompt(int key);
+
     enum class Mode
     {
         HEX,
@@ -71,28 +70,16 @@ private:
         GO_TO_BYTE
     };
 
-    struct Scroller
-    {
-        std::uint32_t m_first_line  = { 0 };
-        std::uint32_t m_last_line   = { 0 };
-        std::uint32_t m_total_lines = { 0 };
-    } m_scroller;
-
+    Scroller          m_scroller;
     DataBuffer&       m_data;
     const std::string m_type;
-    std::uint32_t     m_cy, m_cx;
-    std::uint32_t     m_lines, m_cols;
     bool              m_update;
     Mode              m_mode;
     Prompt            m_prompt;
     WINDOW*           m_screen;
-    std::uint32_t     m_byte, m_byte_offset;
-    char              m_left_padding_format[sizeof("%%0%dX  ")];
+    std::uint32_t     m_byte, m_nibble;
+    char              m_line_offset_format[sizeof("%%0%dX") + 2];
     bool              m_quit;
     std::string       m_input_buffer;
-
-    void edit_byte(int c);
-
-    void handle_prompt(int c);
 };
 #endif // TERMINAL_WINDOW_H
