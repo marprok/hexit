@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <set>
 #include <vector>
+#include <string>
 
 class SignatureReader
 {
