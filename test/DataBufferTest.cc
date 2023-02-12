@@ -1,9 +1,5 @@
 #include "DataBuffer.h"
-#include "IOHandler.h"
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
+#include "IOHandlerMock.h"
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -14,91 +10,6 @@ namespace fs = std::filesystem;
 
 namespace
 {
-class IOHandlerMock : public IOHandler
-{
-public:
-    static constexpr std::uint32_t chunk_count = 255;
-
-    IOHandlerMock()
-        : m_id(0u)
-        , m_load_count(0u)
-    {
-        randomize();
-    }
-
-    ~IOHandlerMock() = default;
-
-    bool open(const fs::path& path) override
-    {
-        m_name = path;
-        return true;
-    }
-
-    void close() override
-    {
-    }
-
-    bool read(std::uint8_t* o_buffer, std::size_t buffer_size) override
-    {
-        if (!o_buffer
-            || buffer_size == 0
-            || buffer_size > ChunkCache::capacity
-            || m_id >= chunk_count)
-            return false;
-
-        std::memcpy(o_buffer, m_data[m_id], buffer_size);
-        m_load_count++;
-        m_id++;
-        return true;
-    }
-
-    bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override
-    {
-        if (!i_buffer
-            || buffer_size == 0
-            || buffer_size > ChunkCache::capacity
-            || m_id >= chunk_count)
-            return false;
-
-        std::memcpy(m_data[m_id], i_buffer, buffer_size);
-        return true;
-    }
-
-    bool seek(std::uint32_t offset) override
-    {
-        m_id = offset / ChunkCache::capacity;
-        return true;
-    }
-
-    const fs::path& name() const override
-    {
-        return m_name;
-    }
-
-    std::uint32_t size() const override
-    {
-        return chunk_count * ChunkCache::capacity;
-    }
-
-    std::uint8_t* data() { return reinterpret_cast<std::uint8_t*>(m_data); }
-
-    std::uint32_t load_count() const { return m_load_count; }
-
-private:
-    inline void randomize()
-    {
-        std::srand(std::time(nullptr));
-        std::uint8_t* bytes = data();
-        for (std::size_t i = 0; i < chunk_count * ChunkCache::capacity; ++i)
-            bytes[i] = rand() % 256;
-    }
-
-    fs::path      m_name;
-    std::uint8_t  m_data[chunk_count][ChunkCache::capacity];
-    std::uint32_t m_id;
-    std::uint32_t m_load_count;
-};
-
 const std::string       file_name("test/path/to/somewhere");
 constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 inline std::uint32_t    expected_chunks()
@@ -108,17 +19,6 @@ inline std::uint32_t    expected_chunks()
         chunks++;
     return chunks;
 }
-}
-
-// General information regarding the IOHandler interface.
-TEST(DataBufferTest, IOHandlerInformation)
-{
-    IOHandlerMock handler;
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
-    ASSERT_EQ(buffer.name(), file_name);
-    ASSERT_EQ(buffer.size(), expected_size_bytes);
-    ASSERT_EQ(expected_chunks(), buffer.total_chunks());
 }
 
 // Accessing bytes from a chunk that already is in memory
@@ -147,42 +47,6 @@ TEST(DataBufferTest, ChunkCaching)
     EXPECT_EQ(handler.load_count(), 2);
     EXPECT_EQ(buffer.recent().m_id, last_chunkc_id);
     EXPECT_EQ(buffer.fallback().m_id, first_chunk_id);
-}
-
-// When load_chunk(chunk_id) gets called, the chunk returned by recent()
-// should contain the data of chunk_id. The chunk returned by fallback()
-// should contain the data that recent() had before the call to
-// load_chunk(chunk_id).
-TEST(DataBufferTest, LoadChunk)
-{
-    IOHandlerMock handler;
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
-    ASSERT_EQ(buffer.total_chunks(), expected_chunks());
-    ASSERT_TRUE(buffer.load_chunk(0));
-    EXPECT_EQ(buffer.recent().m_id, 0);
-    for (std::uint32_t i = 1; i < buffer.total_chunks(); ++i)
-    {
-        ASSERT_TRUE(buffer.load_chunk(i));
-        EXPECT_EQ(buffer.recent().m_id, buffer.fallback().m_id + 1);
-    }
-}
-
-// This is the same test as LoadChunk but this time the chunks get loaded
-// in reverse order.
-TEST(DataBufferTest, LoadChunkReverse)
-{
-    IOHandlerMock handler;
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
-    ASSERT_EQ(buffer.total_chunks(), expected_chunks());
-    ASSERT_TRUE(buffer.load_chunk(buffer.total_chunks() - 1));
-    EXPECT_EQ(buffer.recent().m_id, buffer.total_chunks() - 1);
-    for (std::uint32_t i = buffer.total_chunks() - 2; i > 0; --i)
-    {
-        ASSERT_TRUE(buffer.load_chunk(i));
-        EXPECT_EQ(buffer.recent().m_id, buffer.fallback().m_id - 1);
-    }
 }
 
 // When a byte gets modified, the buffer should keep the new value
@@ -242,27 +106,6 @@ TEST(DataBufferTest, DataReadReverse)
     for (std::uint32_t i = buffer.size() - 1; i > 0 && match; --i)
         match = buffer[i] == expectation[i];
     EXPECT_TRUE(match);
-}
-
-// When a chunk gets saved, the underlying IOHandler should get updated.
-TEST(DataBufferTest, SaveChunk)
-{
-    IOHandlerMock handler;
-    std::uint8_t* raw_data = handler.data();
-    DataBuffer    buffer(handler);
-    const auto    chunk_id = buffer.total_chunks() / 2;
-    // initialize the data to zero
-    std::memset(raw_data, 0, handler.size());
-    ASSERT_TRUE(buffer.open(file_name));
-    ASSERT_TRUE(buffer.load_chunk(chunk_id));
-    auto& data_chunk = buffer.recent();
-    EXPECT_EQ(chunk_id, data_chunk.m_id);
-    std::memset(data_chunk.m_data, 0xEF, data_chunk.m_count);
-    std::uint8_t* expectation = raw_data + (chunk_id * ChunkCache::capacity);
-    EXPECT_NE(std::memcmp(expectation, data_chunk.m_data, data_chunk.m_count), 0);
-    EXPECT_TRUE(buffer.save_chunk(data_chunk));
-    EXPECT_EQ(std::memcmp(expectation, data_chunk.m_data, data_chunk.m_count), 0);
-    EXPECT_EQ(expectation[0], 0xEF);
 }
 
 // Setting bytes using DataBuffer will not update the actual data

@@ -6,10 +6,12 @@ add_executable(HexitTest)
 target_include_directories(HexitTest PRIVATE ../src)
 
 target_sources(HexitTest PRIVATE
+    ChunkCacheTest.cc
     DataBufferTest.cc
     SignatureReaderTest.cc
     ScrollerTest.cc
     UtilitiesTest.cc
+    IOHandlerMock.cc
     ../src/DataBuffer.cc
     ../src/ChunkCache.cc
     ../src/FileHandler.cc
