@@ -84,10 +84,10 @@ std::string get_type(DataBuffer& dataBuffer)
 void start_hexit(IOHandler&  handler,
                  const char* starting_offset,
                  const char* input_path,
-                 bool        immutable = false)
+                 bool        is_read_only = false)
 {
     DataBuffer data(handler);
-    if (input_path && !data.open(input_path, immutable))
+    if (input_path && !data.open(input_path, is_read_only))
     {
         std::cerr << "Could not open " << input_path << '\n';
         std::exit(EXIT_FAILURE);

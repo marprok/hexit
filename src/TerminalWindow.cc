@@ -358,7 +358,7 @@ void TerminalWindow::consume_input(int key)
 
 void TerminalWindow::TerminalWindow::save()
 {
-    if (!m_data.has_dirty() || m_data.immutable())
+    if (!m_data.has_dirty() || m_data.is_read_only())
         return;
 
     m_data.save();
@@ -369,7 +369,7 @@ void TerminalWindow::prompt_save()
 {
     if (!m_data.has_dirty()
         || m_prompt != Prompt::NONE
-        || m_data.immutable())
+        || m_data.is_read_only())
         return;
 
     m_prompt = Prompt::SAVE;
@@ -385,7 +385,7 @@ void TerminalWindow::prompt_quit()
         m_update = true;
         m_input_buffer.clear();
     }
-    else if (!m_data.has_dirty() || m_data.immutable())
+    else if (!m_data.has_dirty() || m_data.is_read_only())
         m_quit = true;
     else
     {

@@ -28,23 +28,24 @@ public:
 
     std::uint32_t total_chunks() const;
 
-    bool open(const fs::path& name, bool immutable = false);
+    bool open(const fs::path& name, bool read_only = false);
 
     bool load_chunk(std::uint32_t chunk_id);
 
     bool save_chunk(const DataChunk& chunk);
 
-    DataChunk& recent_chunk();
+    DataChunk& recent();
 
-    DataChunk& fallback_chunk();
+    DataChunk& fallback();
 
-    bool immutable() const;
+    bool is_read_only() const;
+
 private:
     IOHandler&    m_handler;
     std::uint32_t m_total_chunks;
     DataChunk     m_chunks[2];
-    std::uint8_t  m_recent_id;
-    std::uint8_t  m_fallback_id;
-    bool          m_immutable;
+    DataChunk*    m_recent;
+    DataChunk*    m_fallback;
+    bool          m_read_only;
 };
 #endif // CHUNK_CACHE_H
