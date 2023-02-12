@@ -142,7 +142,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
                 else
                 {
                     wattron(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line, col, hexDigits);
+                    mvwprintw(m_screen, line, col, "%s", hexDigits);
                     wattroff(m_screen, A_REVERSE);
                 }
             }
@@ -150,7 +150,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
             {
                 if (is_dirty)
                     wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-                mvwprintw(m_screen, line, col, hexDigits);
+                mvwprintw(m_screen, line, col, "%s", hexDigits);
                 if (is_dirty)
                     wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
             }
