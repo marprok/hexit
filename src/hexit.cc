@@ -86,13 +86,14 @@ void start_hexit(IOHandler&  handler,
                  const char* input_path,
                  bool        is_read_only = false)
 {
-    DataBuffer data(handler);
-    if (input_path && !data.open(input_path, is_read_only))
+    ChunkCache cache(handler);
+    if (input_path && !cache.open(input_path, is_read_only))
     {
         std::cerr << "Could not open " << input_path << '\n';
         std::exit(EXIT_FAILURE);
     }
 
+    DataBuffer data(cache);
     init_ncurses();
     TerminalWindow win(stdscr, data, get_type(data), get_starting_offset(starting_offset));
     win.run();

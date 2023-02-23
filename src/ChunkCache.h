@@ -1,12 +1,11 @@
 #ifndef CHUNK_CACHE_H
 #define CHUNK_CACHE_H
 
+#include "IOHandler.h"
 #include <cstdint>
 #include <filesystem>
 
 namespace fs = std::filesystem;
-
-class IOHandler;
 
 class ChunkCache
 {
@@ -22,23 +21,23 @@ public:
 
     ChunkCache(IOHandler& handler);
 
-    const fs::path& name() const;
-
-    std::uint32_t size() const;
-
-    std::uint32_t total_chunks() const;
-
     bool open(const fs::path& name, bool read_only = false);
 
     bool load_chunk(std::uint32_t chunk_id);
 
     bool save_chunk(const DataChunk& chunk);
 
-    DataChunk& recent();
+    inline const fs::path& name() const { return m_handler.name(); }
 
-    DataChunk& fallback();
+    inline std::uint32_t size() const { return m_handler.size(); }
 
-    bool is_read_only() const;
+    inline std::uint32_t total_chunks() const { return m_total_chunks; }
+
+    inline DataChunk& recent() { return *m_recent; }
+
+    inline DataChunk& fallback() { return *m_fallback; }
+
+    inline bool is_read_only() const { return m_read_only; }
 
 private:
     IOHandler&    m_handler;

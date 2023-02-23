@@ -11,12 +11,6 @@ ChunkCache::ChunkCache(IOHandler& handler)
 {
 }
 
-const fs::path& ChunkCache::name() const { return m_handler.name(); }
-
-std::uint32_t ChunkCache::size() const { return m_handler.size(); }
-
-std::uint32_t ChunkCache::total_chunks() const { return m_total_chunks; }
-
 bool ChunkCache::open(const fs::path& path, bool read_only)
 {
     if (!m_handler.open(path))
@@ -58,19 +52,4 @@ bool ChunkCache::save_chunk(const DataChunk& chunk)
         return false;
 
     return m_handler.write(chunk.m_data, chunk.m_count);
-}
-
-ChunkCache::DataChunk& ChunkCache::recent()
-{
-    return *m_recent;
-}
-
-ChunkCache::DataChunk& ChunkCache::fallback()
-{
-    return *m_fallback;
-}
-
-bool ChunkCache::is_read_only() const
-{
-    return m_read_only;
 }

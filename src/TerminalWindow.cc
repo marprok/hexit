@@ -42,7 +42,6 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
 
     std::sprintf(m_line_offset_format, "%%0%dX", LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
-    m_data.load_chunk(m_byte / DataBuffer::capacity);
     resize();
 }
 
