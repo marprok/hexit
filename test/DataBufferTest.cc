@@ -26,27 +26,28 @@ inline std::uint32_t    expected_chunks()
 TEST(DataBufferTest, ChunkCaching)
 {
     IOHandlerMock handler;
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
-    ASSERT_EQ(buffer.total_chunks(), expected_chunks());
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
+    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_EQ(cache.total_chunks(), expected_chunks());
     constexpr std::uint32_t first_chunk_id = 2, last_chunkc_id = 3;
-    for (std::uint32_t i = DataBuffer::capacity * first_chunk_id;
-         (i < DataBuffer::capacity * (last_chunkc_id + 1)) && (i < buffer.size());
+    for (std::uint32_t i = ChunkCache::capacity * first_chunk_id;
+         (i < ChunkCache::capacity * (last_chunkc_id + 1)) && (i < buffer.size());
          ++i)
     {
         // Access each byte to trigger the caching mechanism.
         buffer[i];
     }
     // Accessing again the bytes from the first chunk, should not cause any loading.
-    for (std::uint32_t i = DataBuffer::capacity * first_chunk_id;
-         (i < DataBuffer::capacity * last_chunkc_id) && (i < buffer.size());
+    for (std::uint32_t i = ChunkCache::capacity * first_chunk_id;
+         (i < ChunkCache::capacity * last_chunkc_id) && (i < buffer.size());
          ++i)
     {
         buffer[i];
     }
     EXPECT_EQ(handler.load_count(), 2);
-    EXPECT_EQ(buffer.recent().m_id, last_chunkc_id);
-    EXPECT_EQ(buffer.fallback().m_id, first_chunk_id);
+    EXPECT_EQ(cache.recent().m_id, last_chunkc_id);
+    EXPECT_EQ(cache.fallback().m_id, first_chunk_id);
 }
 
 // When a byte gets modified, the buffer should keep the new value
@@ -55,11 +56,12 @@ TEST(DataBufferTest, ChunkCaching)
 TEST(DataBufferTest, DataModification)
 {
     IOHandlerMock handler;
-    DataBuffer    buffer(handler);
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
     const auto    byte_id     = buffer.size() - 1;
     std::uint8_t* expectation = handler.data();
     expectation[byte_id]      = 0x0F;
-    ASSERT_TRUE(buffer.open(file_name));
+    ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(buffer.size(), expected_size_bytes);
     // access the byte to load the chunk
     auto byte_old = buffer[byte_id];
@@ -80,11 +82,12 @@ TEST(DataBufferTest, DataRead)
 {
     IOHandlerMock handler;
     std::uint8_t* expectation = handler.data();
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
+    ASSERT_TRUE(cache.open(file_name));
     // start from the first chunk and the first byte
-    ASSERT_TRUE(buffer.load_chunk(0));
-    ASSERT_EQ(buffer.recent().m_id, 0);
+    ASSERT_TRUE(cache.load_chunk(0));
+    ASSERT_EQ(cache.recent().m_id, 0);
     bool match = true;
     for (std::uint32_t i = 0; i < buffer.size() && match; ++i)
         match = buffer[i] == expectation[i];
@@ -97,11 +100,12 @@ TEST(DataBufferTest, DataReadReverse)
 {
     IOHandlerMock handler;
     std::uint8_t* expectation = handler.data();
-    DataBuffer    buffer(handler);
-    ASSERT_TRUE(buffer.open(file_name));
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
+    ASSERT_TRUE(cache.open(file_name));
     // start from the last chunk and the last byte
-    ASSERT_TRUE(buffer.load_chunk(buffer.total_chunks() - 1));
-    EXPECT_EQ(buffer.recent().m_id, buffer.total_chunks() - 1);
+    ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
+    EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
     bool match = true;
     for (std::uint32_t i = buffer.size() - 1; i > 0 && match; --i)
         match = buffer[i] == expectation[i];
@@ -114,15 +118,16 @@ TEST(DataBufferTest, SaveAllChunks)
 {
     IOHandlerMock handler;
     std::uint8_t* raw_data = handler.data();
-    DataBuffer    buffer(handler);
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
-    ASSERT_TRUE(buffer.open(file_name));
+    ASSERT_TRUE(cache.open(file_name));
     std::uint32_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
-        ASSERT_TRUE(buffer.load_chunk(id));
-        ChunkCache::DataChunk data_chunk = buffer.recent();
+        ASSERT_TRUE(cache.load_chunk(id));
+        auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
@@ -131,15 +136,15 @@ TEST(DataBufferTest, SaveAllChunks)
             EXPECT_EQ(buffer[id * ChunkCache::capacity + i], id + 1);
             EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
             // The recent chunk should not change
-            ASSERT_EQ(id, buffer.recent().m_id);
+            ASSERT_EQ(id, cache.recent().m_id);
         }
     }
     // save all the dirty bytes
     buffer.save();
     for (auto id : dirty_ids)
     {
-        ASSERT_TRUE(buffer.load_chunk(id));
-        ChunkCache::DataChunk data_chunk = buffer.recent();
+        ASSERT_TRUE(cache.load_chunk(id));
+        auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
@@ -147,7 +152,7 @@ TEST(DataBufferTest, SaveAllChunks)
             EXPECT_EQ(expectation[i], buffer[id * ChunkCache::capacity + i]);
             EXPECT_EQ(expectation[i], id + 1);
             // The recent chunk should not change
-            ASSERT_EQ(id, buffer.recent().m_id);
+            ASSERT_EQ(id, cache.recent().m_id);
         }
     }
 }
@@ -158,15 +163,16 @@ TEST(DataBufferTest, SaveAllChunksReadOnly)
 {
     IOHandlerMock handler;
     std::uint8_t* raw_data = handler.data();
-    DataBuffer    buffer(handler);
+    ChunkCache    cache(handler);
+    DataBuffer    buffer(cache);
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
-    ASSERT_TRUE(buffer.open(file_name, true));
+    ASSERT_TRUE(cache.open(file_name, true));
     std::uint32_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
-        ASSERT_TRUE(buffer.load_chunk(id));
-        ChunkCache::DataChunk data_chunk = buffer.recent();
+        ASSERT_TRUE(cache.load_chunk(id));
+        auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
@@ -175,15 +181,15 @@ TEST(DataBufferTest, SaveAllChunksReadOnly)
             EXPECT_EQ(buffer[id * ChunkCache::capacity + i], id + 1);
             EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
             // The recent chunk should not change
-            ASSERT_EQ(id, buffer.recent().m_id);
+            ASSERT_EQ(id, cache.recent().m_id);
         }
     }
     // save all the dirty bytes
     buffer.save();
     for (auto id : dirty_ids)
     {
-        ASSERT_TRUE(buffer.load_chunk(id));
-        ChunkCache::DataChunk data_chunk = buffer.recent();
+        ASSERT_TRUE(cache.load_chunk(id));
+        auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
@@ -191,7 +197,7 @@ TEST(DataBufferTest, SaveAllChunksReadOnly)
             EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
             EXPECT_NE(expectation[i], id + 1);
             // The recent chunk should not change
-            ASSERT_EQ(id, buffer.recent().m_id);
+            ASSERT_EQ(id, cache.recent().m_id);
         }
     }
 }
