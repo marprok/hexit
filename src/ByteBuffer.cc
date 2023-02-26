@@ -33,28 +33,16 @@ void ByteBuffer::set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
 {
     const std::uint32_t chunk_id    = byte_id / ChunkCache::capacity;
     const std::uint32_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+
     if (!m_dirty_bytes.contains(byte_id))
-    {
-        auto& chunk_changes = m_dirty_chunks[chunk_id];
-        chunk_changes.emplace_back(relative_id);
-    }
+        m_dirty_chunks[chunk_id].emplace_back(relative_id);
 
     m_dirty_bytes.insert_or_assign(byte_id, byte_value);
 }
 
-bool ByteBuffer::is_dirty(std::uint32_t byte_id) const
-{
-    return m_dirty_bytes.contains(byte_id);
-}
-
-bool ByteBuffer::has_dirty() const
-{
-    return m_dirty_bytes.size() != 0;
-}
-
 void ByteBuffer::save()
 {
-    if (m_dirty_bytes.size() == 0 || m_cache.is_read_only())
+    if (!has_dirty() || m_cache.is_read_only())
         return;
 
     for (const auto& [chunk_id, changes] : m_dirty_chunks)

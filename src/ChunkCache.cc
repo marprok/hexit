@@ -1,6 +1,5 @@
 #include "ChunkCache.h"
 #include "IOHandler.h"
-#include <stdexcept>
 
 ChunkCache::ChunkCache(IOHandler& handler)
     : m_handler(handler)
@@ -48,6 +47,7 @@ bool ChunkCache::save_chunk(const DataChunk& chunk)
 {
     if (m_read_only)
         return false;
+
     if (!m_handler.seek(chunk.m_id * ChunkCache::capacity))
         return false;
 

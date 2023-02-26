@@ -15,11 +15,11 @@ public:
 
     void set_byte(std::uint32_t byte_id, std::uint8_t byte_value);
 
-    bool is_dirty(std::uint32_t byte_id) const;
-
-    bool has_dirty() const;
-
     void save();
+
+    inline bool is_dirty(std::uint32_t byte_id) const { return m_dirty_bytes.contains(byte_id); }
+
+    inline bool has_dirty() const { return m_dirty_bytes.size() != 0; }
 
     inline const fs::path& name() const { return m_cache.name(); }
 
