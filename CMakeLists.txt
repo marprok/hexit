@@ -34,6 +34,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     src/StdInHandler.cc
     src/SignatureReader.cc
     src/Scroller.cc
+    src/Utilities.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})

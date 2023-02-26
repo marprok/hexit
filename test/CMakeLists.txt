@@ -17,6 +17,7 @@ target_sources(HexitTest PRIVATE
     ../src/FileHandler.cc
     ../src/SignatureReader.cc
     ../src/Scroller.cc
+    ../src/Utilities.cc
 )
 
 target_link_libraries(HexitTest gtest_main)
