@@ -1,4 +1,4 @@
-#include "DataBuffer.h"
+#include "ByteBuffer.h"
 #include "FileHandler.h"
 #include "SignatureReader.h"
 #include "StdInHandler.h"
@@ -65,18 +65,18 @@ std::uint32_t get_starting_offset(const char* offset)
     return std::stoll(starting_offset, nullptr);
 }
 
-std::string get_type(DataBuffer& dataBuffer)
+std::string get_type(ByteBuffer& byteBuffer)
 {
-    if (dataBuffer.size() == 0)
+    if (byteBuffer.size() == 0)
         return {};
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(dataBuffer.size(), 32u);
+    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), 32u);
     query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.push_back(dataBuffer[i]);
+        query.push_back(byteBuffer[i]);
 
     return reader.get_type(query);
 }
@@ -93,9 +93,9 @@ void start_hexit(IOHandler&  handler,
         std::exit(EXIT_FAILURE);
     }
 
-    DataBuffer data(cache);
+    ByteBuffer buffer(cache);
     init_ncurses();
-    TerminalWindow win(stdscr, data, get_type(data), get_starting_offset(starting_offset));
+    TerminalWindow win(stdscr, buffer, get_type(buffer), get_starting_offset(starting_offset));
     win.run();
 }
 }

@@ -6,12 +6,12 @@
 #include <ncurses.h>
 #include <string>
 
-class DataBuffer;
+class ByteBuffer;
 
 class TerminalWindow
 {
 public:
-    TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t go_to_byte = 0);
+    TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t go_to_byte = 0);
 
     ~TerminalWindow();
 
@@ -71,7 +71,7 @@ private:
     };
 
     Scroller          m_scroller;
-    DataBuffer&       m_data;
+    ByteBuffer&       m_data;
     const std::string m_type;
     bool              m_update;
     Mode              m_mode;

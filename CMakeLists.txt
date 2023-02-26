@@ -28,7 +28,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_sources(${PROJECT_NAME} PRIVATE
     src/hexit.cc
     src/TerminalWindow.cc
-    src/DataBuffer.cc
+    src/ByteBuffer.cc
     src/ChunkCache.cc
     src/FileHandler.cc
     src/StdInHandler.cc

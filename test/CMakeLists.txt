@@ -7,12 +7,12 @@ target_include_directories(HexitTest PRIVATE ../src)
 
 target_sources(HexitTest PRIVATE
     ChunkCacheTest.cc
-    DataBufferTest.cc
+    ByteBufferTest.cc
     SignatureReaderTest.cc
     ScrollerTest.cc
     UtilitiesTest.cc
     IOHandlerMock.cc
-    ../src/DataBuffer.cc
+    ../src/ByteBuffer.cc
     ../src/ChunkCache.cc
     ../src/FileHandler.cc
     ../src/SignatureReader.cc

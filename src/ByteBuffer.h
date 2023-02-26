@@ -6,10 +6,10 @@
 #include <unordered_map>
 #include <vector>
 
-class DataBuffer
+class ByteBuffer
 {
 public:
-    DataBuffer(ChunkCache& cache);
+    ByteBuffer(ChunkCache& cache);
 
     std::uint8_t operator[](std::uint32_t byte_id);
 

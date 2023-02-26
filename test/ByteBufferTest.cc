@@ -1,4 +1,4 @@
-#include "DataBuffer.h"
+#include "ByteBuffer.h"
 #include "IOHandlerMock.h"
 #include <filesystem>
 #include <fstream>
@@ -23,11 +23,11 @@ inline std::uint32_t    expected_chunks()
 
 // Accessing bytes from a chunk that already is in memory
 // should not cause any more loading to happen in the underlying IOHandler.
-TEST(DataBufferTest, ChunkCaching)
+TEST(ByteBufferTest, ChunkCaching)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     constexpr std::uint32_t first_chunk_id = 2, last_chunkc_id = 3;
@@ -53,11 +53,11 @@ TEST(DataBufferTest, ChunkCaching)
 // When a byte gets modified, the buffer should keep the new value
 // internally as well as mark the buffer as "dirty". The actual contents
 // of the underlying IOHandler will not get updated until save gets called.
-TEST(DataBufferTest, DataModification)
+TEST(ByteBufferTest, DataModification)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     const auto    byte_id     = buffer.size() - 1;
     std::uint8_t* expectation = handler.data();
     expectation[byte_id]      = 0x0F;
@@ -76,14 +76,14 @@ TEST(DataBufferTest, DataModification)
     EXPECT_EQ(expectation[byte_id], byte_old);
 }
 
-// DataBuffer should have access to all the bytes that the underlying
+// ByteBuffer should have access to all the bytes that the underlying
 // IOHandler does.
-TEST(DataBufferTest, DataRead)
+TEST(ByteBufferTest, ByteRead)
 {
     IOHandlerMock handler;
     std::uint8_t* expectation = handler.data();
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     ASSERT_TRUE(cache.open(file_name));
     // start from the first chunk and the first byte
     ASSERT_TRUE(cache.load_chunk(0));
@@ -96,12 +96,12 @@ TEST(DataBufferTest, DataRead)
 
 // This is the same test as DataRead but this time the bytes get accessed
 // in reverse order.
-TEST(DataBufferTest, DataReadReverse)
+TEST(ByteBufferTest, ByteReadReverse)
 {
     IOHandlerMock handler;
     std::uint8_t* expectation = handler.data();
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     ASSERT_TRUE(cache.open(file_name));
     // start from the last chunk and the last byte
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
@@ -112,14 +112,14 @@ TEST(DataBufferTest, DataReadReverse)
     EXPECT_TRUE(match);
 }
 
-// Setting bytes using DataBuffer will not update the actual data
+// Setting bytes using ByteBuffer will not update the actual data
 // until save() gets called.
-TEST(DataBufferTest, SaveAllChunks)
+TEST(ByteBufferTest, SaveBytes)
 {
     IOHandlerMock handler;
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.open(file_name));
@@ -157,14 +157,14 @@ TEST(DataBufferTest, SaveAllChunks)
     }
 }
 
-// Same as SaveAllChunks but this time the read only flag is set to true
+// Same as SaveBytes but this time the read only flag is set to true
 // and as a result it should not be possible to modify the actual data.
-TEST(DataBufferTest, SaveAllChunksReadOnly)
+TEST(ByteBufferTest, SaveAllBytesReadOnly)
 {
     IOHandlerMock handler;
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    DataBuffer    buffer(cache);
+    ByteBuffer    buffer(cache);
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.open(file_name, true));

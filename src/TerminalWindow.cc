@@ -1,5 +1,5 @@
 #include "TerminalWindow.h"
-#include "DataBuffer.h"
+#include "ByteBuffer.h"
 #include "Utilities.h"
 #include <csignal>
 #include <cstdint>
@@ -22,7 +22,7 @@ constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
 constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 }
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
+TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
     : m_scroller(data.size(), BYTES_PER_LINE)
     , m_data(data)
     , m_type(file_type)
