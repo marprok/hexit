@@ -1,5 +1,5 @@
-#ifndef DATA_BUFFER_H
-#define DATA_BUFFER_H
+#ifndef BYTE_BUFFER_H
+#define BYTE_BUFFER_H
 
 #include "ChunkCache.h"
 #include <map>
@@ -36,4 +36,4 @@ private:
     ChunkCache&   m_cache;
 };
 
-#endif // DATA_BUFFER_H
+#endif // BYTE_BUFFER_H
