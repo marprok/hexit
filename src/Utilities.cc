@@ -6,35 +6,37 @@ namespace fs = std::filesystem;
 
 bool validate_args(std::size_t argc, const char* const* const argv)
 {
-    std::size_t i = 0u;
+    std::size_t i      = 0u;
+    bool        help   = false;
+    bool        file   = false;
+    bool        offset = false;
     for (; i < argc && argv[i];)
     {
         std::string sarg(argv[i]);
-        if (sarg == "--help" || sarg == "-h")
+        if ((sarg == "--help" || sarg == "-h") && !help)
+        {
             ++i;
-        else if (sarg == "--offset" || sarg == "-o")
+            help = true;
+        }
+        else if ((sarg == "--offset" || sarg == "-o") && !offset)
         {
             if (!argv[i + 1])
                 break;
             ++i;
             if (!is_hex_string(argv[i]) && !is_dec_string(argv[i]))
-            {
-                std::cerr << "Invalid starting offset " << argv[i] << "\n";
                 break;
-            }
             ++i;
+            offset = true;
         }
-        else if (sarg == "-f" || sarg == "--file")
+        else if ((sarg == "--file" || sarg == "-f") && !file)
         {
             if (!argv[i + 1])
                 break;
             ++i;
             if (!fs::exists(argv[i]))
-            {
-                std::cerr << "File " << argv[i] << " does not exist!\n";
                 break;
-            }
             ++i;
+            file = true;
         }
         else
             break;
@@ -69,10 +71,10 @@ std::uint32_t str_to_int(const char* const str)
     if (!str)
         return 0;
 
-    if (is_hex_string(str))
-        return std::stoll(str, nullptr, 16);
-    else if (is_dec_string(str))
+    if (is_dec_string(str))
         return std::stoll(str, nullptr);
+    else if (is_hex_string(str))
+        return std::stoll(str, nullptr, 16);
 
     return 0u;
 }

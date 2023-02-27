@@ -42,14 +42,14 @@ inline std::uint8_t update_nibble(std::uint8_t nibble_id, std::uint8_t nibble_va
 inline bool is_hex_string(const std::string& str)
 {
     bool skip = (str.compare(0, 2, "0x") == 0) || (str.compare(0, 2, "0X") == 0);
-    return std::all_of(str.begin() + (skip ? 2 : 0), str.end(), [](unsigned char uc)
-                       { return std::isxdigit(uc); });
+    return !str.empty() && std::all_of(str.begin() + (skip ? 2 : 0), str.end(), [](unsigned char uc)
+                                       { return std::isxdigit(uc); });
 }
 
 inline bool is_dec_string(const std::string& str)
 {
-    return std::all_of(str.begin(), str.end(), [](unsigned char uc)
-                       { return std::isdigit(uc); });
+    return !str.empty() && std::all_of(str.begin(), str.end(), [](unsigned char uc)
+                                       { return std::isdigit(uc); });
 }
 
 bool validate_args(std::size_t argc, const char* const* const argv);
