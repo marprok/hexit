@@ -1,11 +1,10 @@
 #ifndef SIGNATURE_READER_H
 #define SIGNATURE_READER_H
 
-#include <array>
 #include <cstdint>
 #include <set>
-#include <vector>
 #include <string>
+#include <vector>
 
 class SignatureReader
 {

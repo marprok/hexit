@@ -21,6 +21,10 @@ public:
 
     ChunkCache(IOHandler& handler);
 
+    ChunkCache(const ChunkCache&) = delete;
+
+    ChunkCache& operator=(const ChunkCache&) = delete;
+
     bool open(const fs::path& name, bool read_only = false);
 
     bool load_chunk(std::uint32_t chunk_id);

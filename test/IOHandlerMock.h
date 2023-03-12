@@ -13,6 +13,10 @@ public:
 
     IOHandlerMock();
 
+    IOHandlerMock(const IOHandlerMock&) = delete;
+
+    IOHandlerMock& operator=(const IOHandlerMock&) = delete;
+
     ~IOHandlerMock() = default;
 
     bool open(const fs::path& path) override;

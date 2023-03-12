@@ -9,6 +9,10 @@ class StdInHandler : public IOHandler
 public:
     StdInHandler() = default;
 
+    StdInHandler(const StdInHandler&) = delete;
+
+    StdInHandler& operator=(const StdInHandler&) = delete;
+
     ~StdInHandler() = default;
 
     bool open(const fs::path& path) override;

@@ -13,6 +13,10 @@ class TerminalWindow
 public:
     TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t go_to_byte = 0);
 
+    TerminalWindow(const TerminalWindow&) = delete;
+
+    TerminalWindow& operator=(const TerminalWindow&) = delete;
+
     ~TerminalWindow();
 
     void run();

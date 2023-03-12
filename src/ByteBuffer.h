@@ -11,6 +11,10 @@ class ByteBuffer
 public:
     ByteBuffer(ChunkCache& cache);
 
+    ByteBuffer(const ByteBuffer&) = delete;
+
+    ByteBuffer& operator=(const ByteBuffer&) = delete;
+
     std::uint8_t operator[](std::uint32_t byte_id);
 
     void set_byte(std::uint32_t byte_id, std::uint8_t byte_value);
