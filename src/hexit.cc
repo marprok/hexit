@@ -1,8 +1,9 @@
-#include "DataBuffer.h"
+#include "ByteBuffer.h"
 #include "FileHandler.h"
 #include "SignatureReader.h"
 #include "StdInHandler.h"
 #include "TerminalWindow.h"
+#include "Utilities.h"
 #include <algorithm>
 #include <csignal>
 #include <iostream>
@@ -26,81 +27,55 @@ inline void init_ncurses()
     noecho();
     curs_set(0); // invisible cursor
     start_color();
+    use_default_colors();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
     keypad(stdscr, true);
 }
 
-char* get_arg(int argc, char** argv, const std::string& arg, const std::string& alt_arg = "")
+std::string get_type(ByteBuffer& byteBuffer)
 {
-    auto res_arg = std::find(argv, argv + argc, arg);
-    if (res_arg != argv + argc && ++res_arg != argv + argc)
-        return *res_arg;
-    if (!alt_arg.empty())
-    {
-        auto res_alt = std::find(argv, argv + argc, alt_arg);
-        if (res_alt != argv + argc && ++res_alt != argv + argc)
-            return *res_alt;
-    }
-
-    return nullptr;
-}
-
-bool get_flag(int argc, char** argv, const std::string& flag)
-{
-    auto res = std::find(argv, argv + argc, flag);
-    return res != (argv + argc);
-}
-
-std::uint32_t get_starting_offset(const char* offset)
-{
-    if (!offset)
-        return 0;
-
-    std::string starting_offset(offset);
-    if (starting_offset.size() > 2
-        && starting_offset[0] == '0'
-        && (starting_offset[1] == 'x' || starting_offset[1] == 'X'))
-        return std::stoll(starting_offset, nullptr, 16);
-
-    return std::stoll(starting_offset, nullptr);
-}
-
-std::string get_type(DataBuffer& dataBuffer)
-{
-    if (dataBuffer.size() == 0)
+    if (byteBuffer.size() == 0)
         return {};
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(dataBuffer.size(), 32u);
+    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), 32u);
     query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.push_back(dataBuffer[i]);
+        query.push_back(byteBuffer[i]);
 
     return reader.get_type(query);
 }
 
-void start_hexit(IOHandler&  handler,
-                 const char* starting_offset,
-                 const char* input_path,
-                 bool        immutable = false)
+void start_hexit(IOHandler&        handler,
+                 const char* const starting_offset,
+                 const char* const input_path,
+                 bool              is_read_only = false)
 {
-    DataBuffer data(handler);
-    if (input_path && !data.open(input_path, immutable))
+    ChunkCache cache(handler);
+    if (input_path && !cache.open(input_path, is_read_only))
     {
         std::cerr << "Could not open " << input_path << '\n';
         std::exit(EXIT_FAILURE);
     }
 
+    ByteBuffer buffer(cache);
     init_ncurses();
-    TerminalWindow win(stdscr, data, get_type(data), get_starting_offset(starting_offset));
+    TerminalWindow win(stdscr, buffer, get_type(buffer), str_to_int(starting_offset));
     win.run();
 }
 }
 
 int main(int argc, char** argv)
 {
+    if (!validate_args(argc - 1, argv + 1))
+    {
+        std::cerr << "Invalid arguments given!\n";
+        print_help(*argv);
+        std::exit(EXIT_FAILURE);
+    }
+
     auto help            = get_flag(argc - 1, argv + 1, "-h") || get_flag(argc - 1, argv + 1, "--help");
     auto input_file      = get_arg(argc - 1, argv + 1, "-f", "--file");
     auto starting_offset = get_arg(argc - 1, argv + 1, "-o", "--offset");

@@ -1,5 +1,5 @@
 #include "TerminalWindow.h"
-#include "DataBuffer.h"
+#include "ByteBuffer.h"
 #include "Utilities.h"
 #include <csignal>
 #include <cstdint>
@@ -22,7 +22,7 @@ constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
 constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
 }
 
-TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
+TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
     : m_scroller(data.size(), BYTES_PER_LINE)
     , m_data(data)
     , m_type(file_type)
@@ -42,7 +42,6 @@ TerminalWindow::TerminalWindow(WINDOW* win, DataBuffer& data, const std::string&
 
     std::sprintf(m_line_offset_format, "%%0%dX", LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
-    m_data.load_chunk(m_byte / DataBuffer::capacity);
     resize();
 }
 
@@ -358,7 +357,7 @@ void TerminalWindow::consume_input(int key)
 
 void TerminalWindow::TerminalWindow::save()
 {
-    if (!m_data.has_dirty() || m_data.immutable())
+    if (!m_data.has_dirty() || m_data.is_read_only())
         return;
 
     m_data.save();
@@ -369,7 +368,7 @@ void TerminalWindow::prompt_save()
 {
     if (!m_data.has_dirty()
         || m_prompt != Prompt::NONE
-        || m_data.immutable())
+        || m_data.is_read_only())
         return;
 
     m_prompt = Prompt::SAVE;
@@ -385,7 +384,7 @@ void TerminalWindow::prompt_quit()
         m_update = true;
         m_input_buffer.clear();
     }
-    else if (!m_data.has_dirty() || m_data.immutable())
+    else if (!m_data.has_dirty() || m_data.is_read_only())
         m_quit = true;
     else
     {

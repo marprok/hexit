@@ -6,15 +6,18 @@ add_executable(HexitTest)
 target_include_directories(HexitTest PRIVATE ../src)
 
 target_sources(HexitTest PRIVATE
-    DataBufferTest.cc
+    ChunkCacheTest.cc
+    ByteBufferTest.cc
     SignatureReaderTest.cc
     ScrollerTest.cc
     UtilitiesTest.cc
-    ../src/DataBuffer.cc
+    IOHandlerMock.cc
+    ../src/ByteBuffer.cc
     ../src/ChunkCache.cc
     ../src/FileHandler.cc
     ../src/SignatureReader.cc
     ../src/Scroller.cc
+    ../src/Utilities.cc
 )
 
 target_link_libraries(HexitTest gtest_main)

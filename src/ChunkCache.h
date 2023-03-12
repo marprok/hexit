@@ -1,12 +1,11 @@
 #ifndef CHUNK_CACHE_H
 #define CHUNK_CACHE_H
 
+#include "IOHandler.h"
 #include <cstdint>
 #include <filesystem>
 
 namespace fs = std::filesystem;
-
-class IOHandler;
 
 class ChunkCache
 {
@@ -22,29 +21,34 @@ public:
 
     ChunkCache(IOHandler& handler);
 
-    const fs::path& name() const;
+    ChunkCache(const ChunkCache&) = delete;
 
-    std::uint32_t size() const;
+    ChunkCache& operator=(const ChunkCache&) = delete;
 
-    std::uint32_t total_chunks() const;
-
-    bool open(const fs::path& name, bool immutable = false);
+    bool open(const fs::path& name, bool read_only = false);
 
     bool load_chunk(std::uint32_t chunk_id);
 
     bool save_chunk(const DataChunk& chunk);
 
-    DataChunk& recent_chunk();
+    inline const fs::path& name() const { return m_handler.name(); }
 
-    DataChunk& fallback_chunk();
+    inline std::uint32_t size() const { return m_handler.size(); }
 
-    bool immutable() const;
+    inline std::uint32_t total_chunks() const { return m_total_chunks; }
+
+    inline DataChunk& recent() { return *m_recent; }
+
+    inline DataChunk& fallback() { return *m_fallback; }
+
+    inline bool is_read_only() const { return m_read_only; }
+
 private:
     IOHandler&    m_handler;
     std::uint32_t m_total_chunks;
     DataChunk     m_chunks[2];
-    std::uint8_t  m_recent_id;
-    std::uint8_t  m_fallback_id;
-    bool          m_immutable;
+    DataChunk*    m_recent;
+    DataChunk*    m_fallback;
+    bool          m_read_only;
 };
 #endif // CHUNK_CACHE_H

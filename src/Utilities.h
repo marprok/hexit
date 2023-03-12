@@ -1,8 +1,10 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <string>
 
 // Converts a hex character to the corresponding integer value.
 inline std::uint8_t hex_char_to_int(std::uint8_t chr)
@@ -36,4 +38,26 @@ inline std::uint8_t update_nibble(std::uint8_t nibble_id, std::uint8_t nibble_va
 
     return data;
 }
+
+inline bool is_hex_string(const std::string& str)
+{
+    bool skip = (str.compare(0, 2, "0x") == 0) || (str.compare(0, 2, "0X") == 0);
+    return !str.empty() && std::all_of(str.begin() + (skip ? 2 : 0), str.end(), [](unsigned char uc)
+                                       { return std::isxdigit(uc); });
+}
+
+inline bool is_dec_string(const std::string& str)
+{
+    return !str.empty() && std::all_of(str.begin(), str.end(), [](unsigned char uc)
+                                       { return std::isdigit(uc); });
+}
+
+bool validate_args(std::size_t argc, const char* const* const argv);
+
+const char* get_arg(int argc, const char* const* const argv, const std::string& arg, const std::string& alt_arg = "");
+
+bool get_flag(int argc, const char* const* const argv, const std::string& flag);
+
+std::uint32_t str_to_int(const char* const str);
+
 #endif

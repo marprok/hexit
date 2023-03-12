@@ -28,12 +28,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_sources(${PROJECT_NAME} PRIVATE
     src/hexit.cc
     src/TerminalWindow.cc
-    src/DataBuffer.cc
+    src/ByteBuffer.cc
     src/ChunkCache.cc
     src/FileHandler.cc
     src/StdInHandler.cc
     src/SignatureReader.cc
     src/Scroller.cc
+    src/Utilities.cc
 )
 
 target_link_libraries(${PROJECT_NAME} ${CURSES_LIBRARIES})
