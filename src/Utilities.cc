@@ -13,14 +13,16 @@ bool validate_args(std::size_t argc, const char* const* const argv)
     for (; i < argc && argv[i];)
     {
         std::string sarg(argv[i]);
-        if ((sarg == "--help" || sarg == "-h") && !help)
+        if (sarg == "--help" || sarg == "-h")
         {
+            if (help)
+                break;
             ++i;
             help = true;
         }
-        else if ((sarg == "--offset" || sarg == "-o") && !offset)
+        else if (sarg == "--offset" || sarg == "-o")
         {
-            if (!argv[i + 1])
+            if (offset || ((i + 1) >= argc) || !argv[i + 1])
                 break;
             ++i;
             if (!is_hex_string(argv[i]) && !is_dec_string(argv[i]))
@@ -28,9 +30,9 @@ bool validate_args(std::size_t argc, const char* const* const argv)
             ++i;
             offset = true;
         }
-        else if ((sarg == "--file" || sarg == "-f") && !file)
+        else if (sarg == "--file" || sarg == "-f")
         {
-            if (!argv[i + 1])
+            if (file || ((i + 1) >= argc) || !argv[i + 1])
                 break;
             ++i;
             if (!fs::exists(argv[i]))

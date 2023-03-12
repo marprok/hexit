@@ -137,6 +137,26 @@ TEST(UtilitiesTest, ValidateArgs)
         EXPECT_FALSE(validate_args(1, argv));
     }
     {
+        const char* argv[] = { "-f", current_path.c_str(), nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "--file", current_path.c_str(), nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "-f", "this file does not exist", nullptr };
+        EXPECT_FALSE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "--file", "this file does not exist", nullptr };
+        EXPECT_FALSE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { current_path.c_str(), "--file", nullptr };
+        EXPECT_FALSE(validate_args(2, argv));
+    }
+    {
         const char* argv[] = { "-o", nullptr };
         EXPECT_FALSE(validate_args(1, argv));
     }
@@ -145,35 +165,59 @@ TEST(UtilitiesTest, ValidateArgs)
         EXPECT_FALSE(validate_args(1, argv));
     }
     {
-        const char* argv[] = { "-f", "this file does not exist", "-o", "123", nullptr };
+        const char* argv[] = { "-o", "abcdef", nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "--offset", "0xabcdef", nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "-o", "1234", nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "--offset", "1234", nullptr };
+        EXPECT_TRUE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "1234", "--offset", nullptr };
+        EXPECT_FALSE(validate_args(2, argv));
+    }
+    {
+        const char* argv[] = { "-f", "this file does not exist", "-o", "1234", nullptr };
         EXPECT_FALSE(validate_args(4, argv));
     }
     {
-        const char* argv[] = { "-f", current_path.c_str(), "-o", "0xffee", nullptr };
+        const char* argv[] = { "-f", current_path.c_str(), "-o", "1234", nullptr };
         EXPECT_TRUE(validate_args(4, argv));
     }
     {
-        const char* argv[] = { "-o", "443", "-f", current_path.c_str(), nullptr };
+        const char* argv[] = { "-o", "1234", "-f", current_path.c_str(), nullptr };
         EXPECT_TRUE(validate_args(4, argv));
     }
     {
-        const char* argv[] = { "--offset", "554", "--file", current_path.c_str(), "--help", nullptr };
+        const char* argv[] = { "--offset", "1234", "--file", current_path.c_str(), "--help", nullptr };
         EXPECT_TRUE(validate_args(5, argv));
     }
     {
-        const char* argv[] = { "--offset", "554", "--file", current_path.c_str(), "--help", "-h", nullptr };
+        const char* argv[] = { "--offset", "1234", "--file", current_path.c_str(), "--help", "-h", nullptr };
         EXPECT_FALSE(validate_args(6, argv));
     }
     {
-        const char* argv[] = { "--offset", "554", "--file", current_path.c_str(), "-f", current_path.c_str(), nullptr };
+        const char* argv[] = { "--offset", "abcdef", "--file", current_path.c_str(), "-f", current_path.c_str(), nullptr };
         EXPECT_FALSE(validate_args(6, argv));
     }
     {
-        const char* argv[] = { "--offset", "554", "-o", "0x554", "-f", current_path.c_str(), nullptr };
+        const char* argv[] = { "--offset", "1234", "-o", "0xabcdef", "-f", current_path.c_str(), nullptr };
         EXPECT_FALSE(validate_args(6, argv));
     }
     {
-        const char* argv[] = { "0x554", "-f", current_path.c_str(), nullptr };
+        const char* argv[] = { "0xabcdef", "-f", current_path.c_str(), nullptr };
+        EXPECT_FALSE(validate_args(3, argv));
+    }
+    {
+        const char* argv[] = { "-d", "--some-random-flag", current_path.c_str(), nullptr };
         EXPECT_FALSE(validate_args(3, argv));
     }
 }
