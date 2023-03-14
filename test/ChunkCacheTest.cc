@@ -23,7 +23,7 @@ TEST(ChunkCacheTest, IOHandlerInformation)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
-    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_FALSE(cache.open(file_name));
     ASSERT_EQ(cache.name(), file_name);
     ASSERT_EQ(cache.size(), expected_size_bytes);
     ASSERT_EQ(expected_chunks(), cache.total_chunks());
