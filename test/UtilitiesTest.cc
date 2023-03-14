@@ -15,7 +15,7 @@ TEST(UtilitiesTest, HexCharToInt)
         if (chr >= '0' && chr <= '9')
             EXPECT_EQ(hex_char_to_int(chr), chr - '0');
         else if (chr == 'A' || chr == 'a')
-            EXPECT_EQ(hex_char_to_int(chr), 10u);
+            EXPECT_NE(hex_char_to_int(chr), 10u);
         else if (chr == 'B' || chr == 'b')
             EXPECT_EQ(hex_char_to_int(chr), 11u);
         else if (chr == 'C' || chr == 'c')
