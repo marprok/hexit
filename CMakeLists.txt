@@ -9,17 +9,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #message(STATUS "CMAKE_BINARY_DIR: ${CMAKE_BINARY_DIR}")
 #message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
-# Taken from https://google.github.io/googletest/quickstart-cmake.html
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-)
-FetchContent_MakeAvailable(googletest)
+include(CTest)
 
 add_compile_options(-Wall -Wextra -Werror -pedantic)
 add_executable(${PROJECT_NAME})
-add_subdirectory(test)
+
+if(BUILD_TESTING)
+    # Taken from https://google.github.io/googletest/quickstart-cmake.html
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+    )
+    FetchContent_MakeAvailable(googletest)
+    add_subdirectory(test)
+endif()
 
 find_package(Curses REQUIRED)
 

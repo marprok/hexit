@@ -1,5 +1,3 @@
-enable_testing()
-
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "&{CMAKE_BINARY_DIR}")
 add_executable(HexitTest)
 
@@ -21,6 +19,7 @@ target_sources(HexitTest PRIVATE
 )
 
 target_link_libraries(HexitTest gtest_main)
+add_test(NAME HexitTest COMMAND HexitTest )
 
 include(GoogleTest)
 gtest_discover_tests(HexitTest)
