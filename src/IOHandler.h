@@ -11,6 +11,12 @@ class IOHandler
 public:
     virtual ~IOHandler() = default;
 
+    IOHandler() = default;
+
+    IOHandler(const IOHandler&) = delete;
+
+    IOHandler& operator=(const IOHandler&) = delete;
+
     virtual bool open(const fs::path& path) = 0;
 
     virtual void close() = 0;
