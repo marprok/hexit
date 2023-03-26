@@ -9,10 +9,6 @@ class FileHandler : public IOHandler
 public:
     FileHandler() = default;
 
-    FileHandler(const FileHandler&) = delete;
-
-    FileHandler& operator=(const FileHandler&) = delete;
-
     ~FileHandler() = default;
 
     bool open(const fs::path& path) override;

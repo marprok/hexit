@@ -109,7 +109,6 @@ void TerminalWindow::run()
 
 void TerminalWindow::draw_line(std::uint32_t line)
 {
-    std::uint32_t col           = FIRST_HEX;
     std::uint32_t line_abs      = m_scroller.first() + line;
     std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
@@ -120,60 +119,34 @@ void TerminalWindow::draw_line(std::uint32_t line)
     line++;
     // Draw the line byte offset.
     mvwprintw(m_screen, line, 1, m_line_offset_format, line_byte);
-    // Draw the HEX part.
-    for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, col += 3, line_byte++)
+    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, line_byte++)
     {
-        if (i < bytes_to_draw)
-        {
-            bool is_dirty     = m_data.is_dirty(line_byte);
-            char hexDigits[3] = { 0 };
-            std::sprintf(hexDigits, "%02X", m_data[line_byte]);
-
-            if (line_byte == m_byte)
-            {
-                if (m_mode == Mode::HEX)
-                {
-                    wattron(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line, col + m_nibble, "%c", hexDigits[m_nibble]);
-                    wattroff(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line, col + 1 - m_nibble, "%c", hexDigits[1 - m_nibble]);
-                }
-                else
-                {
-                    wattron(m_screen, A_REVERSE);
-                    mvwprintw(m_screen, line, col, "%s", hexDigits);
-                    wattroff(m_screen, A_REVERSE);
-                }
-            }
-            else
-            {
-                if (is_dirty)
-                    wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-                mvwprintw(m_screen, line, col, "%s", hexDigits);
-                if (is_dirty)
-                    wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
-            }
-        }
-    }
-
-    line_byte = line_abs * BYTES_PER_LINE;
-    col       = FIRST_ASCII;
-    // Draw the ASCII part.
-    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, col++, line_byte++)
-    {
-        const char c        = m_data[line_byte];
-        const bool is_dirty = m_data.is_dirty(line_byte);
+        const std::uint8_t c            = m_data[line_byte];
+        bool               is_dirty     = m_data.is_dirty(line_byte);
+        char               hexDigits[3] = { 0 };
+        std::sprintf(hexDigits, "%02X", c);
         if (line_byte == m_byte)
         {
             wattron(m_screen, A_REVERSE);
-            mvwprintw(m_screen, line, col, "%c", std::isprint(c) ? c : '.');
-            wattroff(m_screen, A_REVERSE);
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(c) ? c : '.');
+            if (m_mode == Mode::HEX)
+            {
+                mvwprintw(m_screen, line, FIRST_HEX + i * 3 + m_nibble, "%c", hexDigits[m_nibble]);
+                wattroff(m_screen, A_REVERSE);
+                mvwprintw(m_screen, line, FIRST_HEX + i * 3 + 1 - m_nibble, "%c", hexDigits[1 - m_nibble]);
+            }
+            else
+            {
+                mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
+                wattroff(m_screen, A_REVERSE);
+            }
         }
         else
         {
             if (is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-            mvwprintw(m_screen, line, col, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
             if (is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
         }
