@@ -21,6 +21,23 @@ inline std::uint32_t    expected_chunks()
 }
 }
 
+// In case of an io error, the random access operator should return an empty optional.
+TEST(ByteBufferTest, RandomAccessError)
+{
+    IOHandlerMock handler;
+    ChunkCache    cache(handler);
+    ByteBuffer    buffer(cache);
+    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    handler.mock_io_fail(true);
+
+    for (std::uint32_t i = 0; i < buffer.size(); ++i)
+    {
+        const auto value = buffer[i];
+        EXPECT_FALSE(value.has_value());
+    }
+}
+
 // Accessing bytes from a chunk that already is in memory
 // should not cause any more loading to happen in the underlying IOHandler.
 TEST(ByteBufferTest, ChunkCaching)
@@ -36,14 +53,14 @@ TEST(ByteBufferTest, ChunkCaching)
          ++i)
     {
         // Access each byte to trigger the caching mechanism.
-        buffer[i];
+        ASSERT_TRUE(buffer[i].has_value());
     }
     // Accessing again the bytes from the first chunk, should not cause any loading.
     for (std::uint32_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * last_chunkc_id) && (i < buffer.size());
          ++i)
     {
-        buffer[i];
+        ASSERT_TRUE(buffer[i].has_value());
     }
     EXPECT_EQ(handler.load_count(), 2);
     EXPECT_EQ(cache.recent().m_id, last_chunkc_id);
@@ -64,16 +81,19 @@ TEST(ByteBufferTest, DataModification)
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(buffer.size(), expected_size_bytes);
     // access the byte to load the chunk
-    auto byte_old = buffer[byte_id];
+    const auto byte_old = buffer[byte_id];
+    ASSERT_TRUE(byte_old.has_value());
     EXPECT_EQ(byte_old, 0x0F);
     EXPECT_FALSE(buffer.is_dirty(byte_id));
     EXPECT_FALSE(buffer.has_dirty());
     buffer.set_byte(byte_id, 0xFF);
     EXPECT_TRUE(buffer.is_dirty(byte_id));
     EXPECT_TRUE(buffer.has_dirty());
-    EXPECT_EQ(buffer[byte_id], 0xFF);
+    const auto byte_new = buffer[byte_id];
+    ASSERT_TRUE(byte_new.has_value());
+    EXPECT_EQ(*byte_new, 0xFF);
     EXPECT_NE(expectation[byte_id], 0xFF);
-    EXPECT_EQ(expectation[byte_id], byte_old);
+    EXPECT_EQ(expectation[byte_id], *byte_old);
 }
 
 // ByteBuffer should have access to all the bytes that the underlying
@@ -88,10 +108,12 @@ TEST(ByteBufferTest, ByteRead)
     // start from the first chunk and the first byte
     ASSERT_TRUE(cache.load_chunk(0));
     ASSERT_EQ(cache.recent().m_id, 0);
-    bool match = true;
-    for (std::uint32_t i = 0; i < buffer.size() && match; ++i)
-        match = buffer[i] == expectation[i];
-    EXPECT_TRUE(match);
+    for (std::uint32_t i = 0; i < buffer.size(); ++i)
+    {
+        const auto value = buffer[i];
+        ASSERT_TRUE(value.has_value());
+        ASSERT_EQ(*value, expectation[i]);
+    }
 }
 
 // This is the same test as DataRead but this time the bytes get accessed
@@ -106,10 +128,12 @@ TEST(ByteBufferTest, ByteReadReverse)
     // start from the last chunk and the last byte
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
-    bool match = true;
-    for (std::uint32_t i = buffer.size() - 1; i > 0 && match; --i)
-        match = buffer[i] == expectation[i];
-    EXPECT_TRUE(match);
+    for (std::uint32_t i = buffer.size() - 1; i > 0; --i)
+    {
+        const auto value = buffer[i];
+        ASSERT_TRUE(value.has_value());
+        ASSERT_EQ(*value, expectation[i]);
+    }
 }
 
 // Setting bytes using ByteBuffer will not update the actual data
@@ -133,8 +157,10 @@ TEST(ByteBufferTest, SaveBytes)
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
-            EXPECT_EQ(buffer[id * ChunkCache::capacity + i], id + 1);
-            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
+            const auto value = buffer[id * ChunkCache::capacity + i];
+            ASSERT_TRUE(value.has_value());
+            EXPECT_EQ(*value, id + 1);
+            EXPECT_NE(expectation[i], *value);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
@@ -149,8 +175,10 @@ TEST(ByteBufferTest, SaveBytes)
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
-            EXPECT_EQ(expectation[i], buffer[id * ChunkCache::capacity + i]);
-            EXPECT_EQ(expectation[i], id + 1);
+            const auto value = buffer[id * ChunkCache::capacity + i];
+            ASSERT_TRUE(value.has_value());
+            EXPECT_EQ(expectation[i], *value);
+            EXPECT_EQ(*value, id + 1);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
@@ -178,8 +206,10 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
-            EXPECT_EQ(buffer[id * ChunkCache::capacity + i], id + 1);
-            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
+            const auto value = buffer[id * ChunkCache::capacity + i];
+            ASSERT_TRUE(value.has_value());
+            EXPECT_EQ(*value, id + 1);
+            EXPECT_NE(expectation[i], *value);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
@@ -194,7 +224,9 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
         for (std::size_t i = 0; i < data_chunk.m_count; ++i)
         {
-            EXPECT_NE(expectation[i], buffer[id * ChunkCache::capacity + i]);
+            const auto value = buffer[id * ChunkCache::capacity + i];
+            ASSERT_TRUE(value.has_value());
+            EXPECT_NE(expectation[i], *value);
             EXPECT_NE(expectation[i], id + 1);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);

@@ -8,7 +8,7 @@ ByteBuffer::ByteBuffer(ChunkCache& cache)
 }
 
 // No bounds checking is performed by the operator
-std::uint8_t ByteBuffer::operator[](std::uint32_t byte_id)
+std::optional<std::uint8_t> ByteBuffer::operator[](std::uint32_t byte_id)
 {
     std::uint32_t chunk_id    = byte_id / ChunkCache::capacity;
     std::uint32_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
@@ -23,8 +23,7 @@ std::uint8_t ByteBuffer::operator[](std::uint32_t byte_id)
 
     // chunk miss, load from disk...
     if (!m_cache.load_chunk(chunk_id))
-        throw std::runtime_error(std::string("ByteBuffer::operator[] Could not load chunk ")
-                                 + std::to_string(chunk_id));
+        return std::nullopt;
 
     return m_cache.recent().m_data[relative_id];
 }

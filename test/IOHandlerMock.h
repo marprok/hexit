@@ -33,6 +33,8 @@ public:
 
     std::uint32_t load_count() const;
 
+    void mock_io_fail(bool should_fail);
+
 private:
     inline void randomize()
     {
@@ -46,5 +48,6 @@ private:
     std::uint8_t  m_data[chunk_count][ChunkCache::capacity];
     std::uint32_t m_id;
     std::uint32_t m_load_count;
+    bool          m_io_fail;
 };
 #endif // IOHANDLER_MOCK_H

@@ -121,14 +121,20 @@ void TerminalWindow::draw_line(std::uint32_t line)
     mvwprintw(m_screen, line, 1, m_line_offset_format, line_byte);
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, line_byte++)
     {
-        const std::uint8_t c            = m_data[line_byte];
-        bool               is_dirty     = m_data.is_dirty(line_byte);
-        char               hexDigits[3] = { 0 };
-        std::sprintf(hexDigits, "%02X", c);
+        const auto c = m_data[line_byte];
+        if (!c.has_value())
+        {
+            m_quit = true;
+            return;
+        }
+
+        bool is_dirty     = m_data.is_dirty(line_byte);
+        char hexDigits[3] = { 0 };
+        std::sprintf(hexDigits, "%02X", *c);
         if (line_byte == m_byte)
         {
             wattron(m_screen, A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(*c) ? *c : '.');
             if (m_mode == Mode::HEX)
             {
                 mvwprintw(m_screen, line, FIRST_HEX + i * 3 + m_nibble, "%c", hexDigits[m_nibble]);
@@ -145,7 +151,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
         {
             if (is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(c) ? c : '.');
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(*c) ? *c : '.');
             mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
             if (is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
@@ -401,7 +407,11 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
     if (m_mode == Mode::ASCII && std::isprint(chr))
         new_value = chr;
     else if (m_mode == Mode::HEX && std::isxdigit(chr))
-        new_value = update_nibble(m_nibble, chr, m_data[m_byte]);
+    {
+        // No error checking is needed for the operator[]
+        // since we have already drawn the byte by this point.
+        new_value = update_nibble(m_nibble, chr, *m_data[m_byte]);
+    }
     else
         return;
 

@@ -43,7 +43,15 @@ std::string get_type(ByteBuffer& byteBuffer)
     query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.push_back(byteBuffer[i]);
+    {
+        const auto value = byteBuffer[i];
+        if (!value.has_value())
+        {
+            std::cerr << "Error reading file signature!\n";
+            std::exit(EXIT_FAILURE);
+        }
+        query.push_back(*value);
+    }
 
     return reader.get_type(query);
 }
@@ -97,5 +105,5 @@ int main(int argc, char** argv)
         start_hexit(handler, starting_offset, input_file);
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
