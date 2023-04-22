@@ -4,6 +4,7 @@
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
+#include <iostream>
 
 namespace
 {
@@ -48,13 +49,21 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
 TerminalWindow::~TerminalWindow()
 {
     endwin();
+    if (!m_error_msg.empty())
+        std::cerr << m_error_msg << std::endl;
 }
 
 void TerminalWindow::run()
 {
     while (!m_quit)
     {
-        update_screen();
+        if (!update_screen())
+        {
+            // not needed now but set the flag for possible future use
+            m_quit = true;
+            break;
+        }
+
         reset_cursor();
         wrefresh(m_screen);
         auto c = wgetch(m_screen);
@@ -107,7 +116,7 @@ void TerminalWindow::run()
     }
 }
 
-void TerminalWindow::draw_line(std::uint32_t line)
+bool TerminalWindow::draw_line(std::uint32_t line)
 {
     std::uint32_t line_abs      = m_scroller.first() + line;
     std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
@@ -119,22 +128,24 @@ void TerminalWindow::draw_line(std::uint32_t line)
     line++;
     // Draw the line byte offset.
     mvwprintw(m_screen, line, 1, m_line_offset_format, line_byte);
-    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, line_byte++)
+    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, ++line_byte)
     {
-        const auto c = m_data[line_byte];
-        if (!c.has_value())
+        const auto opt = m_data[line_byte];
+        if (!opt.has_value()) [[unlikely]]
         {
-            m_quit = true;
-            return;
+            m_error_msg.reserve(255);
+            m_error_msg = "Could not read bytes at offset ";
+            m_error_msg += std::to_string(line_byte);
+            return false;
         }
-
-        bool is_dirty     = m_data.is_dirty(line_byte);
-        char hexDigits[3] = { 0 };
-        std::sprintf(hexDigits, "%02X", *c);
+        const std::uint8_t bt           = *opt;
+        const bool         is_dirty     = m_data.is_dirty(line_byte);
+        char               hexDigits[3] = { 0 };
+        std::sprintf(hexDigits, "%02X", bt);
         if (line_byte == m_byte)
         {
             wattron(m_screen, A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(*c) ? *c : '.');
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
             if (m_mode == Mode::HEX)
             {
                 mvwprintw(m_screen, line, FIRST_HEX + i * 3 + m_nibble, "%c", hexDigits[m_nibble]);
@@ -151,23 +162,26 @@ void TerminalWindow::draw_line(std::uint32_t line)
         {
             if (is_dirty)
                 wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(*c) ? *c : '.');
+            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
             mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
             if (is_dirty)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
         }
     }
+
+    return true;
 }
 
-void TerminalWindow::update_screen()
+bool TerminalWindow::update_screen()
 {
     if (m_update)
     {
         werase(m_screen);
         box(m_screen, 0, 0);
 
-        for (std::uint32_t line = 0; line < m_scroller.visible(); line++)
-            draw_line(line);
+        for (std::uint32_t line = 0; line < m_scroller.visible(); ++line)
+            if (!draw_line(line))
+                return false;
 
         const std::string file_name = m_data.name().filename();
         if (m_data.has_dirty())
@@ -201,6 +215,8 @@ void TerminalWindow::update_screen()
     // Draw the current byte offset.
     if (m_prompt == Prompt::NONE)
         mvwprintw(m_screen, LINES - 1, 1, m_line_offset_format, m_byte);
+
+    return true;
 }
 
 void TerminalWindow::resize()

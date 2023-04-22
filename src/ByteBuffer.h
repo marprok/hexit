@@ -20,7 +20,7 @@ public:
 
     void set_byte(std::uint32_t byte_id, std::uint8_t byte_value);
 
-    void save();
+    bool save();
 
     inline bool is_dirty(std::uint32_t byte_id) const { return m_dirty_bytes.contains(byte_id); }
 

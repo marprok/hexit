@@ -166,7 +166,7 @@ TEST(ByteBufferTest, SaveBytes)
         }
     }
     // save all the dirty bytes
-    buffer.save();
+    EXPECT_TRUE(buffer.save());
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
@@ -215,7 +215,7 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         }
     }
     // save all the dirty bytes
-    buffer.save();
+    EXPECT_TRUE(buffer.save());
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
@@ -232,4 +232,22 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
             ASSERT_EQ(id, cache.recent().m_id);
         }
     }
+}
+
+TEST(ByteBufferTest, ErrorDuringSave)
+{
+    IOHandlerMock handler;
+    ChunkCache    cache(handler);
+    ByteBuffer    buffer(cache);
+
+    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_EQ(buffer.size(), expected_size_bytes);
+
+    EXPECT_FALSE(buffer.is_dirty(0));
+    EXPECT_FALSE(buffer.has_dirty());
+    buffer.set_byte(0, 0xBE);
+    EXPECT_TRUE(buffer.is_dirty(0));
+    EXPECT_TRUE(buffer.has_dirty());
+    handler.mock_io_fail(true);
+    EXPECT_FALSE(buffer.save());
 }

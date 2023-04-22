@@ -39,25 +39,26 @@ void ByteBuffer::set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
     m_dirty_bytes.insert_or_assign(byte_id, byte_value);
 }
 
-void ByteBuffer::save()
+bool ByteBuffer::save()
 {
     if (!has_dirty() || m_cache.is_read_only())
-        return;
+        return true;
 
     for (const auto& [chunk_id, changes] : m_dirty_chunks)
     {
         if (!m_cache.load_chunk(chunk_id))
-            throw std::runtime_error(std::string("ByteBuffer::save Could not load chunk ")
-                                     + std::to_string(chunk_id));
+            return false;
+
         auto& chunk = m_cache.recent();
         for (auto& change : changes)
             chunk.m_data[change] = m_dirty_bytes[chunk_id * ChunkCache::capacity + change];
 
         if (!m_cache.save_chunk(chunk))
-            throw std::runtime_error(std::string("ByteBuffer::save Could not save chunk ")
-                                     + std::to_string(chunk_id));
+            return false;
     }
 
     m_dirty_bytes.clear();
     m_dirty_chunks.clear();
+
+    return true;
 }
