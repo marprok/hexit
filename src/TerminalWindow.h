@@ -60,6 +60,13 @@ private:
 
     void handle_prompt(int key);
 
+    inline void set_error_and_quit(const std::string& err)
+    {
+        m_error_msg.reserve(err.size());
+        m_error_msg = err;
+        m_quit      = true;
+    }
+
     enum class Mode
     {
         HEX,

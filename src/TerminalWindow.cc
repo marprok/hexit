@@ -55,15 +55,8 @@ TerminalWindow::~TerminalWindow()
 
 void TerminalWindow::run()
 {
-    while (!m_quit)
+    while (!m_quit && update_screen())
     {
-        if (!update_screen())
-        {
-            // not needed now but set the flag for possible future use
-            m_quit = true;
-            break;
-        }
-
         reset_cursor();
         wrefresh(m_screen);
         auto c = wgetch(m_screen);
@@ -133,9 +126,7 @@ bool TerminalWindow::draw_line(std::uint32_t line)
         const auto opt = m_data[line_byte];
         if (!opt.has_value()) [[unlikely]]
         {
-            m_error_msg.reserve(255);
-            m_error_msg = "Could not read bytes at offset ";
-            m_error_msg += std::to_string(line_byte);
+            set_error_and_quit("Could not read bytes at offset: " + std::to_string(line_byte));
             return false;
         }
         const std::uint8_t bt           = *opt;
@@ -178,11 +169,11 @@ bool TerminalWindow::update_screen()
     {
         werase(m_screen);
         box(m_screen, 0, 0);
-
         for (std::uint32_t line = 0; line < m_scroller.visible(); ++line)
+        {
             if (!draw_line(line))
                 return false;
-
+        }
         const std::string file_name = m_data.name().filename();
         if (m_data.has_dirty())
             mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "*%s", file_name.c_str());
@@ -355,8 +346,10 @@ void TerminalWindow::TerminalWindow::save()
     if (!m_data.has_dirty() || m_data.is_read_only())
         return;
 
-    m_data.save();
-    m_update = true;
+    if (!m_data.save())
+        set_error_and_quit("Save failed!");
+    else
+        m_update = true;
 }
 
 void TerminalWindow::prompt_save()
