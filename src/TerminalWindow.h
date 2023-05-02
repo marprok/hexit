@@ -22,9 +22,9 @@ public:
     void run();
 
 private:
-    void draw_line(std::uint32_t line);
+    bool draw_line(std::uint32_t line);
 
-    void update_screen();
+    bool update_screen();
 
     void resize();
 
@@ -60,6 +60,13 @@ private:
 
     void handle_prompt(int key);
 
+    inline void set_error_and_quit(const std::string& err)
+    {
+        m_error_msg.reserve(err.size());
+        m_error_msg = err;
+        m_quit      = true;
+    }
+
     enum class Mode
     {
         HEX,
@@ -85,5 +92,6 @@ private:
     char              m_line_offset_format[sizeof("%%0%dX") + 2];
     bool              m_quit;
     std::string       m_input_buffer;
+    std::string       m_error_msg;
 };
 #endif // TERMINAL_WINDOW_H

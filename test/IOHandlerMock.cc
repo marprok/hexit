@@ -3,6 +3,7 @@
 IOHandlerMock::IOHandlerMock()
     : m_id(0u)
     , m_load_count(0u)
+    , m_io_fail(false)
 {
     randomize();
 }
@@ -10,7 +11,7 @@ IOHandlerMock::IOHandlerMock()
 bool IOHandlerMock::open(const fs::path& path)
 {
     m_name = path;
-    return true;
+    return !m_io_fail;
 }
 
 void IOHandlerMock::close()
@@ -28,7 +29,7 @@ bool IOHandlerMock::read(std::uint8_t* o_buffer, std::size_t buffer_size)
     std::memcpy(o_buffer, m_data[m_id], buffer_size);
     m_load_count++;
     m_id++;
-    return true;
+    return !m_io_fail;
 }
 
 bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
@@ -40,13 +41,13 @@ bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
         return false;
 
     std::memcpy(m_data[m_id], i_buffer, buffer_size);
-    return true;
+    return !m_io_fail;
 }
 
 bool IOHandlerMock::seek(std::uint32_t offset)
 {
     m_id = offset / ChunkCache::capacity;
-    return true;
+    return !m_io_fail;
 }
 
 const fs::path& IOHandlerMock::name() const
@@ -62,3 +63,8 @@ std::uint32_t IOHandlerMock::size() const
 std::uint8_t* IOHandlerMock::data() { return reinterpret_cast<std::uint8_t*>(m_data); }
 
 std::uint32_t IOHandlerMock::load_count() const { return m_load_count; }
+
+void IOHandlerMock::mock_io_fail(bool should_fail)
+{
+    m_io_fail = should_fail;
+}
