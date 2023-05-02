@@ -124,7 +124,7 @@ bool TerminalWindow::draw_line(std::uint32_t line)
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, ++line_byte)
     {
         const auto opt = m_data[line_byte];
-        if (!opt.has_value()) [[unlikely]]
+        if (!opt.has_value())
         {
             set_error_and_quit("Could not read bytes at offset: " + std::to_string(line_byte));
             return false;
