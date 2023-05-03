@@ -1,6 +1,8 @@
 #ifndef HEXIT_CONFIG_H
 #define HEXIT_CONFIG_H
 
+namespace Hexit
+{
 inline constexpr bool          SUPPORT_BIG_FILES = false;
 inline constexpr std::uint32_t BYTES_PER_LINE    = 16;
 inline constexpr std::uint32_t ASCII_PADDING     = 2;                                                                         // The distance between hex and ASCII digits.
@@ -16,5 +18,6 @@ inline constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
 inline constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
 inline constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
 inline constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
+} // namespace
 
 #endif // HEXIT_CONFIG_H

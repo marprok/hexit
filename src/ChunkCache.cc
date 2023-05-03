@@ -1,6 +1,8 @@
 #include "ChunkCache.h"
 #include "IOHandler.h"
 
+namespace Hexit
+{
 ChunkCache::ChunkCache(IOHandler& handler)
     : m_handler(handler)
     , m_total_chunks(0)
@@ -53,3 +55,4 @@ bool ChunkCache::save_chunk(const DataChunk& chunk)
 
     return m_handler.write(chunk.m_data, chunk.m_count);
 }
+} // namespace

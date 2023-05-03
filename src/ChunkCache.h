@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <filesystem>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
 class ChunkCache
@@ -51,4 +53,5 @@ private:
     DataChunk*    m_fallback;
     bool          m_read_only;
 };
+} // namespace
 #endif // CHUNK_CACHE_H

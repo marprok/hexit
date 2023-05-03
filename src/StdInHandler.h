@@ -4,6 +4,8 @@
 #include "IOHandler.h"
 #include <vector>
 
+namespace Hexit
+{
 class StdInHandler : public IOHandler
 {
 public:
@@ -31,5 +33,5 @@ private:
     std::uint32_t             m_size;
     std::uint32_t             m_offset;
 };
-
+} // namespace
 #endif

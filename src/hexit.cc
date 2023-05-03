@@ -10,6 +10,7 @@
 #include <ncurses.h>
 #include <string>
 
+using namespace Hexit;
 namespace
 {
 inline void print_help(const char* bin)

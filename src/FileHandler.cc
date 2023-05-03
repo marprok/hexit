@@ -1,5 +1,7 @@
 #include "FileHandler.h"
 
+namespace Hexit
+{
 bool FileHandler::open(const fs::path& path)
 {
     if (!fs::exists(path))
@@ -66,3 +68,4 @@ std::uint32_t FileHandler::size() const
 {
     return m_size;
 }
+} // namepsace

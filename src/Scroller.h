@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace Hexit
+{
 class Scroller
 {
 public:
@@ -32,5 +34,5 @@ private:
     std::uint32_t m_visible_lines;
     std::uint32_t m_active_line;
 };
-
+} // namespace
 #endif // SCROLLER_H

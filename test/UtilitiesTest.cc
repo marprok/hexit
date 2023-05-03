@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
 TEST(UtilitiesTest, HexCharToInt)
@@ -221,3 +223,4 @@ TEST(UtilitiesTest, ValidateArgs)
         EXPECT_FALSE(validate_args(3, argv));
     }
 }
+} // namespace
