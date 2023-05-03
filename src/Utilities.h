@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <string>
 
+namespace Hexit
+{
 // Converts a hex character to the corresponding integer value.
 inline std::uint8_t hex_char_to_int(std::uint8_t chr)
 {
@@ -59,5 +61,5 @@ const char* get_arg(int argc, const char* const* const argv, const std::string& 
 bool get_flag(int argc, const char* const* const argv, const std::string& flag);
 
 std::uint32_t str_to_int(const char* const str);
-
+} // namespace
 #endif

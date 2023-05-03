@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace Hexit
+{
 class ByteBuffer
 {
 public:
@@ -40,5 +42,5 @@ private:
     DirtyChunkMap m_dirty_chunks;
     ChunkCache&   m_cache;
 };
-
+} // mamespace
 #endif // BYTE_BUFFER_H

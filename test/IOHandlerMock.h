@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <cstring>
 
+namespace Hexit
+{
 class IOHandlerMock : public IOHandler
 {
 public:
@@ -50,4 +52,5 @@ private:
     std::uint32_t m_load_count;
     bool          m_io_fail;
 };
+} // namespace
 #endif // IOHANDLER_MOCK_H

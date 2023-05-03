@@ -3,10 +3,10 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
-namespace
-{
 const std::string       file_name("test/path/to/somewhere");
 constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 inline std::uint32_t    expected_chunks()
@@ -15,7 +15,6 @@ inline std::uint32_t    expected_chunks()
     if (expected_size_bytes % ChunkCache::capacity)
         chunks++;
     return chunks;
-}
 }
 
 // General information regarding the IOHandler interface.
@@ -106,3 +105,4 @@ TEST(ChunkCacheTest, SaveChunkReadOnly)
     EXPECT_NE(std::memcmp(expectation, data_chunk.m_data, data_chunk.m_count), 0);
     EXPECT_NE(expectation[0], 0xEF);
 }
+} // namespace

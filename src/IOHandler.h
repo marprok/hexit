@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <filesystem>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
 class IOHandler
@@ -31,5 +33,5 @@ public:
 
     virtual std::uint32_t size() const = 0;
 };
-
+} // namespace
 #endif // IO_HANDLER_H

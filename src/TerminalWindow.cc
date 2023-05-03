@@ -1,28 +1,14 @@
 #include "TerminalWindow.h"
 #include "ByteBuffer.h"
 #include "Utilities.h"
+#include "config.h"
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
 
-namespace
+namespace Hexit
 {
-constexpr std::uint32_t BYTES_PER_LINE  = 16;
-constexpr std::uint32_t ASCII_PADDING   = 2;                         // The distance between hex and ASCII digits.
-constexpr std::uint32_t HEX_PADDING     = 2;                         // The distatnce between the line byte offset and the ASCII digits.
-constexpr std::uint32_t LINE_OFFSET_LEN = sizeof(std::uint32_t) * 2; // The number of hex digits used for the line byte offset.
-constexpr std::uint32_t FIRST_HEX       = LINE_OFFSET_LEN + 1 + HEX_PADDING;
-constexpr std::uint32_t FIRST_ASCII     = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
-// Special key sequences.
-constexpr int CTRL_Q = 'q' & 0x1F; // Quit
-constexpr int CTRL_S = 's' & 0x1F; // Save
-constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
-constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
-constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
-constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
-}
-
 TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
     : m_scroller(data.size(), BYTES_PER_LINE)
     , m_data(data)
@@ -498,3 +484,4 @@ void TerminalWindow::handle_prompt(int key)
         }
     }
 }
+} // namespace

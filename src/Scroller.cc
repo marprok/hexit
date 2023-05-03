@@ -1,6 +1,8 @@
 #include "Scroller.h"
 #include <algorithm>
 
+namespace Hexit
+{
 Scroller::Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line)
     : m_first_line(0u)
     , m_last_line(0u)
@@ -62,3 +64,4 @@ bool Scroller::move_up()
     }
     return scrolled;
 }
+} // namespace

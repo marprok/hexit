@@ -6,6 +6,8 @@
 #include <ncurses.h>
 #include <string>
 
+namespace Hexit
+{
 class ByteBuffer;
 
 class TerminalWindow
@@ -94,4 +96,5 @@ private:
     std::string       m_input_buffer;
     std::string       m_error_msg;
 };
+} // namespace
 #endif // TERMINAL_WINDOW_H

@@ -1,6 +1,8 @@
 #include "SignatureReader.h"
 #include <gtest/gtest.h>
 
+namespace Hexit
+{
 TEST(SignatureReaderTest, SignatureMapping)
 {
     SignatureReader reader;
@@ -46,3 +48,4 @@ TEST(SignatureReaderTest, SignatureMapping)
     EXPECT_EQ(reader.get_type({ 0xFF, 0xF2 }), std::string("mp3"));
     EXPECT_EQ(reader.get_type({ 0x42, 0x4D }), std::string("bmp"));
 }
+} // namespace

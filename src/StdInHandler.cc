@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iterator>
 
+namespace Hexit
+{
 bool StdInHandler::open(const fs::path& path)
 {
     std::cin.unsetf(std::ios_base::skipws);
@@ -66,3 +68,4 @@ std::uint32_t StdInHandler::size() const
 {
     return m_size;
 }
+} // namespace

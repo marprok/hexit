@@ -4,6 +4,8 @@
 #include "IOHandler.h"
 #include <fstream>
 
+namespace Hexit
+{
 class FileHandler : public IOHandler
 {
 public:
@@ -30,5 +32,6 @@ private:
     fs::path      m_name;
     std::uint32_t m_size;
 };
+} // namespace
 
 #endif

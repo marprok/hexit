@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace Hexit
+{
 class SignatureReader
 {
 public:
@@ -28,5 +30,5 @@ private:
     };
     std::vector<Signature> m_signatures;
 };
-
+} // namespace
 #endif // SIGNATURE_READER_H

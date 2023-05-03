@@ -2,6 +2,8 @@
 #include "IOHandler.h"
 #include <string>
 
+namespace Hexit
+{
 ByteBuffer::ByteBuffer(ChunkCache& cache)
     : m_cache(cache)
 {
@@ -62,3 +64,4 @@ bool ByteBuffer::save()
 
     return true;
 }
+} // namespace

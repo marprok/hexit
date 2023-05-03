@@ -1,6 +1,8 @@
 #include "Scroller.h"
 #include <gtest/gtest.h>
 
+namespace Hexit
+{
 TEST(ScrollerTest, InvalidParameters)
 {
     Scroller scroller(0u, 0u);
@@ -91,3 +93,4 @@ TEST(ScrollerTest, AutoScrolling)
             EXPECT_FALSE(scroller.move_up());
     }
 }
+} // namespace

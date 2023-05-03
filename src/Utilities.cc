@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <iostream>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
 bool validate_args(std::size_t argc, const char* const* const argv)
@@ -80,3 +82,4 @@ std::uint32_t str_to_int(const char* const str)
 
     return 0u;
 }
+} // namespace

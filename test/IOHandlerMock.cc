@@ -1,5 +1,7 @@
 #include "IOHandlerMock.h"
 
+namespace Hexit
+{
 IOHandlerMock::IOHandlerMock()
     : m_id(0u)
     , m_load_count(0u)
@@ -68,3 +70,4 @@ void IOHandlerMock::mock_io_fail(bool should_fail)
 {
     m_io_fail = should_fail;
 }
+} // namespace

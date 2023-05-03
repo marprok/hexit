@@ -6,10 +6,10 @@
 #include <memory>
 #include <string>
 
+namespace Hexit
+{
 namespace fs = std::filesystem;
 
-namespace
-{
 const std::string       file_name("test/path/to/somewhere");
 constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 inline std::uint32_t    expected_chunks()
@@ -18,7 +18,6 @@ inline std::uint32_t    expected_chunks()
     if (expected_size_bytes % ChunkCache::capacity)
         chunks++;
     return chunks;
-}
 }
 
 // In case of an io error, the random access operator should return an empty optional.
@@ -251,3 +250,4 @@ TEST(ByteBufferTest, ErrorDuringSave)
     handler.mock_io_fail(true);
     EXPECT_FALSE(buffer.save());
 }
+} // namespace

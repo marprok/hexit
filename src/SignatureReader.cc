@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cstring>
 
+namespace Hexit
+{
 SignatureReader::SignatureReader()
 {
     m_signatures.push_back({ { 0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C }, "asf", {} });
@@ -67,3 +69,4 @@ std::string SignatureReader::get_type(const std::vector<std::uint8_t>& query)
 
     return "unk";
 }
+} // namespace
