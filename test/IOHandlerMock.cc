@@ -1,7 +1,5 @@
 #include "IOHandlerMock.h"
 
-namespace Hexit
-{
 IOHandlerMock::IOHandlerMock()
     : m_id(0u)
     , m_load_count(0u)
@@ -24,7 +22,7 @@ bool IOHandlerMock::read(std::uint8_t* o_buffer, std::size_t buffer_size)
 {
     if (!o_buffer
         || buffer_size == 0
-        || buffer_size > ChunkCache::capacity
+        || buffer_size > Hexit::ChunkCache::capacity
         || m_id >= chunk_count)
         return false;
 
@@ -38,7 +36,7 @@ bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
 {
     if (!i_buffer
         || buffer_size == 0
-        || buffer_size > ChunkCache::capacity
+        || buffer_size > Hexit::ChunkCache::capacity
         || m_id >= chunk_count)
         return false;
 
@@ -48,7 +46,7 @@ bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
 
 bool IOHandlerMock::seek(std::uint32_t offset)
 {
-    m_id = offset / ChunkCache::capacity;
+    m_id = offset / Hexit::ChunkCache::capacity;
     return !m_io_fail;
 }
 
@@ -59,7 +57,7 @@ const fs::path& IOHandlerMock::name() const
 
 std::uint32_t IOHandlerMock::size() const
 {
-    return chunk_count * ChunkCache::capacity;
+    return chunk_count * Hexit::ChunkCache::capacity;
 }
 
 std::uint8_t* IOHandlerMock::data() { return reinterpret_cast<std::uint8_t*>(m_data); }
@@ -70,4 +68,3 @@ void IOHandlerMock::mock_io_fail(bool should_fail)
 {
     m_io_fail = should_fail;
 }
-} // namespace

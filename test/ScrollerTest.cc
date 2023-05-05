@@ -1,8 +1,10 @@
 #include "Scroller.h"
 #include <gtest/gtest.h>
 
-namespace Hexit
+namespace
 {
+using namespace Hexit;
+
 TEST(ScrollerTest, InvalidParameters)
 {
     Scroller scroller(0u, 0u);

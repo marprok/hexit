@@ -6,13 +6,15 @@
 #include <memory>
 #include <string>
 
-namespace Hexit
+namespace
 {
 namespace fs = std::filesystem;
+using namespace Hexit;
 
 const std::string       file_name("test/path/to/somewhere");
 constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
-inline std::uint32_t    expected_chunks()
+
+inline std::uint32_t expected_chunks()
 {
     std::uint32_t chunks = expected_size_bytes / ChunkCache::capacity;
     if (expected_size_bytes % ChunkCache::capacity)

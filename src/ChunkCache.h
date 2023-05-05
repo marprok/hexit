@@ -53,5 +53,5 @@ private:
     DataChunk*    m_fallback;
     bool          m_read_only;
 };
-} // namespace
+} // namespace Hexit
 #endif // CHUNK_CACHE_H

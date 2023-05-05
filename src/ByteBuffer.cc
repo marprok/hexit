@@ -64,4 +64,4 @@ bool ByteBuffer::save()
 
     return true;
 }
-} // namespace
+} // namespace Hexit

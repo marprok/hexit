@@ -64,4 +64,4 @@ bool Scroller::move_up()
     }
     return scrolled;
 }
-} // namespace
+} // namespace Hexit

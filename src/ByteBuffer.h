@@ -42,5 +42,5 @@ private:
     DirtyChunkMap m_dirty_chunks;
     ChunkCache&   m_cache;
 };
-} // mamespace
+} // mamespace Hexit
 #endif // BYTE_BUFFER_H

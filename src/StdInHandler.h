@@ -33,5 +33,5 @@ private:
     std::uint32_t             m_size;
     std::uint32_t             m_offset;
 };
-} // namespace
-#endif
+} // namespace Hexit
+#endif // STDIN_HANDLER_H

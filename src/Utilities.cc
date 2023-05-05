@@ -82,4 +82,4 @@ std::uint32_t str_to_int(const char* const str)
 
     return 0u;
 }
-} // namespace
+} // namespace Hexit

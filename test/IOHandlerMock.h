@@ -6,9 +6,9 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace Hexit
-{
-class IOHandlerMock : public IOHandler
+namespace fs = std::filesystem;
+
+class IOHandlerMock : public Hexit::IOHandler
 {
 public:
     static constexpr std::uint32_t chunk_count = 255;
@@ -42,15 +42,14 @@ private:
     {
         std::srand(std::time(nullptr));
         std::uint8_t* bytes = data();
-        for (std::size_t i = 0; i < chunk_count * ChunkCache::capacity; ++i)
+        for (std::size_t i = 0; i < chunk_count * Hexit::ChunkCache::capacity; ++i)
             bytes[i] = rand() % 256;
     }
 
     fs::path      m_name;
-    std::uint8_t  m_data[chunk_count][ChunkCache::capacity];
+    std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];
     std::uint32_t m_id;
     std::uint32_t m_load_count;
     bool          m_io_fail;
 };
-} // namespace
 #endif // IOHANDLER_MOCK_H

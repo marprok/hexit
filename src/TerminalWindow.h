@@ -96,5 +96,5 @@ private:
     std::string       m_input_buffer;
     std::string       m_error_msg;
 };
-} // namespace
+} // namespace Hexit
 #endif // TERMINAL_WINDOW_H

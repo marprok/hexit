@@ -1,8 +1,10 @@
 #include "SignatureReader.h"
 #include <gtest/gtest.h>
 
-namespace Hexit
+namespace
 {
+using namespace Hexit;
+
 TEST(SignatureReaderTest, SignatureMapping)
 {
     SignatureReader reader;

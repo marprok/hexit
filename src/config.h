@@ -21,6 +21,6 @@ inline constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
 inline constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
 inline constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
 inline constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
-} // namespace
+} // namespace Hexit
 
 #endif // HEXIT_CONFIG_H
