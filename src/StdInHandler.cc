@@ -68,4 +68,4 @@ std::uint32_t StdInHandler::size() const
 {
     return m_size;
 }
-} // namespace
+} // namespace Hexit

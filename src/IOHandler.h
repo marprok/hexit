@@ -33,5 +33,5 @@ public:
 
     virtual std::uint32_t size() const = 0;
 };
-} // namespace
+} // namespace Hexit
 #endif // IO_HANDLER_H

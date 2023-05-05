@@ -30,5 +30,5 @@ private:
     };
     std::vector<Signature> m_signatures;
 };
-} // namespace
+} // namespace Hexit
 #endif // SIGNATURE_READER_H

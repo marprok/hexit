@@ -484,4 +484,4 @@ void TerminalWindow::handle_prompt(int key)
         }
     }
 }
-} // namespace
+} // namespace Hexit

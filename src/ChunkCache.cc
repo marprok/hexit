@@ -55,4 +55,4 @@ bool ChunkCache::save_chunk(const DataChunk& chunk)
 
     return m_handler.write(chunk.m_data, chunk.m_count);
 }
-} // namespace
+} // namespace Hexit

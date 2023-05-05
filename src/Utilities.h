@@ -61,5 +61,5 @@ const char* get_arg(int argc, const char* const* const argv, const std::string& 
 bool get_flag(int argc, const char* const* const argv, const std::string& flag);
 
 std::uint32_t str_to_int(const char* const str);
-} // namespace
-#endif
+} // namespace Hexit
+#endif // UTILITIES_H

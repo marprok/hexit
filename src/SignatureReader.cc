@@ -69,4 +69,4 @@ std::string SignatureReader::get_type(const std::vector<std::uint8_t>& query)
 
     return "unk";
 }
-} // namespace
+} // namespace Hexit

@@ -32,6 +32,5 @@ private:
     fs::path      m_name;
     std::uint32_t m_size;
 };
-} // namespace
-
+} // namespace Hexit
 #endif

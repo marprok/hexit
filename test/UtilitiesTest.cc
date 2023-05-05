@@ -3,8 +3,9 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
-namespace Hexit
+namespace
 {
+using namespace Hexit;
 namespace fs = std::filesystem;
 
 TEST(UtilitiesTest, HexCharToInt)

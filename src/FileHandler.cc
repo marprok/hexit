@@ -68,4 +68,4 @@ std::uint32_t FileHandler::size() const
 {
     return m_size;
 }
-} // namepsace
+} // namepsace Hexit

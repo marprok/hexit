@@ -34,5 +34,5 @@ private:
     std::uint32_t m_visible_lines;
     std::uint32_t m_active_line;
 };
-} // namespace
+} // namespace Hexit
 #endif // SCROLLER_H
