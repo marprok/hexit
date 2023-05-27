@@ -1,10 +1,8 @@
-# hexit
-A minimalistic hex editor.
+# Hexit, a minimalistic hex editor
 
-HEX mode                   |  ASCII mode
-:-------------------------:|:-------------------------:
-![hex mode](hex_mode.png)  |  ![ascii mode](ascii_mode.png)
+Edit files or display the hex dump of stdin.
 
+<img src="https://github.com/marprok/hexit/assets/18293204/da3e1252-a4ff-428a-8e17-3f971419f124" width="520" height="280">
 
 ### Controls
 
@@ -15,10 +13,8 @@ HEX mode                   |  ASCII mode
 | ctrl-a                        | Toggle ASCII mode.|
 | ctrl-q                        | Exit the editor.|
 | ctrl-g                        | Go to byte.|
-| Arrows(up,down,left,right)    | Move the cursor.|
+| Arrows keys                   | Move the cursor.|
 | Page-up/Page-down             | Move the page up/down.|
-| Hexadecimal digits(HEX mode)  | Change the value of the nibble that the cursor points to.|
-| Printable ASCII characters(ASCII mode) | Change the value of the byte that the cursor points to.|
 
 ### Prerequisites
 

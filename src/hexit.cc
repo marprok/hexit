@@ -16,6 +16,9 @@ namespace
 inline void print_help(const char* bin)
 {
     std::cerr << "USAGE: " << bin << " -f (--file) FILE [OPTIONS]\n";
+    std::cerr << "\nDisplay the hex dump of a file.\n";
+    std::cerr << "If no file is given via the -f flag, then hexit will read bytes from standard input\n";
+    std::cerr << "until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.\n";
     std::cerr << "\nOPTIONS:\n";
     std::cerr << "-o (--offset) OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
 }
