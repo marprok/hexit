@@ -2,7 +2,7 @@
 
 Edit files or display the hex dump of stdin.
 
-<img src="https://github.com/marprok/hexit/assets/18293204/da3e1252-a4ff-428a-8e17-3f971419f124" width="520" height="280">
+![demo](https://github.com/marprok/hexit/assets/18293204/00e0085e-575e-4742-b4aa-718528d3e59f)
 
 ### Controls
 
@@ -30,6 +30,7 @@ Make sure you have all of the following packages installed.
 3. mkdir build && cd build
 4. cmake -DCMAKE_BUILD_TYPE=Release ..
 5. make
+6. ./hexit -h
 
 ### Limitations
 * With hexit you can edit only one file at a time.
