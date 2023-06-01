@@ -2,7 +2,7 @@
 
 Edit files or display the hex dump of stdin.
 
-![demo](https://github.com/marprok/hexit/assets/18293204/00e0085e-575e-4742-b4aa-718528d3e59f)
+![demo](https://github.com/marprok/hexit/assets/18293204/73c7c699-9d60-40c1-8f6a-911c67d5514f)
 
 ### Controls
 
