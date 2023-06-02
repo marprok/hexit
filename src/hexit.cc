@@ -5,7 +5,6 @@
 #include "TerminalWindow.h"
 #include "Utilities.h"
 #include <algorithm>
-#include <csignal>
 #include <iostream>
 #include <ncurses.h>
 #include <string>
@@ -15,28 +14,29 @@ namespace
 {
 inline void print_help(const char* bin)
 {
-    std::cerr << "USAGE: " << bin << " -f (--file) FILE [OPTIONS]\n";
-    std::cerr << "\nDisplay the hex dump of a file.\n";
+    std::cerr << "\nUsage:\n";
+    std::cerr << bin << " -f (--file) <file> [options]\n\n";
+    std::cerr << "Display the hex dump of a file.\n\n";
     std::cerr << "If no file is given via the -f flag, then hexit will read bytes from standard input\n";
-    std::cerr << "until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.\n";
-    std::cerr << "\nOPTIONS:\n";
-    std::cerr << "-o (--offset) OFFSET: Hexadecimal or decimal byte offset to seek during startup\n";
+    std::cerr << "until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.\n\n";
+    std::cerr << "Options:\n";
+    std::cerr << "-o (--offset) <offset>: Hexadecimal or decimal byte offset to seek during startup.\n";
 }
 
-inline void init_ncurses()
+inline bool init_ncurses()
 {
     // Global ncurses initialization and setup
-    initscr();
-    raw();
-    noecho();
-    curs_set(0); // invisible cursor
-    start_color();
-    use_default_colors();
-    init_pair(1, COLOR_GREEN, COLOR_BLACK);
-    keypad(stdscr, true);
+    return initscr() != nullptr
+        && raw() != ERR
+        && noecho() != ERR
+        && curs_set(0) != ERR // invisible cursor
+        && start_color() != ERR
+        && use_default_colors() != ERR
+        && init_pair(1, COLOR_GREEN, COLOR_BLACK) != ERR
+        && keypad(stdscr, true) != ERR;
 }
 
-std::string get_type(ByteBuffer& byteBuffer)
+int get_type(ByteBuffer& byteBuffer, std::string& file_type)
 {
     if (byteBuffer.size() == 0)
         return {};
@@ -52,30 +52,38 @@ std::string get_type(ByteBuffer& byteBuffer)
         if (!value.has_value())
         {
             std::cerr << "Error reading file signature!\n";
-            std::exit(EXIT_FAILURE);
+            return 1;
         }
         query.push_back(*value);
     }
 
-    return reader.get_type(query);
+    file_type = reader.get_type(query);
+    return 0;
 }
 
-void start_hexit(IOHandler&        handler,
-                 const char* const starting_offset,
-                 const char* const input_path,
-                 bool              is_read_only = false)
+int start_hexit(IOHandler&        handler,
+                const char* const starting_offset,
+                const char* const input_path,
+                bool              is_read_only = false)
 {
     ChunkCache cache(handler);
     if (input_path && !cache.open(input_path, is_read_only))
     {
         std::cerr << "Could not open " << input_path << '\n';
-        std::exit(EXIT_FAILURE);
+        return 1;
     }
 
     ByteBuffer buffer(cache);
-    init_ncurses();
-    TerminalWindow win(stdscr, buffer, get_type(buffer), str_to_int(starting_offset));
+    if (!init_ncurses())
+        return 1;
+
+    std::string file_type;
+    if (get_type(buffer, file_type) != 0)
+        return 1;
+
+    TerminalWindow win(stdscr, buffer, file_type, str_to_int(starting_offset));
     win.run();
+    return 0;
 }
 }
 
@@ -85,7 +93,7 @@ int main(int argc, char** argv)
     {
         std::cerr << "Invalid arguments given!\n";
         print_help(*argv);
-        std::exit(EXIT_FAILURE);
+        return 1;
     }
 
     auto help            = get_flag(argc - 1, argv + 1, "-h") || get_flag(argc - 1, argv + 1, "--help");
@@ -95,19 +103,20 @@ int main(int argc, char** argv)
     if (help || (!input_file && !starting_offset && argc > 1))
     {
         print_help(*argv);
-        std::exit(EXIT_FAILURE);
+        return 1;
     }
 
+    int ret = 0;
     if (!input_file)
     {
         StdInHandler handler;
-        start_hexit(handler, starting_offset, "stdin", true);
+        ret = start_hexit(handler, starting_offset, "stdin", true);
     }
     else
     {
         FileHandler handler;
-        start_hexit(handler, starting_offset, input_file);
+        ret = start_hexit(handler, starting_offset, input_file);
     }
 
-    return EXIT_SUCCESS;
+    return ret;
 }

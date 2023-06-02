@@ -27,7 +27,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_line_offset_format, "%%0%dX", LINE_OFFSET_LEN);
+    std::sprintf(m_offset_format, "%%0%dX", LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
@@ -69,23 +69,23 @@ void TerminalWindow::run()
         case KEY_RESIZE:
             resize();
             break;
-        case CTRL_S:
+        case K_SAVE:
             prompt_save();
             break;
-        case CTRL_Q:
+        case K_QUIT:
             prompt_quit();
             break;
-        case CTRL_X:
+        case K_HEX:
             toggle_hex_mode();
             break;
-        case CTRL_A:
+        case K_ASCII:
             toggle_ascii_mode();
             break;
-        case CTRL_Z:
+        case K_SUSP:
             endwin();
             raise(SIGSTOP);
             break;
-        case CTRL_G:
+        case K_GO_TO:
             prompt_go_to_byte();
             break;
         default:
@@ -106,7 +106,7 @@ bool TerminalWindow::draw_line(std::uint32_t line)
     // Skip the first box border line.
     line++;
     // Draw the line byte offset.
-    mvwprintw(m_screen, line, 1, m_line_offset_format, line_byte);
+    mvwprintw(m_screen, line, 1, m_offset_format, line_byte);
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, ++line_byte)
     {
         const auto opt = m_data[line_byte];
@@ -191,7 +191,7 @@ bool TerminalWindow::update_screen()
 
     // Draw the current byte offset.
     if (m_prompt == Prompt::NONE)
-        mvwprintw(m_screen, LINES - 1, 1, m_line_offset_format, m_byte);
+        mvwprintw(m_screen, LINES - 1, 1, m_offset_format, m_byte);
 
     return true;
 }

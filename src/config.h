@@ -15,12 +15,20 @@ inline constexpr std::uint32_t FIRST_HEX       = LINE_OFFSET_LEN + 1 + HEX_PADDI
 inline constexpr std::uint32_t FIRST_ASCII     = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 
 // Special key sequences.
-inline constexpr int CTRL_Q = 'q' & 0x1F; // Quit
-inline constexpr int CTRL_S = 's' & 0x1F; // Save
-inline constexpr int CTRL_X = 'x' & 0x1F; // HEX mode
-inline constexpr int CTRL_A = 'a' & 0x1F; // ASCII mode
-inline constexpr int CTRL_Z = 'z' & 0x1F; // Suspend
-inline constexpr int CTRL_G = 'g' & 0x1F; // Go to byte
+inline constexpr int CTRL_Q = 'q' & 0x1F;
+inline constexpr int CTRL_S = 's' & 0x1F;
+inline constexpr int CTRL_X = 'x' & 0x1F;
+inline constexpr int CTRL_A = 'a' & 0x1F;
+inline constexpr int CTRL_Z = 'z' & 0x1F;
+inline constexpr int CTRL_G = 'g' & 0x1F;
+
+// Feel free to map the controls to the keys of your choice :)
+inline constexpr int K_QUIT  = CTRL_Q; // Quit
+inline constexpr int K_SAVE  = CTRL_S; // Save
+inline constexpr int K_HEX   = CTRL_X; // HEX mode
+inline constexpr int K_ASCII = CTRL_A; // ASCII mode
+inline constexpr int K_SUSP  = CTRL_Z; // Suspend
+inline constexpr int K_GO_TO = CTRL_G; // Go to byte
 } // namespace Hexit
 
 #endif // HEXIT_CONFIG_H

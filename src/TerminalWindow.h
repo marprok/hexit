@@ -91,7 +91,7 @@ private:
     Prompt            m_prompt;
     WINDOW*           m_screen;
     std::uint32_t     m_byte, m_nibble;
-    char              m_line_offset_format[sizeof("%%0%dX") + 2];
+    char              m_offset_format[sizeof("%%0%dX") + 2];
     bool              m_quit;
     std::string       m_input_buffer;
     std::string       m_error_msg;
