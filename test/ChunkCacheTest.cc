@@ -9,11 +9,11 @@ namespace fs = std::filesystem;
 using namespace Hexit;
 
 const std::string       file_name("test/path/to/somewhere");
-constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
+constexpr std::uint64_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 
-inline std::uint32_t expected_chunks()
+inline std::uint64_t expected_chunks()
 {
-    std::uint32_t chunks = expected_size_bytes / ChunkCache::capacity;
+    std::uint64_t chunks = expected_size_bytes / ChunkCache::capacity;
     if (expected_size_bytes % ChunkCache::capacity)
         chunks++;
     return chunks;
@@ -42,7 +42,7 @@ TEST(ChunkCacheTest, LoadChunk)
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     ASSERT_TRUE(cache.load_chunk(0));
     EXPECT_EQ(cache.recent().m_id, 0);
-    for (std::uint32_t i = 1; i < cache.total_chunks(); ++i)
+    for (std::uint64_t i = 1; i < cache.total_chunks(); ++i)
     {
         ASSERT_TRUE(cache.load_chunk(i));
         EXPECT_EQ(cache.recent().m_id, cache.fallback().m_id + 1);
@@ -59,7 +59,7 @@ TEST(ChunkCacheTest, LoadChunkReverse)
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
-    for (std::uint32_t i = cache.total_chunks() - 2; i > 0; --i)
+    for (std::uint64_t i = cache.total_chunks() - 2; i > 0; --i)
     {
         ASSERT_TRUE(cache.load_chunk(i));
         EXPECT_EQ(cache.recent().m_id, cache.fallback().m_id - 1);

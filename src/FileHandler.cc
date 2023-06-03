@@ -51,7 +51,7 @@ bool FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
         m_stream.write(reinterpret_cast<const char*>(i_buffer), buffer_size));
 }
 
-bool FileHandler::seek(std::uint32_t offset)
+bool FileHandler::seek(std::uint64_t offset)
 {
     if (!m_stream.is_open())
         return false;
@@ -64,7 +64,7 @@ const fs::path& FileHandler::name() const
     return m_name;
 }
 
-std::uint32_t FileHandler::size() const
+std::uint64_t FileHandler::size() const
 {
     return m_size;
 }

@@ -9,7 +9,7 @@
 
 namespace Hexit
 {
-TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
+TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t start_from_byte)
     : m_scroller(data.size(), BYTES_PER_LINE)
     , m_data(data)
     , m_type(file_type)
@@ -27,7 +27,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_offset_format, "%%0%dX", LINE_OFFSET_LEN);
+    std::sprintf(m_offset_format, "%%0%d" PRIx64 , LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
@@ -424,11 +424,11 @@ void TerminalWindow::handle_prompt(int key)
         {
             if (!m_input_buffer.empty())
             {
-                std::uint32_t go_to_byte = 0;
+                std::uint64_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
-                    go_to_byte = std::stoll(m_input_buffer, nullptr);
+                    go_to_byte = std::stoull(m_input_buffer, nullptr);
                 else if (m_mode == Mode::HEX)
-                    go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
+                    go_to_byte = std::stoull(m_input_buffer, nullptr, 16);
 
                 if (go_to_byte < m_data.size())
                     m_byte = go_to_byte;

@@ -70,15 +70,15 @@ bool get_flag(int argc, const char* const* const argv, const std::string& flag)
     return res != (argv + argc);
 }
 
-std::uint32_t str_to_int(const char* const str)
+std::uint64_t str_to_int(const char* const str)
 {
     if (!str)
         return 0;
 
     if (is_dec_string(str))
-        return std::stoll(str, nullptr);
+        return std::stoull(str, nullptr);
     else if (is_hex_string(str))
-        return std::stoll(str, nullptr, 16);
+        return std::stoull(str, nullptr, 16);
 
     return 0u;
 }

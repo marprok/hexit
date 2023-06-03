@@ -2,6 +2,7 @@
 #define TERMINAL_WINDOW_H
 
 #include "Scroller.h"
+#include <cinttypes>
 #include <cstdint>
 #include <ncurses.h>
 #include <string>
@@ -13,7 +14,7 @@ class ByteBuffer;
 class TerminalWindow
 {
 public:
-    TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t go_to_byte = 0);
+    TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t go_to_byte = 0);
 
     TerminalWindow(const TerminalWindow&) = delete;
 
@@ -90,8 +91,9 @@ private:
     Mode              m_mode;
     Prompt            m_prompt;
     WINDOW*           m_screen;
-    std::uint32_t     m_byte, m_nibble;
-    char              m_offset_format[sizeof("%%0%dX") + 2];
+    std::uint64_t     m_byte;
+    std::uint8_t      m_nibble;
+    char              m_offset_format[sizeof("%%0%d" PRIx64) + 2];
     bool              m_quit;
     std::string       m_input_buffer;
     std::string       m_error_msg;

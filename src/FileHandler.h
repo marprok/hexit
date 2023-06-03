@@ -21,16 +21,16 @@ public:
 
     bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
 
-    bool seek(std::uint32_t offset) override;
+    bool seek(std::uint64_t offset) override;
 
     const fs::path& name() const override;
 
-    std::uint32_t size() const override;
+    std::uint64_t size() const override;
 
 private:
     std::fstream  m_stream;
     fs::path      m_name;
-    std::uint32_t m_size;
+    std::uint64_t m_size;
 };
 } // namespace Hexit
 #endif

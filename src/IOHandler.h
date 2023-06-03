@@ -27,11 +27,11 @@ public:
 
     virtual bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) = 0;
 
-    virtual bool seek(std::uint32_t offset) = 0;
+    virtual bool seek(std::uint64_t offset) = 0;
 
     virtual const fs::path& name() const = 0;
 
-    virtual std::uint32_t size() const = 0;
+    virtual std::uint64_t size() const = 0;
 };
 } // namespace Hexit
 #endif // IO_HANDLER_H
