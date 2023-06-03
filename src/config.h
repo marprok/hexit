@@ -3,14 +3,14 @@
 
 namespace Hexit
 {
-inline constexpr bool          SUPPORT_BIG_FILES = false;
-inline constexpr std::uint32_t BYTES_PER_LINE    = 16;
+inline constexpr bool          BIG_FILES      = false;
+inline constexpr std::uint32_t BYTES_PER_LINE = 16;
 // The distance between hex and ASCII digits.
 inline constexpr std::uint32_t ASCII_PADDING = 2;
 // The distatnce between the line byte offset and the ASCII digits.
 inline constexpr std::uint32_t HEX_PADDING = 2;
 // The number of hex digits used for the line byte offset.
-inline constexpr std::uint32_t LINE_OFFSET_LEN = SUPPORT_BIG_FILES ? sizeof(std::uint64_t) * 2 : sizeof(std::uint32_t) * 2;
+inline constexpr std::uint32_t LINE_OFFSET_LEN = BIG_FILES ? sizeof(std::uint64_t) * 2 : sizeof(std::uint32_t) * 2;
 inline constexpr std::uint32_t FIRST_HEX       = LINE_OFFSET_LEN + 1 + HEX_PADDING;
 inline constexpr std::uint32_t FIRST_ASCII     = FIRST_HEX + BYTES_PER_LINE * 3 - 1 + ASCII_PADDING;
 

@@ -17,8 +17,8 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     , m_mode(Mode::HEX)
     , m_prompt(Prompt::NONE)
     , m_screen(win)
-    , m_byte(0)
-    , m_nibble(0)
+    , m_byte(0u)
+    , m_nibble(0u)
     , m_quit(false)
 {
 
@@ -27,7 +27,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_offset_format, "%%0%d" PRIx64 , LINE_OFFSET_LEN);
+    std::sprintf(m_offset_format, "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
@@ -97,8 +97,8 @@ void TerminalWindow::run()
 
 bool TerminalWindow::draw_line(std::uint32_t line)
 {
-    std::uint32_t line_abs      = m_scroller.first() + line;
-    std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
+    std::uint64_t line_abs      = m_scroller.first() + line;
+    std::uint64_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
     if (((m_scroller.total() - 1) == line_abs) && (m_data.size() % BYTES_PER_LINE) > 0)
@@ -202,7 +202,7 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_scroller.adjust_lines(static_cast<std::uint32_t>(LINES - 2), m_byte / BYTES_PER_LINE);
+    m_scroller.adjust_lines(static_cast<std::uint64_t>(LINES - 2), m_byte / BYTES_PER_LINE);
     m_update = true;
 }
 
@@ -245,7 +245,7 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint32_t distance = m_data.size() - m_byte;
+    const std::uint64_t distance = m_data.size() - m_byte;
     m_update                     = m_scroller.move_down();
     if (distance > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
@@ -296,7 +296,7 @@ void TerminalWindow::move_right()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint32_t line_abs   = m_byte / BYTES_PER_LINE;
+    const std::uint64_t line_abs   = m_byte / BYTES_PER_LINE;
     std::uint32_t       line_bytes = BYTES_PER_LINE;
 
     if ((line_abs == m_scroller.total() - 1) && (m_data.size() % BYTES_PER_LINE) > 0)
