@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 class IOHandlerMock : public Hexit::IOHandler
 {
 public:
-    static constexpr std::uint32_t chunk_count = 255;
+    static constexpr std::uint64_t chunk_count = 255;
 
     IOHandlerMock();
 
@@ -25,15 +25,15 @@ public:
 
     bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
 
-    bool seek(std::uint32_t offset) override;
+    bool seek(std::uint64_t offset) override;
 
     const fs::path& name() const override;
 
-    std::uint32_t size() const override;
+    std::uint64_t size() const override;
 
     std::uint8_t* data();
 
-    std::uint32_t load_count() const;
+    std::uint64_t load_count() const;
 
     void mock_io_fail(bool should_fail);
 
@@ -42,14 +42,14 @@ private:
     {
         std::srand(std::time(nullptr));
         std::uint8_t* bytes = data();
-        for (std::size_t i = 0; i < chunk_count * Hexit::ChunkCache::capacity; ++i)
+        for (std::uint64_t i = 0; i < chunk_count * Hexit::ChunkCache::capacity; ++i)
             bytes[i] = rand() % 256;
     }
 
     fs::path      m_name;
     std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];
-    std::uint32_t m_id;
-    std::uint32_t m_load_count;
+    std::uint64_t m_id;
+    std::uint64_t m_load_count;
     bool          m_io_fail;
 };
 #endif // IOHANDLER_MOCK_H

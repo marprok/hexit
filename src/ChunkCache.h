@@ -12,16 +12,16 @@ namespace fs = std::filesystem;
 class ChunkCache
 {
 public:
-    static constexpr std::uint32_t capacity = 1024;
+    static constexpr std::uint64_t capacity = 1024u;
 
     struct DataChunk
     {
-        std::uint32_t m_id             = { UINT32_MAX };
-        std::uint32_t m_count          = { 0 };
+        std::uint64_t m_id             = { UINT64_MAX };
+        std::uint64_t m_count          = { 0 };
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    ChunkCache(IOHandler& handler);
+    explicit ChunkCache(IOHandler& handler);
 
     ChunkCache(const ChunkCache&) = delete;
 
@@ -29,15 +29,15 @@ public:
 
     bool open(const fs::path& name, bool read_only = false);
 
-    bool load_chunk(std::uint32_t chunk_id);
+    bool load_chunk(std::uint64_t chunk_id);
 
     bool save_chunk(const DataChunk& chunk);
 
     inline const fs::path& name() const { return m_handler.name(); }
 
-    inline std::uint32_t size() const { return m_handler.size(); }
+    inline std::uint64_t size() const { return m_handler.size(); }
 
-    inline std::uint32_t total_chunks() const { return m_total_chunks; }
+    inline std::uint64_t total_chunks() const { return m_total_chunks; }
 
     inline DataChunk& recent() { return *m_recent; }
 
@@ -47,7 +47,7 @@ public:
 
 private:
     IOHandler&    m_handler;
-    std::uint32_t m_total_chunks;
+    std::uint64_t m_total_chunks;
     DataChunk     m_chunks[2];
     DataChunk*    m_recent;
     DataChunk*    m_fallback;

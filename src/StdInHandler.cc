@@ -50,7 +50,7 @@ bool StdInHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
     return true;
 }
 
-bool StdInHandler::seek(std::uint32_t offset)
+bool StdInHandler::seek(std::uint64_t offset)
 {
     if (m_data.empty() || offset >= m_size)
         return false;
@@ -64,7 +64,7 @@ const fs::path& StdInHandler::name() const
     return m_name;
 }
 
-std::uint32_t StdInHandler::size() const
+std::uint64_t StdInHandler::size() const
 {
     return m_size;
 }

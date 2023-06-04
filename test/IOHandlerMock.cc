@@ -44,7 +44,7 @@ bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
     return !m_io_fail;
 }
 
-bool IOHandlerMock::seek(std::uint32_t offset)
+bool IOHandlerMock::seek(std::uint64_t offset)
 {
     m_id = offset / Hexit::ChunkCache::capacity;
     return !m_io_fail;
@@ -55,14 +55,14 @@ const fs::path& IOHandlerMock::name() const
     return m_name;
 }
 
-std::uint32_t IOHandlerMock::size() const
+std::uint64_t IOHandlerMock::size() const
 {
     return chunk_count * Hexit::ChunkCache::capacity;
 }
 
 std::uint8_t* IOHandlerMock::data() { return reinterpret_cast<std::uint8_t*>(m_data); }
 
-std::uint32_t IOHandlerMock::load_count() const { return m_load_count; }
+std::uint64_t IOHandlerMock::load_count() const { return m_load_count; }
 
 void IOHandlerMock::mock_io_fail(bool should_fail)
 {

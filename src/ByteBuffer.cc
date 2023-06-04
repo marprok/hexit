@@ -10,10 +10,10 @@ ByteBuffer::ByteBuffer(ChunkCache& cache)
 }
 
 // No bounds checking is performed by the operator
-std::optional<std::uint8_t> ByteBuffer::operator[](std::uint32_t byte_id)
+std::optional<std::uint8_t> ByteBuffer::operator[](std::uint64_t byte_id)
 {
-    std::uint32_t chunk_id    = byte_id / ChunkCache::capacity;
-    std::uint32_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+    std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
+    std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
 
     if (is_dirty(byte_id))
         return m_dirty_bytes[byte_id];
@@ -30,10 +30,10 @@ std::optional<std::uint8_t> ByteBuffer::operator[](std::uint32_t byte_id)
     return m_cache.recent().m_data[relative_id];
 }
 
-void ByteBuffer::set_byte(std::uint32_t byte_id, std::uint8_t byte_value)
+void ByteBuffer::set_byte(std::uint64_t byte_id, std::uint8_t byte_value)
 {
-    const std::uint32_t chunk_id    = byte_id / ChunkCache::capacity;
-    const std::uint32_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+    const std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
+    const std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
 
     if (!m_dirty_bytes.contains(byte_id))
         m_dirty_chunks[chunk_id].emplace_back(relative_id);

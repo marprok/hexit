@@ -9,7 +9,7 @@
 
 namespace Hexit
 {
-TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint32_t start_from_byte)
+TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t start_from_byte)
     : m_scroller(data.size(), BYTES_PER_LINE)
     , m_data(data)
     , m_type(file_type)
@@ -17,8 +17,8 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     , m_mode(Mode::HEX)
     , m_prompt(Prompt::NONE)
     , m_screen(win)
-    , m_byte(0)
-    , m_nibble(0)
+    , m_byte(0u)
+    , m_nibble(0u)
     , m_quit(false)
 {
 
@@ -27,7 +27,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_offset_format, "%%0%dX", LINE_OFFSET_LEN);
+    std::snprintf(m_offset_format, sizeof(m_offset_format), "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
@@ -37,6 +37,7 @@ TerminalWindow::~TerminalWindow()
     endwin();
     if (!m_error_msg.empty())
         std::cerr << m_error_msg << std::endl;
+    m_error_msg.clear();
 }
 
 void TerminalWindow::run()
@@ -97,8 +98,8 @@ void TerminalWindow::run()
 
 bool TerminalWindow::draw_line(std::uint32_t line)
 {
-    std::uint32_t line_abs      = m_scroller.first() + line;
-    std::uint32_t line_byte     = line_abs * BYTES_PER_LINE;
+    std::uint64_t line_abs      = m_scroller.first() + line;
+    std::uint64_t line_byte     = line_abs * BYTES_PER_LINE;
     std::uint32_t bytes_to_draw = BYTES_PER_LINE;
 
     if (((m_scroller.total() - 1) == line_abs) && (m_data.size() % BYTES_PER_LINE) > 0)
@@ -202,7 +203,7 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_scroller.adjust_lines(static_cast<std::uint32_t>(LINES - 2), m_byte / BYTES_PER_LINE);
+    m_scroller.adjust_lines(static_cast<std::uint64_t>(LINES - 2), m_byte / BYTES_PER_LINE);
     m_update = true;
 }
 
@@ -245,7 +246,7 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint32_t distance = m_data.size() - m_byte;
+    const std::uint64_t distance = m_data.size() - m_byte;
     m_update                     = m_scroller.move_down();
     if (distance > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
@@ -296,7 +297,7 @@ void TerminalWindow::move_right()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint32_t line_abs   = m_byte / BYTES_PER_LINE;
+    const std::uint64_t line_abs   = m_byte / BYTES_PER_LINE;
     std::uint32_t       line_bytes = BYTES_PER_LINE;
 
     if ((line_abs == m_scroller.total() - 1) && (m_data.size() % BYTES_PER_LINE) > 0)
@@ -424,11 +425,11 @@ void TerminalWindow::handle_prompt(int key)
         {
             if (!m_input_buffer.empty())
             {
-                std::uint32_t go_to_byte = 0;
+                std::uint64_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
-                    go_to_byte = std::stoll(m_input_buffer, nullptr);
+                    go_to_byte = std::stoull(m_input_buffer, nullptr);
                 else if (m_mode == Mode::HEX)
-                    go_to_byte = std::stoll(m_input_buffer, nullptr, 16);
+                    go_to_byte = std::stoull(m_input_buffer, nullptr, 16);
 
                 if (go_to_byte < m_data.size())
                     m_byte = go_to_byte;

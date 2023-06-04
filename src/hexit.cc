@@ -43,7 +43,7 @@ int get_type(ByteBuffer& byteBuffer, std::string& file_type)
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), 32u);
+    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), static_cast<std::uint64_t>(32u));
     query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)

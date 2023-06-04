@@ -12,11 +12,11 @@ namespace fs = std::filesystem;
 using namespace Hexit;
 
 const std::string       file_name("test/path/to/somewhere");
-constexpr std::uint32_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
+constexpr std::uint64_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 
-inline std::uint32_t expected_chunks()
+inline std::uint64_t expected_chunks()
 {
-    std::uint32_t chunks = expected_size_bytes / ChunkCache::capacity;
+    std::uint64_t chunks = expected_size_bytes / ChunkCache::capacity;
     if (expected_size_bytes % ChunkCache::capacity)
         chunks++;
     return chunks;
@@ -32,7 +32,7 @@ TEST(ByteBufferTest, RandomAccessError)
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     handler.mock_io_fail(true);
 
-    for (std::uint32_t i = 0; i < buffer.size(); ++i)
+    for (std::uint64_t i = 0; i < buffer.size(); ++i)
     {
         const auto value = buffer[i];
         EXPECT_FALSE(value.has_value());
@@ -48,8 +48,8 @@ TEST(ByteBufferTest, ChunkCaching)
     ByteBuffer    buffer(cache);
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
-    constexpr std::uint32_t first_chunk_id = 2, last_chunkc_id = 3;
-    for (std::uint32_t i = ChunkCache::capacity * first_chunk_id;
+    constexpr std::uint64_t first_chunk_id = 2, last_chunkc_id = 3;
+    for (std::uint64_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * (last_chunkc_id + 1)) && (i < buffer.size());
          ++i)
     {
@@ -57,7 +57,7 @@ TEST(ByteBufferTest, ChunkCaching)
         ASSERT_TRUE(buffer[i].has_value());
     }
     // Accessing again the bytes from the first chunk, should not cause any loading.
-    for (std::uint32_t i = ChunkCache::capacity * first_chunk_id;
+    for (std::uint64_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * last_chunkc_id) && (i < buffer.size());
          ++i)
     {
@@ -109,7 +109,7 @@ TEST(ByteBufferTest, ByteRead)
     // start from the first chunk and the first byte
     ASSERT_TRUE(cache.load_chunk(0));
     ASSERT_EQ(cache.recent().m_id, 0);
-    for (std::uint32_t i = 0; i < buffer.size(); ++i)
+    for (std::uint64_t i = 0; i < buffer.size(); ++i)
     {
         const auto value = buffer[i];
         ASSERT_TRUE(value.has_value());
@@ -129,7 +129,7 @@ TEST(ByteBufferTest, ByteReadReverse)
     // start from the last chunk and the last byte
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
-    for (std::uint32_t i = buffer.size() - 1; i > 0; --i)
+    for (std::uint64_t i = buffer.size() - 1; i > 0; --i)
     {
         const auto value = buffer[i];
         ASSERT_TRUE(value.has_value());
@@ -148,14 +148,14 @@ TEST(ByteBufferTest, SaveBytes)
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.open(file_name));
-    std::uint32_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
+    std::uint64_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
         auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
-        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
             const auto value = buffer[id * ChunkCache::capacity + i];
@@ -174,7 +174,7 @@ TEST(ByteBufferTest, SaveBytes)
         auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
-        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             const auto value = buffer[id * ChunkCache::capacity + i];
             ASSERT_TRUE(value.has_value());
@@ -197,14 +197,14 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.open(file_name, true));
-    std::uint32_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
+    std::uint64_t dirty_ids[] = { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
         auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
-        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
             const auto value = buffer[id * ChunkCache::capacity + i];
@@ -223,7 +223,7 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         auto data_chunk = cache.recent();
         EXPECT_EQ(id, data_chunk.m_id);
         std::uint8_t* expectation = raw_data + (id * ChunkCache::capacity);
-        for (std::size_t i = 0; i < data_chunk.m_count; ++i)
+        for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             const auto value = buffer[id * ChunkCache::capacity + i];
             ASSERT_TRUE(value.has_value());

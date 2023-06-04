@@ -3,7 +3,7 @@
 
 namespace Hexit
 {
-Scroller::Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line)
+Scroller::Scroller(std::uint64_t total_bytes, std::uint64_t bytes_per_line)
     : m_first_line(0u)
     , m_last_line(0u)
     , m_total_lines(0u)
@@ -18,7 +18,7 @@ Scroller::Scroller(std::uint32_t total_bytes, std::uint32_t bytes_per_line)
     }
 }
 
-void Scroller::adjust_lines(std::uint32_t visible_lines, std::uint32_t current_line)
+void Scroller::adjust_lines(std::uint64_t visible_lines, std::uint64_t current_line)
 {
     m_visible_lines = std::min(visible_lines, m_total_lines);
 
