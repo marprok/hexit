@@ -12,7 +12,7 @@ namespace Hexit
 class ByteBuffer
 {
 public:
-    ByteBuffer(ChunkCache& cache);
+    explicit ByteBuffer(ChunkCache& cache);
 
     ByteBuffer(const ByteBuffer&) = delete;
 

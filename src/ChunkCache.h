@@ -21,7 +21,7 @@ public:
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    ChunkCache(IOHandler& handler);
+    explicit ChunkCache(IOHandler& handler);
 
     ChunkCache(const ChunkCache&) = delete;
 
