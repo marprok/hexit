@@ -24,6 +24,15 @@ TEST(ChunkCacheTest, IOHandlerInformation)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
+
+    ASSERT_EQ(cache.recent().m_id, UINT64_MAX);
+    ASSERT_EQ(cache.recent().m_count, 0);
+    ASSERT_EQ(sizeof(cache.recent().m_data), ChunkCache::capacity);
+
+    ASSERT_EQ(cache.fallback().m_id, UINT64_MAX);
+    ASSERT_EQ(cache.fallback().m_count, 0);
+    ASSERT_EQ(sizeof(cache.fallback().m_data), ChunkCache::capacity);
+
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(cache.name(), file_name);
     ASSERT_EQ(cache.size(), expected_size_bytes);
