@@ -93,7 +93,7 @@ private:
     WINDOW*           m_screen;
     std::uint64_t     m_byte;
     std::uint8_t      m_nibble;
-    char              m_offset_format[7];
+    char              m_offset_format[16];
     bool              m_quit;
     std::string       m_input_buffer;
     std::string       m_error_msg;

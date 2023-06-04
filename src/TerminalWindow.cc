@@ -27,7 +27,7 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
     else
         m_byte = m_data.size() - 1;
 
-    std::sprintf(m_offset_format, "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
+    std::snprintf(m_offset_format, sizeof(m_offset_format), "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
@@ -37,6 +37,7 @@ TerminalWindow::~TerminalWindow()
     endwin();
     if (!m_error_msg.empty())
         std::cerr << m_error_msg << std::endl;
+    m_error_msg.clear();
 }
 
 void TerminalWindow::run()
