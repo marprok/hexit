@@ -35,9 +35,8 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
 TerminalWindow::~TerminalWindow()
 {
     endwin();
-    if (!m_error_msg.empty())
-        std::cerr << m_error_msg << std::endl;
-    m_error_msg.clear();
+    if (!m_data.is_ok())
+        std::cerr << m_data.error_msg() << std::endl;
 }
 
 void TerminalWindow::run()
@@ -96,7 +95,7 @@ void TerminalWindow::run()
     }
 }
 
-bool TerminalWindow::draw_line(std::uint32_t line)
+void TerminalWindow::draw_line(std::uint32_t line)
 {
     std::uint64_t line_abs      = m_scroller.first() + line;
     std::uint64_t line_byte     = line_abs * BYTES_PER_LINE;
@@ -110,13 +109,7 @@ bool TerminalWindow::draw_line(std::uint32_t line)
     mvwprintw(m_screen, line, 1, m_offset_format, line_byte);
     for (std::uint32_t i = 0; i < bytes_to_draw; ++i, ++line_byte)
     {
-        const auto opt = m_data[line_byte];
-        if (!opt.has_value())
-        {
-            set_error_and_quit("Could not read bytes at offset: " + std::to_string(line_byte));
-            return false;
-        }
-        const std::uint8_t bt           = *opt;
+        const std::uint8_t bt           = m_data[line_byte];
         const bool         is_dirty     = m_data.is_dirty(line_byte);
         char               hexDigits[3] = { 0 };
         std::sprintf(hexDigits, "%02X", bt);
@@ -146,8 +139,6 @@ bool TerminalWindow::draw_line(std::uint32_t line)
                 wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
         }
     }
-
-    return true;
 }
 
 bool TerminalWindow::update_screen()
@@ -157,10 +148,8 @@ bool TerminalWindow::update_screen()
         werase(m_screen);
         box(m_screen, 0, 0);
         for (std::uint32_t line = 0; line < m_scroller.visible(); ++line)
-        {
-            if (!draw_line(line))
-                return false;
-        }
+            draw_line(line);
+
         const std::string file_name = m_data.name().filename();
         if (m_data.has_dirty())
             mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "*%s", file_name.c_str());
@@ -194,7 +183,7 @@ bool TerminalWindow::update_screen()
     if (m_prompt == Prompt::NONE)
         mvwprintw(m_screen, LINES - 1, 1, m_offset_format, m_byte);
 
-    return true;
+    return m_data.is_ok();
 }
 
 void TerminalWindow::resize()
@@ -333,10 +322,8 @@ void TerminalWindow::TerminalWindow::save()
     if (!m_data.has_dirty() || m_data.is_read_only())
         return;
 
-    if (!m_data.save())
-        set_error_and_quit("Save failed!");
-    else
-        m_update = true;
+    m_data.save();
+    m_update = true;
 }
 
 void TerminalWindow::prompt_save()
@@ -404,9 +391,7 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
         new_value = chr;
     else if (m_mode == Mode::HEX && std::isxdigit(chr))
     {
-        // No error checking is needed for the operator[]
-        // since we have already drawn the byte by this point.
-        new_value = update_nibble(m_nibble, chr, *m_data[m_byte]);
+        new_value = update_nibble(m_nibble, chr, m_data[m_byte]);
     }
     else
         return;

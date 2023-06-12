@@ -47,14 +47,13 @@ int get_type(ByteBuffer& byteBuffer, std::string& file_type)
     query.reserve(bytes_to_copy);
 
     for (std::size_t i = 0u; i < bytes_to_copy; ++i)
+        query.push_back(byteBuffer[i]);
+
+    if (!byteBuffer.is_ok())
     {
-        const auto value = byteBuffer[i];
-        if (!value.has_value())
-        {
-            std::cerr << "Error reading file signature!\n";
-            return 1;
-        }
-        query.push_back(*value);
+        std::cerr << "Error reading file signature!\n";
+        std::cerr << byteBuffer.error_msg() << '\n';
+        return 1;
     }
 
     file_type = reader.get_type(query);
@@ -73,12 +72,12 @@ int start_hexit(IOHandler&        handler,
         return 1;
     }
 
-    ByteBuffer buffer(cache);
-    if (!init_ncurses())
-        return 1;
-
+    ByteBuffer  buffer(cache);
     std::string file_type;
     if (get_type(buffer, file_type) != 0)
+        return 1;
+
+    if (!init_ncurses())
         return 1;
 
     TerminalWindow win(stdscr, buffer, file_type, str_to_int(starting_offset));

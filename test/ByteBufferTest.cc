@@ -22,7 +22,8 @@ inline std::uint64_t expected_chunks()
     return chunks;
 }
 
-// In case of an io error, the random access operator should return an empty optional.
+// In case of an io error, is_ok should return true and error_msg() should contain
+// an error message.
 TEST(ByteBufferTest, RandomAccessError)
 {
     IOHandlerMock handler;
@@ -31,12 +32,14 @@ TEST(ByteBufferTest, RandomAccessError)
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     handler.mock_io_fail(true);
-
+    EXPECT_TRUE(buffer.error_msg().empty());
+    EXPECT_TRUE(buffer.is_ok());
     for (std::uint64_t i = 0; i < buffer.size(); ++i)
     {
-        const auto value = buffer[i];
-        EXPECT_FALSE(value.has_value());
+        buffer[i];
+        EXPECT_FALSE(buffer.is_ok());
     }
+    EXPECT_FALSE(buffer.error_msg().empty());
 }
 
 // Accessing bytes from a chunk that already is in memory
@@ -54,14 +57,14 @@ TEST(ByteBufferTest, ChunkCaching)
          ++i)
     {
         // Access each byte to trigger the caching mechanism.
-        ASSERT_TRUE(buffer[i].has_value());
+        buffer[i];
     }
     // Accessing again the bytes from the first chunk, should not cause any loading.
     for (std::uint64_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * last_chunkc_id) && (i < buffer.size());
          ++i)
     {
-        ASSERT_TRUE(buffer[i].has_value());
+        buffer[i];
     }
     EXPECT_EQ(handler.load_count(), 2);
     EXPECT_EQ(cache.recent().m_id, last_chunkc_id);
@@ -83,7 +86,6 @@ TEST(ByteBufferTest, DataModification)
     ASSERT_EQ(buffer.size(), expected_size_bytes);
     // access the byte to load the chunk
     const auto byte_old = buffer[byte_id];
-    ASSERT_TRUE(byte_old.has_value());
     EXPECT_EQ(byte_old, 0x0F);
     EXPECT_FALSE(buffer.is_dirty(byte_id));
     EXPECT_FALSE(buffer.has_dirty());
@@ -91,10 +93,9 @@ TEST(ByteBufferTest, DataModification)
     EXPECT_TRUE(buffer.is_dirty(byte_id));
     EXPECT_TRUE(buffer.has_dirty());
     const auto byte_new = buffer[byte_id];
-    ASSERT_TRUE(byte_new.has_value());
-    EXPECT_EQ(*byte_new, 0xFF);
+    EXPECT_EQ(byte_new, 0xFF);
     EXPECT_NE(expectation[byte_id], 0xFF);
-    EXPECT_EQ(expectation[byte_id], *byte_old);
+    EXPECT_EQ(expectation[byte_id], byte_old);
 }
 
 // ByteBuffer should have access to all the bytes that the underlying
@@ -110,11 +111,7 @@ TEST(ByteBufferTest, ByteRead)
     ASSERT_TRUE(cache.load_chunk(0));
     ASSERT_EQ(cache.recent().m_id, 0);
     for (std::uint64_t i = 0; i < buffer.size(); ++i)
-    {
-        const auto value = buffer[i];
-        ASSERT_TRUE(value.has_value());
-        ASSERT_EQ(*value, expectation[i]);
-    }
+        ASSERT_EQ(buffer[i], expectation[i]);
 }
 
 // This is the same test as DataRead but this time the bytes get accessed
@@ -130,11 +127,7 @@ TEST(ByteBufferTest, ByteReadReverse)
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
     for (std::uint64_t i = buffer.size() - 1; i > 0; --i)
-    {
-        const auto value = buffer[i];
-        ASSERT_TRUE(value.has_value());
-        ASSERT_EQ(*value, expectation[i]);
-    }
+        ASSERT_EQ(buffer[i], expectation[i]);
 }
 
 // Setting bytes using ByteBuffer will not update the actual data
@@ -159,15 +152,14 @@ TEST(ByteBufferTest, SaveBytes)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
             const auto value = buffer[id * ChunkCache::capacity + i];
-            ASSERT_TRUE(value.has_value());
-            EXPECT_EQ(*value, id + 1);
-            EXPECT_NE(expectation[i], *value);
+            EXPECT_EQ(value, id + 1);
+            EXPECT_NE(expectation[i], value);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
     }
     // save all the dirty bytes
-    EXPECT_TRUE(buffer.save());
+    buffer.save();
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
@@ -177,9 +169,8 @@ TEST(ByteBufferTest, SaveBytes)
         for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             const auto value = buffer[id * ChunkCache::capacity + i];
-            ASSERT_TRUE(value.has_value());
-            EXPECT_EQ(expectation[i], *value);
-            EXPECT_EQ(*value, id + 1);
+            EXPECT_EQ(expectation[i], value);
+            EXPECT_EQ(value, id + 1);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
@@ -208,15 +199,14 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         {
             buffer.set_byte(id * ChunkCache::capacity + i, id + 1);
             const auto value = buffer[id * ChunkCache::capacity + i];
-            ASSERT_TRUE(value.has_value());
-            EXPECT_EQ(*value, id + 1);
-            EXPECT_NE(expectation[i], *value);
+            EXPECT_EQ(value, id + 1);
+            EXPECT_NE(expectation[i], value);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
         }
     }
     // save all the dirty bytes
-    EXPECT_TRUE(buffer.save());
+    buffer.save();
     for (auto id : dirty_ids)
     {
         ASSERT_TRUE(cache.load_chunk(id));
@@ -226,8 +216,7 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
         for (std::uint64_t i = 0; i < data_chunk.m_count; ++i)
         {
             const auto value = buffer[id * ChunkCache::capacity + i];
-            ASSERT_TRUE(value.has_value());
-            EXPECT_NE(expectation[i], *value);
+            EXPECT_NE(expectation[i], value);
             EXPECT_NE(expectation[i], id + 1);
             // The recent chunk should not change
             ASSERT_EQ(id, cache.recent().m_id);
@@ -243,13 +232,16 @@ TEST(ByteBufferTest, ErrorDuringSave)
 
     ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(buffer.size(), expected_size_bytes);
-
+    EXPECT_TRUE(buffer.error_msg().empty());
+    EXPECT_TRUE(buffer.is_ok());
     EXPECT_FALSE(buffer.is_dirty(0));
     EXPECT_FALSE(buffer.has_dirty());
     buffer.set_byte(0, 0xBE);
     EXPECT_TRUE(buffer.is_dirty(0));
     EXPECT_TRUE(buffer.has_dirty());
     handler.mock_io_fail(true);
-    EXPECT_FALSE(buffer.save());
+    buffer.save();
+    EXPECT_FALSE(buffer.error_msg().empty());
+    EXPECT_FALSE(buffer.is_ok());
 }
 } // namespace

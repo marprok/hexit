@@ -9,8 +9,9 @@ ByteBuffer::ByteBuffer(ChunkCache& cache)
 {
 }
 
-// No bounds checking is performed by the operator
-std::optional<std::uint8_t> ByteBuffer::operator[](std::uint64_t byte_id)
+// No bounds checking is performed by the operator at all.
+// is_ok() method should get called to check if an I/O error has occured.
+std::uint8_t ByteBuffer::operator[](std::uint64_t byte_id)
 {
     std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
     std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
@@ -25,7 +26,7 @@ std::optional<std::uint8_t> ByteBuffer::operator[](std::uint64_t byte_id)
 
     // chunk miss, load from disk...
     if (!m_cache.load_chunk(chunk_id))
-        return std::nullopt;
+        log_error("Error at ByteBuffer::operator[]: Could not load chunk with id " + std::to_string(chunk_id));
 
     return m_cache.recent().m_data[relative_id];
 }
@@ -41,27 +42,31 @@ void ByteBuffer::set_byte(std::uint64_t byte_id, std::uint8_t byte_value)
     m_dirty_bytes.insert_or_assign(byte_id, byte_value);
 }
 
-bool ByteBuffer::save()
+void ByteBuffer::save()
 {
     if (!has_dirty() || m_cache.is_read_only())
-        return true;
+        return;
 
     for (const auto& [chunk_id, changes] : m_dirty_chunks)
     {
         if (!m_cache.load_chunk(chunk_id))
-            return false;
+        {
+            log_error("Error at ByteBuffer::save(): Could not load chunk with id " + std::to_string(chunk_id));
+            break;
+        }
 
         auto& chunk = m_cache.recent();
         for (auto& change : changes)
             chunk.m_data[change] = m_dirty_bytes[chunk_id * ChunkCache::capacity + change];
 
         if (!m_cache.save_chunk(chunk))
-            return false;
+        {
+            log_error("Error at ByteBuffer::save(): Could not save chunk with id " + std::to_string(chunk_id));
+            break;
+        }
     }
 
     m_dirty_bytes.clear();
     m_dirty_chunks.clear();
-
-    return true;
 }
 } // namespace Hexit
