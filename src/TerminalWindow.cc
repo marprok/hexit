@@ -9,9 +9,9 @@
 
 namespace Hexit
 {
-TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t start_from_byte)
-    : m_scroller(data.size(), BYTES_PER_LINE)
-    , m_data(data)
+TerminalWindow::TerminalWindow(WINDOW* win, IOHandler& handler, const std::string& file_type, std::uint64_t start_from_byte)
+    : m_scroller(handler.size(), BYTES_PER_LINE)
+    , m_data(handler)
     , m_type(file_type)
     , m_update(true)
     , m_mode(Mode::HEX)

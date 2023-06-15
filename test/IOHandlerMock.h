@@ -13,7 +13,7 @@ class IOHandlerMock : public Hexit::IOHandler
 public:
     static constexpr std::uint64_t chunk_count = 255;
 
-    IOHandlerMock();
+    IOHandlerMock(bool read_only = false);
 
     ~IOHandlerMock() = default;
 

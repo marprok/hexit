@@ -9,7 +9,10 @@ namespace Hexit
 class StdInHandler : public IOHandler
 {
 public:
-    StdInHandler() = default;
+    explicit StdInHandler(bool read_only = false)
+        : IOHandler(read_only)
+    {
+    }
 
     ~StdInHandler() = default;
 

@@ -1,6 +1,7 @@
 #ifndef TERMINAL_WINDOW_H
 #define TERMINAL_WINDOW_H
 
+#include "ByteBuffer.h"
 #include "Scroller.h"
 #include <cinttypes>
 #include <cstdint>
@@ -9,12 +10,10 @@
 
 namespace Hexit
 {
-class ByteBuffer;
-
 class TerminalWindow
 {
 public:
-    TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t go_to_byte = 0);
+    TerminalWindow(WINDOW* win, IOHandler& handler, const std::string& file_type, std::uint64_t go_to_byte = 0);
 
     TerminalWindow(const TerminalWindow&) = delete;
 
@@ -78,7 +77,7 @@ private:
     };
 
     Scroller          m_scroller;
-    ByteBuffer&       m_data;
+    ByteBuffer        m_data;
     const std::string m_type;
     bool              m_update;
     Mode              m_mode;

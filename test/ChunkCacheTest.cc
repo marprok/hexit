@@ -23,7 +23,8 @@ inline std::uint64_t expected_chunks()
 TEST(ChunkCacheTest, IOHandlerInformation)
 {
     IOHandlerMock handler;
-    ChunkCache    cache(handler);
+    ASSERT_TRUE(handler.open(file_name));
+    ChunkCache cache(handler);
 
     ASSERT_EQ(cache.recent().m_id, UINT64_MAX);
     ASSERT_EQ(cache.recent().m_count, 0);
@@ -33,7 +34,6 @@ TEST(ChunkCacheTest, IOHandlerInformation)
     ASSERT_EQ(cache.fallback().m_count, 0);
     ASSERT_EQ(sizeof(cache.fallback().m_data), ChunkCache::capacity);
 
-    ASSERT_TRUE(cache.open(file_name));
     ASSERT_EQ(cache.name(), file_name);
     ASSERT_EQ(cache.size(), expected_size_bytes);
     ASSERT_EQ(expected_chunks(), cache.total_chunks());
@@ -46,8 +46,8 @@ TEST(ChunkCacheTest, IOHandlerInformation)
 TEST(ChunkCacheTest, LoadChunk)
 {
     IOHandlerMock handler;
-    ChunkCache    cache(handler);
-    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_TRUE(handler.open(file_name));
+    ChunkCache cache(handler);
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     ASSERT_TRUE(cache.load_chunk(0));
     EXPECT_EQ(cache.recent().m_id, 0);
@@ -63,8 +63,8 @@ TEST(ChunkCacheTest, LoadChunk)
 TEST(ChunkCacheTest, LoadChunkReverse)
 {
     IOHandlerMock handler;
-    ChunkCache    cache(handler);
-    ASSERT_TRUE(cache.open(file_name));
+    ASSERT_TRUE(handler.open(file_name));
+    ChunkCache cache(handler);
     ASSERT_EQ(cache.total_chunks(), expected_chunks());
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
@@ -79,12 +79,12 @@ TEST(ChunkCacheTest, LoadChunkReverse)
 TEST(ChunkCacheTest, SaveChunk)
 {
     IOHandlerMock handler;
+    ASSERT_TRUE(handler.open(file_name));
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
     const auto    chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
-    ASSERT_TRUE(cache.open(file_name));
     ASSERT_TRUE(cache.load_chunk(chunk_id));
     auto& data_chunk = cache.recent();
     EXPECT_EQ(chunk_id, data_chunk.m_id);
@@ -99,13 +99,13 @@ TEST(ChunkCacheTest, SaveChunk)
 // When a chunk is read only, the underlying IOHandler should not get updated.
 TEST(ChunkCacheTest, SaveChunkReadOnly)
 {
-    IOHandlerMock handler;
+    IOHandlerMock handler(true);
+    ASSERT_TRUE(handler.open(file_name));
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
     const auto    chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
-    ASSERT_TRUE(cache.open(file_name, true));
     ASSERT_TRUE(cache.load_chunk(chunk_id));
     auto& data_chunk = cache.recent();
     EXPECT_EQ(chunk_id, data_chunk.m_id);

@@ -21,13 +21,11 @@ public:
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    explicit ChunkCache(IOHandler& handler);
+    ChunkCache(IOHandler& handler);
 
     ChunkCache(const ChunkCache&) = delete;
 
     ChunkCache& operator=(const ChunkCache&) = delete;
-
-    bool open(const fs::path& name, bool read_only = false);
 
     bool load_chunk(std::uint64_t chunk_id);
 
@@ -43,7 +41,7 @@ public:
 
     inline DataChunk& fallback() { return *m_fallback; }
 
-    inline bool is_read_only() const { return m_read_only; }
+    inline bool is_read_only() const { return m_handler.read_only(); }
 
 private:
     IOHandler&    m_handler;
@@ -51,7 +49,6 @@ private:
     DataChunk     m_chunks[2];
     DataChunk*    m_recent;
     DataChunk*    m_fallback;
-    bool          m_read_only;
 };
 } // namespace Hexit
 #endif // CHUNK_CACHE_H

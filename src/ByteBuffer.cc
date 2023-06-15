@@ -4,8 +4,8 @@
 
 namespace Hexit
 {
-ByteBuffer::ByteBuffer(ChunkCache& cache)
-    : m_cache(cache)
+ByteBuffer::ByteBuffer(IOHandler& handler)
+    : m_cache(handler)
 {
 }
 

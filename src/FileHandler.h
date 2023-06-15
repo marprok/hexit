@@ -9,7 +9,7 @@ namespace Hexit
 class FileHandler : public IOHandler
 {
 public:
-    FileHandler() = default;
+    FileHandler(bool read_only = false);
 
     ~FileHandler() = default;
 

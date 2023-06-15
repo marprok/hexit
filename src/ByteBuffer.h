@@ -3,7 +3,6 @@
 
 #include "ChunkCache.h"
 #include <map>
-#include <optional>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -13,7 +12,7 @@ namespace Hexit
 class ByteBuffer
 {
 public:
-    explicit ByteBuffer(ChunkCache& cache);
+    explicit ByteBuffer(IOHandler& handler);
 
     ByteBuffer(const ByteBuffer&) = delete;
 
@@ -51,7 +50,7 @@ private:
 
     DirtyByteMap  m_dirty_bytes;
     DirtyChunkMap m_dirty_chunks;
-    ChunkCache&   m_cache;
+    ChunkCache    m_cache;
     std::string   m_error_msg;
 };
 } // mamespace Hexit
