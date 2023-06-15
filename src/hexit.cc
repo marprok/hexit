@@ -36,23 +36,19 @@ inline bool init_ncurses()
         && keypad(stdscr, true) != ERR;
 }
 
-int get_type(ByteBuffer& byteBuffer, std::string& file_type)
+int get_type(IOHandler& handler, std::string& file_type)
 {
-    if (byteBuffer.size() == 0)
-        return {};
+    if (handler.size() == 0)
+        return 1;
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), static_cast<std::uint64_t>(32u));
-    query.reserve(bytes_to_copy);
+    std::size_t               bytes_to_copy = std::min(handler.size(), static_cast<std::uint64_t>(32u));
+    query.resize(bytes_to_copy);
 
-    for (std::size_t i = 0u; i < bytes_to_copy; ++i)
-        query.push_back(byteBuffer[i]);
-
-    if (!byteBuffer.is_ok())
+    if (!handler.seek(0u) || !handler.read(query.data(), bytes_to_copy))
     {
         std::cerr << "Error reading file signature!\n";
-        std::cerr << byteBuffer.error_msg() << '\n';
         return 1;
     }
 
@@ -74,7 +70,7 @@ int start_hexit(IOHandler&        handler,
 
     ByteBuffer  buffer(cache);
     std::string file_type;
-    if (get_type(buffer, file_type) != 0)
+    if (get_type(handler, file_type) != 0)
         return 1;
 
     if (!init_ncurses())
