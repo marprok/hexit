@@ -82,7 +82,8 @@ TEST(ChunkCacheTest, SaveChunk)
     ASSERT_TRUE(handler.open(file_name));
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    const auto    chunk_id = cache.total_chunks() / 2;
+    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    const auto chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.load_chunk(chunk_id));
@@ -103,7 +104,8 @@ TEST(ChunkCacheTest, SaveChunkReadOnly)
     ASSERT_TRUE(handler.open(file_name));
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    const auto    chunk_id = cache.total_chunks() / 2;
+    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    const auto chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
     ASSERT_TRUE(cache.load_chunk(chunk_id));
