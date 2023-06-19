@@ -84,6 +84,7 @@ private:
     Prompt            m_prompt;
     WINDOW*           m_screen;
     std::uint64_t     m_byte;
+    std::uint64_t     m_total_bytes;
     std::uint8_t      m_nibble;
     char              m_offset_format[16];
     bool              m_quit;
