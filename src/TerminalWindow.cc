@@ -12,6 +12,7 @@ namespace Hexit
 TerminalWindow::TerminalWindow(WINDOW* win, IOHandler& handler, const std::string& file_type, std::uint64_t start_from_byte)
     : m_scroller(handler.size(), BYTES_PER_LINE)
     , m_data(handler)
+    , m_name(handler.name().filename())
     , m_type(file_type)
     , m_update(true)
     , m_mode(Mode::HEX)
@@ -98,9 +99,9 @@ void TerminalWindow::run()
 
 void TerminalWindow::draw_line(std::uint32_t line)
 {
-    std::uint64_t line_abs      = m_scroller.first() + line;
-    std::uint64_t line_byte     = line_abs * BYTES_PER_LINE;
-    std::uint32_t bytes_to_draw = BYTES_PER_LINE;
+    const std::uint64_t line_abs      = m_scroller.first() + line;
+    std::uint64_t       line_byte     = line_abs * BYTES_PER_LINE;
+    std::uint32_t       bytes_to_draw = BYTES_PER_LINE;
 
     if (((m_scroller.total() - 1) == line_abs) && (m_total_bytes % BYTES_PER_LINE) > 0)
         bytes_to_draw = m_total_bytes % BYTES_PER_LINE;
@@ -151,11 +152,10 @@ bool TerminalWindow::update_screen()
         for (std::uint32_t line = 0; line < m_scroller.visible(); ++line)
             draw_line(line);
 
-        const std::string file_name = m_data.name().filename();
         if (m_data.has_dirty())
-            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "*%s", file_name.c_str());
+            mvwprintw(m_screen, 0, (COLS - m_name.size()) / 2 - 1, "*%s", m_name.c_str());
         else
-            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "%s", file_name.c_str());
+            mvwprintw(m_screen, 0, (COLS - m_name.size()) / 2 - 1, "%s", m_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage  = static_cast<float>(m_scroller.last() + 1) / m_scroller.total() * 100;

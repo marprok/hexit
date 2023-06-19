@@ -78,6 +78,7 @@ private:
 
     Scroller          m_scroller;
     ByteBuffer        m_data;
+    const std::string m_name;
     const std::string m_type;
     bool              m_update;
     Mode              m_mode;

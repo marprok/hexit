@@ -31,10 +31,6 @@ public:
 
     bool save_chunk(const DataChunk& chunk);
 
-    inline const fs::path& name() const { return m_handler.name(); }
-
-    inline std::uint64_t size() const { return m_handler.size(); }
-
     inline std::uint64_t total_chunks() const { return m_total_chunks; }
 
     inline DataChunk& recent() { return *m_recent; }

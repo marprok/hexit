@@ -28,10 +28,6 @@ public:
 
     inline bool has_dirty() const { return m_dirty_bytes.size() != 0; }
 
-    inline const fs::path& name() const { return m_cache.name(); }
-
-    inline std::uint64_t size() const { return m_cache.size(); }
-
     inline bool is_read_only() const { return m_cache.is_read_only(); }
 
     inline bool is_ok() const { return m_error_msg.empty(); };
