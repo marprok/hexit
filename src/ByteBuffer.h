@@ -34,6 +34,8 @@ public:
 
     const std::string_view error_msg() const { return m_error_msg; }
 
+    const std::uint64_t size;
+
 private:
     inline void log_error(const std::string_view err)
     {

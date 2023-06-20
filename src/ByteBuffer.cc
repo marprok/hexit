@@ -5,7 +5,8 @@
 namespace Hexit
 {
 ByteBuffer::ByteBuffer(IOHandler& handler)
-    : m_cache(handler)
+    : size(handler.size())
+    , m_cache(handler)
 {
 }
 

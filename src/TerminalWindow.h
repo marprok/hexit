@@ -30,8 +30,6 @@ private:
 
     void resize();
 
-    void reset_cursor() const;
-
     void move_up();
 
     void page_up();
@@ -62,13 +60,13 @@ private:
 
     void handle_prompt(int key);
 
-    enum class Mode
+    enum class Mode : std::uint8_t
     {
         HEX,
         ASCII,
     };
 
-    enum class Prompt
+    enum class Prompt : std::uint8_t
     {
         NONE,
         SAVE,
@@ -80,16 +78,15 @@ private:
     ByteBuffer        m_data;
     const std::string m_name;
     const std::string m_type;
-    bool              m_update;
-    Mode              m_mode;
-    Prompt            m_prompt;
+    std::string       m_input_buffer;
     WINDOW*           m_screen;
     std::uint64_t     m_byte;
-    std::uint64_t     m_total_bytes;
-    std::uint8_t      m_nibble;
     char              m_offset_format[16];
+    Mode              m_mode;
+    Prompt            m_prompt;
+    std::uint8_t      m_nibble;
+    bool              m_update;
     bool              m_quit;
-    std::string       m_input_buffer;
 };
 } // namespace Hexit
 #endif // TERMINAL_WINDOW_H

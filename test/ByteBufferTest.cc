@@ -21,6 +21,7 @@ TEST(ByteBufferTest, RandomAccessError)
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
     ByteBuffer buffer(handler);
+    EXPECT_EQ(buffer.size, expected_size_bytes);
     handler.mock_io_fail(true);
     EXPECT_TRUE(buffer.error_msg().empty());
     EXPECT_TRUE(buffer.is_ok());
