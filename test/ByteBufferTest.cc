@@ -63,24 +63,51 @@ TEST(ByteBufferTest, DataModification)
 {
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
-    const auto    size = handler.size();
-    ByteBuffer    buffer(handler);
-    const auto    byte_id     = size - 1;
-    std::uint8_t* expectation = handler.data();
-    expectation[byte_id]      = 0x0F;
+    const auto size = handler.size();
+    ByteBuffer buffer(handler);
     ASSERT_EQ(size, expected_size_bytes);
-    // access the byte to load the chunk
-    const auto byte_old = buffer[byte_id];
-    EXPECT_EQ(byte_old, 0x0F);
-    EXPECT_FALSE(buffer.is_dirty(byte_id));
-    EXPECT_FALSE(buffer.has_dirty());
-    buffer.set_byte(byte_id, 0xFF);
-    EXPECT_TRUE(buffer.is_dirty(byte_id));
-    EXPECT_TRUE(buffer.has_dirty());
-    const auto byte_new = buffer[byte_id];
-    EXPECT_EQ(byte_new, 0xFF);
-    EXPECT_NE(expectation[byte_id], 0xFF);
-    EXPECT_EQ(expectation[byte_id], byte_old);
+    // Change the first byte.
+    {
+        const auto    byte_id     = 0;
+        std::uint8_t* expectation = handler.data();
+        expectation[byte_id]      = 0xBE;
+        // access the byte to load the chunk
+        const auto byte_old = buffer[byte_id];
+        EXPECT_EQ(byte_old, 0xBE);
+        EXPECT_FALSE(buffer.is_dirty(byte_id));
+        EXPECT_FALSE(buffer.has_dirty());
+        buffer.set_byte(byte_id, 0xFC);
+        EXPECT_TRUE(buffer.is_dirty(byte_id));
+        EXPECT_TRUE(buffer.has_dirty());
+        const auto byte_new = buffer[byte_id];
+        EXPECT_EQ(byte_new, 0xFC);
+        EXPECT_NE(expectation[byte_id], 0xFC);
+        EXPECT_EQ(expectation[byte_id], byte_old);
+        buffer.save();
+        EXPECT_EQ(expectation[byte_id], 0xFC);
+        EXPECT_NE(expectation[byte_id], byte_old);
+    }
+    // Change the last byte.
+    {
+        const auto    byte_id     = size - 1;
+        std::uint8_t* expectation = handler.data();
+        expectation[byte_id]      = 0x0F;
+        // access the byte to load the chunk
+        const auto byte_old = buffer[byte_id];
+        EXPECT_EQ(byte_old, 0x0F);
+        EXPECT_FALSE(buffer.is_dirty(byte_id));
+        EXPECT_FALSE(buffer.has_dirty());
+        buffer.set_byte(byte_id, 0xFF);
+        EXPECT_TRUE(buffer.is_dirty(byte_id));
+        EXPECT_TRUE(buffer.has_dirty());
+        const auto byte_new = buffer[byte_id];
+        EXPECT_EQ(byte_new, 0xFF);
+        EXPECT_NE(expectation[byte_id], 0xFF);
+        EXPECT_EQ(expectation[byte_id], byte_old);
+        buffer.save();
+        EXPECT_EQ(expectation[byte_id], 0xFF);
+        EXPECT_NE(expectation[byte_id], byte_old);
+    }
 }
 
 // ByteBuffer should have access to all the bytes that the underlying
