@@ -72,7 +72,7 @@ int start_hexit(IOHandler&        handler,
     if (!init_ncurses())
         return 1;
 
-    TerminalWindow win(stdscr, handler, file_type, str_to_int(starting_offset));
+    TerminalWindow win(handler, file_type, str_to_int(starting_offset));
     win.run();
     return 0;
 }
