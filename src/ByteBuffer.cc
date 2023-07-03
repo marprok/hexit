@@ -67,20 +67,42 @@ void ByteBuffer::save()
 
     for (const auto& [chunk_id, changes] : m_dirty_chunks)
     {
-        if (!m_cache.load_chunk(chunk_id))
+        auto& recent   = m_cache.recent();
+        auto& fallback = m_cache.fallback();
+
+        if (recent.m_id == chunk_id)
         {
-            log_error("Error at ByteBuffer::save(): Could not load chunk with id " + std::to_string(chunk_id));
-            break;
+            if (!m_cache.save_chunk(recent))
+            {
+                log_error("Error at ByteBuffer::save(): Could not save chunk with id " + std::to_string(chunk_id));
+                break;
+            }
         }
-
-        auto& chunk = m_cache.recent();
-        for (auto& change : changes)
-            chunk.m_data[change] = m_dirty_bytes[chunk_id * ChunkCache::capacity + change];
-
-        if (!m_cache.save_chunk(chunk))
+        else if (fallback.m_id == chunk_id)
         {
-            log_error("Error at ByteBuffer::save(): Could not save chunk with id " + std::to_string(chunk_id));
-            break;
+            if (!m_cache.save_chunk(fallback))
+            {
+                log_error("Error at ByteBuffer::save(): Could not save chunk with id " + std::to_string(chunk_id));
+                break;
+            }
+        }
+        else
+        {
+            if (!m_cache.load_chunk(chunk_id))
+            {
+                log_error("Error at ByteBuffer::save(): Could not load chunk with id " + std::to_string(chunk_id));
+                break;
+            }
+
+            auto& chunk = m_cache.recent();
+            for (auto& change : changes)
+                chunk.m_data[change] = m_dirty_bytes[chunk_id * ChunkCache::capacity + change];
+
+            if (!m_cache.save_chunk(chunk))
+            {
+                log_error("Error at ByteBuffer::save(): Could not save chunk with id " + std::to_string(chunk_id));
+                break;
+            }
         }
     }
 

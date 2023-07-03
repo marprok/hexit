@@ -63,51 +63,38 @@ TEST(ByteBufferTest, DataModification)
 {
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
-    const auto size = handler.size();
-    ByteBuffer buffer(handler);
+    const auto                   size = handler.size();
+    ByteBuffer                   buffer(handler);
+    std::uint8_t*                expectation = handler.data();
+    std::array<std::uint64_t, 3> byte_ids { 0, size - 1, 1 };
+    std::array<std::uint8_t, 3>  original_values { 0xBE, 0xAB, 0xAC };
+    std::array<std::uint8_t, 3>  new_values { 0xEF, 0xBA, 0xDC };
+    for (auto byte_id : byte_ids)
+        expectation[byte_id] = original_values[byte_id];
     ASSERT_EQ(size, expected_size_bytes);
-    // Change the first byte.
+
+    for (auto byte_id : byte_ids)
     {
-        const auto    byte_id     = 0;
-        std::uint8_t* expectation = handler.data();
-        expectation[byte_id]      = 0xBE;
         // access the byte to load the chunk
         const auto byte_old = buffer[byte_id];
-        EXPECT_EQ(byte_old, 0xBE);
+        EXPECT_EQ(byte_old, original_values[byte_id]);
         EXPECT_FALSE(buffer.is_dirty(byte_id));
         EXPECT_FALSE(buffer.has_dirty());
-        buffer.set_byte(byte_id, 0xFC);
+        buffer.set_byte(byte_id, new_values[byte_id]);
         EXPECT_TRUE(buffer.is_dirty(byte_id));
         EXPECT_TRUE(buffer.has_dirty());
         const auto byte_new = buffer[byte_id];
-        EXPECT_EQ(byte_new, 0xFC);
-        EXPECT_NE(expectation[byte_id], 0xFC);
+        EXPECT_EQ(byte_new, new_values[byte_id]);
+        EXPECT_NE(expectation[byte_id], new_values[byte_id]);
         EXPECT_EQ(expectation[byte_id], byte_old);
         buffer.save();
-        EXPECT_EQ(expectation[byte_id], 0xFC);
+        EXPECT_EQ(expectation[byte_id], new_values[byte_id]);
         EXPECT_NE(expectation[byte_id], byte_old);
     }
-    // Change the last byte.
-    {
-        const auto    byte_id     = size - 1;
-        std::uint8_t* expectation = handler.data();
-        expectation[byte_id]      = 0x0F;
-        // access the byte to load the chunk
-        const auto byte_old = buffer[byte_id];
-        EXPECT_EQ(byte_old, 0x0F);
-        EXPECT_FALSE(buffer.is_dirty(byte_id));
-        EXPECT_FALSE(buffer.has_dirty());
-        buffer.set_byte(byte_id, 0xFF);
-        EXPECT_TRUE(buffer.is_dirty(byte_id));
-        EXPECT_TRUE(buffer.has_dirty());
-        const auto byte_new = buffer[byte_id];
-        EXPECT_EQ(byte_new, 0xFF);
-        EXPECT_NE(expectation[byte_id], 0xFF);
-        EXPECT_EQ(expectation[byte_id], byte_old);
-        buffer.save();
-        EXPECT_EQ(expectation[byte_id], 0xFF);
-        EXPECT_NE(expectation[byte_id], byte_old);
-    }
+    // Only two I/O reads should be performed.
+    // - The first one should be due to cold start when we read the first byte.
+    // - The second one when we try to access the last byte.
+    EXPECT_EQ(handler.load_count(), 2);
 }
 
 // ByteBuffer should have access to all the bytes that the underlying
@@ -170,9 +157,7 @@ TEST(ByteBufferTest, SaveBytes)
             EXPECT_EQ(raw_data[from], old_value + 1);
         }
     }
-    // ByteBuffer::save(...) will force-load each dirty chunk.
-    // This means that the total number of calls to the handler, is twice the number of dirty_ids.
-    EXPECT_EQ(handler.load_count(), dirty_ids.size() * 2);
+    EXPECT_EQ(handler.load_count(), dirty_ids.size());
 }
 
 // Same as SaveBytes but this time the read only flag is set to true
@@ -209,7 +194,6 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
             EXPECT_NE(raw_data[from], old_value + 1);
         }
     }
-
     EXPECT_EQ(handler.load_count(), dirty_ids.size());
 }
 
