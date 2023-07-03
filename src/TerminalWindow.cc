@@ -118,16 +118,16 @@ void TerminalWindow::draw_line(std::uint32_t line)
         if (line_byte == m_byte)
         {
             attron(A_REVERSE);
-            mvprintw(line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
+            mvaddch(line, FIRST_ASCII + i, std::isprint(bt) ? bt : '.');
             if (m_mode == Mode::HEX)
             {
-                mvprintw(line, FIRST_HEX + i * 3 + m_nibble, "%c", hexDigits[m_nibble]);
+                mvaddch(line, FIRST_HEX + i * 3 + m_nibble, hexDigits[m_nibble]);
                 attroff(A_REVERSE);
-                mvprintw(line, FIRST_HEX + i * 3 + 1 - m_nibble, "%c", hexDigits[1 - m_nibble]);
+                mvaddch(line, FIRST_HEX + i * 3 + 1 - m_nibble, hexDigits[1 - m_nibble]);
             }
             else
             {
-                mvprintw(line, FIRST_HEX + i * 3, "%s", hexDigits);
+                mvaddstr(line, FIRST_HEX + i * 3, hexDigits);
                 attroff(A_REVERSE);
             }
         }
@@ -135,16 +135,16 @@ void TerminalWindow::draw_line(std::uint32_t line)
         {
             if (is_dirty)
                 attron(COLOR_PAIR(1) | A_REVERSE);
-            mvprintw(line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
-            mvprintw(line, FIRST_HEX + i * 3, "%s", hexDigits);
+            mvaddch(line, FIRST_ASCII + i, std::isprint(bt) ? bt : '.');
+            mvaddstr(line, FIRST_HEX + i * 3, hexDigits);
             if (is_dirty)
                 attroff(COLOR_PAIR(1) | A_REVERSE);
         }
         else
         {
             // padding for the very last line.
-            mvprintw(line, FIRST_ASCII + i, " ");
-            mvprintw(line, FIRST_HEX + i * 3, "  ");
+            mvaddch(line, FIRST_ASCII + i, ' ');
+            mvaddstr(line, FIRST_HEX + i * 3, "  ");
         }
     }
 }
@@ -160,7 +160,7 @@ bool TerminalWindow::update_screen()
         if (m_data.has_dirty())
             mvprintw(0, (COLS - m_name.size()) / 2 - 1, "*%s", m_name.c_str());
         else
-            mvprintw(0, (COLS - m_name.size()) / 2 - 1, "%s", m_name.c_str());
+            mvaddstr(0, (COLS - m_name.size()) / 2 - 1, m_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage  = static_cast<float>(m_scroller.last() + 1) / m_scroller.total() * 100;
@@ -168,9 +168,9 @@ bool TerminalWindow::update_screen()
         mvprintw(LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
         if (m_prompt == Prompt::SAVE)
-            mvprintw(LINES - 1, 1, "Modified buffer, save?(y/n)");
+            mvaddstr(LINES - 1, 1, "Modified buffer, save?(y/n)");
         else if (m_prompt == Prompt::QUIT)
-            mvprintw(LINES - 1, 1, "Modified buffer, quit?(y,n)");
+            mvaddstr(LINES - 1, 1, "Modified buffer, quit?(y,n)");
         else if (m_prompt == Prompt::GO_TO_BYTE)
             mvprintw(LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
         m_update = false;
