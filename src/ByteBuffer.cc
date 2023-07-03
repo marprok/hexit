@@ -26,7 +26,11 @@ std::uint8_t ByteBuffer::operator[](std::uint64_t byte_id)
 
     // chunk miss, load from disk...
     if (!m_cache.load_chunk(chunk_id))
+    {
         log_error("Error at ByteBuffer::operator[]: Could not load chunk with id " + std::to_string(chunk_id));
+        // Return a garbage value since an error occured.
+        return recent.m_data[relative_id];
+    }
 
     auto& new_chunk = m_cache.recent();
     if (m_dirty_chunks.contains(chunk_id))
