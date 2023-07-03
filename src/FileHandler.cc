@@ -2,6 +2,12 @@
 
 namespace Hexit
 {
+
+FileHandler::FileHandler(bool read_only)
+    : IOHandler(read_only)
+{
+}
+
 bool FileHandler::open(const fs::path& path)
 {
     if (!fs::exists(path))
@@ -43,6 +49,9 @@ bool FileHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
 
 bool FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
 {
+    if (m_read_only)
+        return true;
+
     if (!m_stream.is_open())
         return false;
 

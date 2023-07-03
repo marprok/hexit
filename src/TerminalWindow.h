@@ -1,6 +1,7 @@
 #ifndef TERMINAL_WINDOW_H
 #define TERMINAL_WINDOW_H
 
+#include "ByteBuffer.h"
 #include "Scroller.h"
 #include <cinttypes>
 #include <cstdint>
@@ -9,12 +10,10 @@
 
 namespace Hexit
 {
-class ByteBuffer;
-
 class TerminalWindow
 {
 public:
-    TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t go_to_byte = 0);
+    TerminalWindow(IOHandler& handler, const std::string& file_type, std::uint64_t go_to_byte = 0);
 
     TerminalWindow(const TerminalWindow&) = delete;
 
@@ -25,13 +24,11 @@ public:
     void run();
 
 private:
-    bool draw_line(std::uint32_t line);
+    void draw_line(std::uint32_t line);
 
     bool update_screen();
 
     void resize();
-
-    void reset_cursor() const;
 
     void move_up();
 
@@ -63,20 +60,13 @@ private:
 
     void handle_prompt(int key);
 
-    inline void set_error_and_quit(const std::string& err)
-    {
-        m_error_msg.reserve(err.size());
-        m_error_msg = err;
-        m_quit      = true;
-    }
-
-    enum class Mode
+    enum class Mode : std::uint8_t
     {
         HEX,
         ASCII,
     };
 
-    enum class Prompt
+    enum class Prompt : std::uint8_t
     {
         NONE,
         SAVE,
@@ -85,18 +75,17 @@ private:
     };
 
     Scroller          m_scroller;
-    ByteBuffer&       m_data;
+    ByteBuffer        m_data;
+    const std::string m_name;
     const std::string m_type;
-    bool              m_update;
+    std::string       m_input_buffer;
+    std::uint64_t     m_byte;
+    char              m_offset_format[16];
     Mode              m_mode;
     Prompt            m_prompt;
-    WINDOW*           m_screen;
-    std::uint64_t     m_byte;
     std::uint8_t      m_nibble;
-    char              m_offset_format[16];
+    bool              m_update;
     bool              m_quit;
-    std::string       m_input_buffer;
-    std::string       m_error_msg;
 };
 } // namespace Hexit
 #endif // TERMINAL_WINDOW_H

@@ -1,7 +1,8 @@
 #include "IOHandlerMock.h"
 
-IOHandlerMock::IOHandlerMock()
-    : m_id(0u)
+IOHandlerMock::IOHandlerMock(bool read_only)
+    : IOHandler(read_only)
+    , m_id(0u)
     , m_load_count(0u)
     , m_io_fail(false)
 {

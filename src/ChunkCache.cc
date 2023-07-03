@@ -8,21 +8,10 @@ ChunkCache::ChunkCache(IOHandler& handler)
     , m_total_chunks(0)
     , m_recent(m_chunks + 1)
     , m_fallback(m_chunks)
-    , m_read_only(false)
 {
-}
-
-bool ChunkCache::open(const fs::path& path, bool read_only)
-{
-    if (!m_handler.open(path))
-        return false;
-
     m_total_chunks = m_handler.size() / capacity;
     if (m_handler.size() % capacity)
         m_total_chunks++;
-
-    m_read_only = read_only;
-    return true;
 }
 
 bool ChunkCache::load_chunk(std::uint64_t chunk_id)
@@ -47,7 +36,7 @@ bool ChunkCache::load_chunk(std::uint64_t chunk_id)
 
 bool ChunkCache::save_chunk(const DataChunk& chunk)
 {
-    if (m_read_only)
+    if (m_handler.read_only())
         return false;
 
     if (!m_handler.seek(chunk.m_id * ChunkCache::capacity))

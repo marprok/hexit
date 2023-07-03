@@ -9,23 +9,23 @@
 
 namespace Hexit
 {
-TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string& file_type, std::uint64_t start_from_byte)
-    : m_scroller(data.size(), BYTES_PER_LINE)
-    , m_data(data)
+TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type, std::uint64_t start_from_byte)
+    : m_scroller(handler.size(), BYTES_PER_LINE)
+    , m_data(handler)
+    , m_name(handler.name().filename())
     , m_type(file_type)
-    , m_update(true)
+    , m_byte(0u)
     , m_mode(Mode::HEX)
     , m_prompt(Prompt::NONE)
-    , m_screen(win)
-    , m_byte(0u)
     , m_nibble(0u)
+    , m_update(true)
     , m_quit(false)
 {
 
-    if (start_from_byte < m_data.size())
+    if (start_from_byte < m_data.size)
         m_byte = start_from_byte;
     else
-        m_byte = m_data.size() - 1;
+        m_byte = m_data.size - 1;
 
     std::snprintf(m_offset_format, sizeof(m_offset_format), "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
@@ -35,18 +35,18 @@ TerminalWindow::TerminalWindow(WINDOW* win, ByteBuffer& data, const std::string&
 TerminalWindow::~TerminalWindow()
 {
     endwin();
-    if (!m_error_msg.empty())
-        std::cerr << m_error_msg << std::endl;
-    m_error_msg.clear();
+    if (!m_data.is_ok())
+        std::cerr << m_data.error_msg() << std::endl;
 }
 
 void TerminalWindow::run()
 {
+    erase();
+    box(stdscr, 0, 0);
     while (!m_quit && update_screen())
     {
-        reset_cursor();
-        wrefresh(m_screen);
-        auto c = wgetch(m_screen);
+        refresh();
+        auto c = getch();
         switch (c)
         {
         case KEY_UP:
@@ -69,6 +69,7 @@ void TerminalWindow::run()
             break;
         case KEY_RESIZE:
             resize();
+            erase();
             break;
         case K_SAVE:
             prompt_save();
@@ -96,88 +97,82 @@ void TerminalWindow::run()
     }
 }
 
-bool TerminalWindow::draw_line(std::uint32_t line)
+void TerminalWindow::draw_line(std::uint32_t line)
 {
-    std::uint64_t line_abs      = m_scroller.first() + line;
-    std::uint64_t line_byte     = line_abs * BYTES_PER_LINE;
-    std::uint32_t bytes_to_draw = BYTES_PER_LINE;
+    const std::uint64_t line_abs      = m_scroller.first() + line;
+    std::uint64_t       line_byte     = line_abs * BYTES_PER_LINE;
+    std::uint32_t       bytes_to_draw = BYTES_PER_LINE;
 
-    if (((m_scroller.total() - 1) == line_abs) && (m_data.size() % BYTES_PER_LINE) > 0)
-        bytes_to_draw = m_data.size() % BYTES_PER_LINE;
+    if (((m_scroller.total() - 1) == line_abs) && (m_data.size % BYTES_PER_LINE) > 0)
+        bytes_to_draw = m_data.size % BYTES_PER_LINE;
     // Skip the first box border line.
     line++;
     // Draw the line byte offset.
-    mvwprintw(m_screen, line, 1, m_offset_format, line_byte);
-    for (std::uint32_t i = 0; i < bytes_to_draw; ++i, ++line_byte)
+    mvprintw(line, 1, m_offset_format, line_byte);
+    for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, ++line_byte)
     {
-        const auto opt = m_data[line_byte];
-        if (!opt.has_value())
-        {
-            set_error_and_quit("Could not read bytes at offset: " + std::to_string(line_byte));
-            return false;
-        }
-        const std::uint8_t bt           = *opt;
+        const std::uint8_t bt           = m_data[line_byte];
         const bool         is_dirty     = m_data.is_dirty(line_byte);
         char               hexDigits[3] = { 0 };
         std::sprintf(hexDigits, "%02X", bt);
         if (line_byte == m_byte)
         {
-            wattron(m_screen, A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
+            attron(A_REVERSE);
+            mvaddch(line, FIRST_ASCII + i, std::isprint(bt) ? bt : '.');
             if (m_mode == Mode::HEX)
             {
-                mvwprintw(m_screen, line, FIRST_HEX + i * 3 + m_nibble, "%c", hexDigits[m_nibble]);
-                wattroff(m_screen, A_REVERSE);
-                mvwprintw(m_screen, line, FIRST_HEX + i * 3 + 1 - m_nibble, "%c", hexDigits[1 - m_nibble]);
+                mvaddch(line, FIRST_HEX + i * 3 + m_nibble, hexDigits[m_nibble]);
+                attroff(A_REVERSE);
+                mvaddch(line, FIRST_HEX + i * 3 + 1 - m_nibble, hexDigits[1 - m_nibble]);
             }
             else
             {
-                mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
-                wattroff(m_screen, A_REVERSE);
+                mvaddstr(line, FIRST_HEX + i * 3, hexDigits);
+                attroff(A_REVERSE);
             }
+        }
+        else if (i < bytes_to_draw)
+        {
+            if (is_dirty)
+                attron(COLOR_PAIR(1) | A_REVERSE);
+            mvaddch(line, FIRST_ASCII + i, std::isprint(bt) ? bt : '.');
+            mvaddstr(line, FIRST_HEX + i * 3, hexDigits);
+            if (is_dirty)
+                attroff(COLOR_PAIR(1) | A_REVERSE);
         }
         else
         {
-            if (is_dirty)
-                wattron(m_screen, COLOR_PAIR(1) | A_REVERSE);
-            mvwprintw(m_screen, line, FIRST_ASCII + i, "%c", std::isprint(bt) ? bt : '.');
-            mvwprintw(m_screen, line, FIRST_HEX + i * 3, "%s", hexDigits);
-            if (is_dirty)
-                wattroff(m_screen, COLOR_PAIR(1) | A_REVERSE);
+            // padding for the very last line.
+            mvaddch(line, FIRST_ASCII + i, ' ');
+            mvaddstr(line, FIRST_HEX + i * 3, "  ");
         }
     }
-
-    return true;
 }
 
 bool TerminalWindow::update_screen()
 {
     if (m_update)
     {
-        werase(m_screen);
-        box(m_screen, 0, 0);
+        box(stdscr, 0, 0);
         for (std::uint32_t line = 0; line < m_scroller.visible(); ++line)
-        {
-            if (!draw_line(line))
-                return false;
-        }
-        const std::string file_name = m_data.name().filename();
+            draw_line(line);
+
         if (m_data.has_dirty())
-            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "*%s", file_name.c_str());
+            mvprintw(0, (COLS - m_name.size()) / 2 - 1, "*%s", m_name.c_str());
         else
-            mvwprintw(m_screen, 0, (COLS - file_name.size()) / 2 - 1, "%s", file_name.c_str());
+            mvaddstr(0, (COLS - m_name.size()) / 2 - 1, m_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage  = static_cast<float>(m_scroller.last() + 1) / m_scroller.total() * 100;
         const int           info_column = COLS - 8 - m_type.size();
-        mvwprintw(m_screen, LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
+        mvprintw(LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
         if (m_prompt == Prompt::SAVE)
-            mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, save?(y/n)");
+            mvaddstr(LINES - 1, 1, "Modified buffer, save?(y/n)");
         else if (m_prompt == Prompt::QUIT)
-            mvwprintw(m_screen, LINES - 1, 1, "Modified buffer, quit?(y,n)");
+            mvaddstr(LINES - 1, 1, "Modified buffer, quit?(y,n)");
         else if (m_prompt == Prompt::GO_TO_BYTE)
-            mvwprintw(m_screen, LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
+            mvprintw(LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
         m_update = false;
     }
     else
@@ -192,9 +187,9 @@ bool TerminalWindow::update_screen()
 
     // Draw the current byte offset.
     if (m_prompt == Prompt::NONE)
-        mvwprintw(m_screen, LINES - 1, 1, m_offset_format, m_byte);
+        mvprintw(LINES - 1, 1, m_offset_format, m_byte);
 
-    return true;
+    return m_data.is_ok();
 }
 
 void TerminalWindow::resize()
@@ -205,17 +200,6 @@ void TerminalWindow::resize()
 
     m_scroller.adjust_lines(static_cast<std::uint64_t>(LINES - 2), m_byte / BYTES_PER_LINE);
     m_update = true;
-}
-
-void TerminalWindow::reset_cursor() const
-{
-    std::uint32_t col = 0u;
-    if (m_mode == Mode::HEX)
-        col += FIRST_HEX + (m_byte % BYTES_PER_LINE) * 3;
-    else
-        col += FIRST_ASCII + m_byte % BYTES_PER_LINE;
-
-    wmove(m_screen, m_scroller.active() + 1, col);
 }
 
 void TerminalWindow::move_up()
@@ -246,13 +230,13 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint64_t distance = m_data.size() - m_byte;
+    const std::uint64_t distance = m_data.size - m_byte;
     m_update                     = m_scroller.move_down();
     if (distance > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
-    else if (distance > (m_data.size() % BYTES_PER_LINE))
+    else if (distance > (m_data.size % BYTES_PER_LINE))
     {
-        m_byte   = m_data.size() - 1;
+        m_byte   = m_data.size - 1;
         m_nibble = 0;
     }
 }
@@ -262,10 +246,10 @@ void TerminalWindow::page_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    if ((m_data.size() - m_byte) > (BYTES_PER_LINE * m_scroller.visible()))
+    if ((m_data.size - m_byte) > (BYTES_PER_LINE * m_scroller.visible()))
         m_byte += BYTES_PER_LINE * m_scroller.visible();
     else
-        m_byte = m_data.size() - 1;
+        m_byte = m_data.size - 1;
 
     resize();
 }
@@ -300,8 +284,8 @@ void TerminalWindow::move_right()
     const std::uint64_t line_abs   = m_byte / BYTES_PER_LINE;
     std::uint32_t       line_bytes = BYTES_PER_LINE;
 
-    if ((line_abs == m_scroller.total() - 1) && (m_data.size() % BYTES_PER_LINE) > 0)
-        line_bytes = m_data.size() % BYTES_PER_LINE;
+    if ((line_abs == m_scroller.total() - 1) && (m_data.size % BYTES_PER_LINE) > 0)
+        line_bytes = m_data.size % BYTES_PER_LINE;
 
     if (m_mode == Mode::HEX)
     {
@@ -333,10 +317,8 @@ void TerminalWindow::TerminalWindow::save()
     if (!m_data.has_dirty() || m_data.is_read_only())
         return;
 
-    if (!m_data.save())
-        set_error_and_quit("Save failed!");
-    else
-        m_update = true;
+    m_data.save();
+    m_update = true;
 }
 
 void TerminalWindow::prompt_save()
@@ -404,9 +386,7 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
         new_value = chr;
     else if (m_mode == Mode::HEX && std::isxdigit(chr))
     {
-        // No error checking is needed for the operator[]
-        // since we have already drawn the byte by this point.
-        new_value = update_nibble(m_nibble, chr, *m_data[m_byte]);
+        new_value = update_nibble(m_nibble, chr, m_data[m_byte]);
     }
     else
         return;
@@ -431,10 +411,10 @@ void TerminalWindow::handle_prompt(int key)
                 else if (m_mode == Mode::HEX)
                     go_to_byte = std::stoull(m_input_buffer, nullptr, 16);
 
-                if (go_to_byte < m_data.size())
+                if (go_to_byte < m_data.size)
                     m_byte = go_to_byte;
                 else
-                    m_byte = m_data.size() - 1;
+                    m_byte = m_data.size - 1;
                 m_input_buffer.clear();
             }
             m_prompt = Prompt::NONE;

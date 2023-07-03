@@ -1,4 +1,3 @@
-#include "ByteBuffer.h"
 #include "FileHandler.h"
 #include "SignatureReader.h"
 #include "StdInHandler.h"
@@ -36,25 +35,20 @@ inline bool init_ncurses()
         && keypad(stdscr, true) != ERR;
 }
 
-int get_type(ByteBuffer& byteBuffer, std::string& file_type)
+int get_type(IOHandler& handler, std::string& file_type)
 {
-    if (byteBuffer.size() == 0)
-        return {};
+    if (handler.size() == 0)
+        return 1;
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(byteBuffer.size(), static_cast<std::uint64_t>(32u));
-    query.reserve(bytes_to_copy);
+    std::size_t               bytes_to_copy = std::min(handler.size(), static_cast<std::uint64_t>(32u));
+    query.resize(bytes_to_copy);
 
-    for (std::size_t i = 0u; i < bytes_to_copy; ++i)
+    if (!handler.seek(0u) || !handler.read(query.data(), bytes_to_copy))
     {
-        const auto value = byteBuffer[i];
-        if (!value.has_value())
-        {
-            std::cerr << "Error reading file signature!\n";
-            return 1;
-        }
-        query.push_back(*value);
+        std::cerr << "Error reading file signature!\n";
+        return 1;
     }
 
     file_type = reader.get_type(query);
@@ -63,25 +57,22 @@ int get_type(ByteBuffer& byteBuffer, std::string& file_type)
 
 int start_hexit(IOHandler&        handler,
                 const char* const starting_offset,
-                const char* const input_path,
-                bool              is_read_only = false)
+                const char* const input_path)
 {
-    ChunkCache cache(handler);
-    if (input_path && !cache.open(input_path, is_read_only))
+    if (input_path && !handler.open(input_path))
     {
         std::cerr << "Could not open " << input_path << '\n';
         return 1;
     }
 
-    ByteBuffer buffer(cache);
+    std::string file_type;
+    if (get_type(handler, file_type) != 0)
+        return 1;
+
     if (!init_ncurses())
         return 1;
 
-    std::string file_type;
-    if (get_type(buffer, file_type) != 0)
-        return 1;
-
-    TerminalWindow win(stdscr, buffer, file_type, str_to_int(starting_offset));
+    TerminalWindow win(handler, file_type, str_to_int(starting_offset));
     win.run();
     return 0;
 }
@@ -109,8 +100,8 @@ int main(int argc, char** argv)
     int ret = 0;
     if (!input_file)
     {
-        StdInHandler handler;
-        ret = start_hexit(handler, starting_offset, "stdin", true);
+        StdInHandler handler(true);
+        ret = start_hexit(handler, starting_offset, "stdin");
     }
     else
     {

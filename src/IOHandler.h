@@ -11,9 +11,12 @@ namespace fs = std::filesystem;
 class IOHandler
 {
 public:
-    virtual ~IOHandler() = default;
+    explicit IOHandler(bool read_only = false)
+        : m_read_only(read_only)
+    {
+    }
 
-    IOHandler() = default;
+    virtual ~IOHandler() = default;
 
     IOHandler(const IOHandler&) = delete;
 
@@ -32,6 +35,11 @@ public:
     virtual const fs::path& name() const = 0;
 
     virtual std::uint64_t size() const = 0;
+
+    inline bool read_only() const { return m_read_only; }
+
+protected:
+    bool m_read_only;
 };
 } // namespace Hexit
 #endif // IO_HANDLER_H
