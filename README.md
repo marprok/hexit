@@ -62,7 +62,7 @@
 
 -   <strong>Hexit</strong> is a easy to use program used to view and edit binary files.
 -   Hexit allows editing the raw data contents of a file, instead of other programs which attempt to interpret the data for you.
--   Hexit has three areas: an address area on the left, a hexadecimal area in the center, and a character area on the right.
+-   Hexit's UI is separated into three visual areas: an address area on the left, a hexadecimal area in the center, and a character area on the right.
 
 ### Built With
 
@@ -86,7 +86,7 @@
     ```sh
     git clone https://github.com/marprok/hexit.git
     ```
-1. Cd in to the directory
+1. Cd into the directory
     ```sh
     cd hexit
     ```
@@ -107,7 +107,7 @@
 
 -   Help Page:
     -   `./hexit -h`
--   Display the hex dump of a file.:
+-   Display the hex dump of a file:
 
     -   `./hexit -f (--file) <file> [options]`
 
@@ -115,7 +115,7 @@
 
     -   Hexadecimal or decimal byte offset to seek during startup: `-o (--offset) <offset>`
 
--   If no file is given via the -f flag, then hexit will read bytes from standard input
+-   If no file is given via the -f flag, then Hexit will read bytes from standard input
     until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.
 
 ## Controls
