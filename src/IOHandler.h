@@ -13,6 +13,7 @@ class IOHandler
 public:
     explicit IOHandler(bool read_only = false)
         : m_read_only(read_only)
+        , m_size(0u)
     {
     }
 
@@ -32,14 +33,16 @@ public:
 
     virtual bool seek(std::uint64_t offset) = 0;
 
-    virtual const fs::path& name() const = 0;
+    inline const fs::path& name() const { return m_name; };
 
-    virtual std::uint64_t size() const = 0;
+    inline std::uint64_t size() const { return m_size; };
 
     inline bool read_only() const { return m_read_only; }
 
 protected:
-    bool m_read_only;
+    bool          m_read_only;
+    fs::path      m_name;
+    std::uint64_t m_size;
 };
 } // namespace Hexit
 #endif // IO_HANDLER_H

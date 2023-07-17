@@ -5,9 +5,8 @@ namespace Hexit
 {
 ChunkCache::ChunkCache(IOHandler& handler)
     : m_handler(handler)
-    , m_total_chunks(0)
-    , m_recent(m_chunks + 1)
-    , m_fallback(m_chunks)
+    , m_total_chunks(0u)
+    , m_id(1)
 {
     m_total_chunks = m_handler.size() / capacity;
     if (m_handler.size() % capacity)
@@ -23,13 +22,13 @@ bool ChunkCache::load_chunk(std::uint64_t chunk_id)
     if (chunk_id == (m_total_chunks - 1) && m_handler.size() % capacity)
         bytes_to_read = m_handler.size() % capacity;
 
-    auto& target_cache = *m_fallback;
+    auto& target_cache = m_chunks[1 - m_id];
     if (!m_handler.read(target_cache.m_data, bytes_to_read))
         return false;
 
     target_cache.m_id    = chunk_id;
     target_cache.m_count = bytes_to_read;
-    std::swap(m_fallback, m_recent);
+    m_id                 = 1 - m_id;
 
     return true;
 }

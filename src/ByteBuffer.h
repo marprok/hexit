@@ -37,7 +37,7 @@ public:
     const std::uint64_t size;
 
 private:
-    inline void log_error(const std::string_view err)
+    inline void log_error(const std::string_view& err)
     {
         m_error_msg.reserve(err.size());
         m_error_msg = err;

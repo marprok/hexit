@@ -27,10 +27,6 @@ public:
 
     bool seek(std::uint64_t offset) override;
 
-    const fs::path& name() const override;
-
-    std::uint64_t size() const override;
-
     std::uint8_t* data();
 
     std::uint64_t load_count() const;
@@ -42,11 +38,10 @@ private:
     {
         std::srand(std::time(nullptr));
         std::uint8_t* bytes = data();
-        for (std::uint64_t i = 0; i < chunk_count * Hexit::ChunkCache::capacity; ++i)
+        for (std::uint64_t i = 0; i < m_size; ++i)
             bytes[i] = rand() % 256;
     }
 
-    fs::path      m_name;
     std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];
     std::uint64_t m_id;
     std::uint64_t m_load_count;

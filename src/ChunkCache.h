@@ -21,7 +21,7 @@ public:
         std::uint8_t  m_data[capacity] = { 0 };
     };
 
-    ChunkCache(IOHandler& handler);
+    explicit ChunkCache(IOHandler& handler);
 
     ChunkCache(const ChunkCache&) = delete;
 
@@ -33,9 +33,9 @@ public:
 
     inline std::uint64_t total_chunks() const { return m_total_chunks; }
 
-    inline DataChunk& recent() { return *m_recent; }
+    inline DataChunk& recent() { return m_chunks[m_id]; }
 
-    inline DataChunk& fallback() { return *m_fallback; }
+    inline DataChunk& fallback() { return m_chunks[1 - m_id]; }
 
     inline bool is_read_only() const { return m_handler.read_only(); }
 
@@ -43,8 +43,7 @@ private:
     IOHandler&    m_handler;
     std::uint64_t m_total_chunks;
     DataChunk     m_chunks[2];
-    DataChunk*    m_recent;
-    DataChunk*    m_fallback;
+    std::uint8_t  m_id; // id of the most recently used chunk.
 };
 } // namespace Hexit
 #endif // CHUNK_CACHE_H
