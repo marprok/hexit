@@ -58,14 +58,4 @@ bool StdInHandler::seek(std::uint64_t offset)
     m_offset = offset;
     return true;
 }
-
-const fs::path& StdInHandler::name() const
-{
-    return m_name;
-}
-
-std::uint64_t StdInHandler::size() const
-{
-    return m_size;
-}
 } // namespace Hexit

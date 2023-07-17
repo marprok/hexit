@@ -11,6 +11,7 @@ class StdInHandler : public IOHandler
 public:
     explicit StdInHandler(bool read_only = false)
         : IOHandler(read_only)
+        , m_offset(0u)
     {
     }
 
@@ -26,14 +27,8 @@ public:
 
     bool seek(std::uint64_t offset) override;
 
-    const fs::path& name() const override;
-
-    std::uint64_t size() const override;
-
 private:
     std::vector<std::uint8_t> m_data;
-    fs::path                  m_name;
-    std::uint64_t             m_size;
     std::uint64_t             m_offset;
 };
 } // namespace Hexit

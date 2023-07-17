@@ -6,6 +6,7 @@ IOHandlerMock::IOHandlerMock(bool read_only)
     , m_load_count(0u)
     , m_io_fail(false)
 {
+    m_size = chunk_count * Hexit::ChunkCache::capacity;
     randomize();
 }
 
@@ -49,16 +50,6 @@ bool IOHandlerMock::seek(std::uint64_t offset)
 {
     m_id = offset / Hexit::ChunkCache::capacity;
     return !m_io_fail;
-}
-
-const fs::path& IOHandlerMock::name() const
-{
-    return m_name;
-}
-
-std::uint64_t IOHandlerMock::size() const
-{
-    return chunk_count * Hexit::ChunkCache::capacity;
 }
 
 std::uint8_t* IOHandlerMock::data() { return reinterpret_cast<std::uint8_t*>(m_data); }

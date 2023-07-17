@@ -67,14 +67,4 @@ bool FileHandler::seek(std::uint64_t offset)
 
     return static_cast<bool>(m_stream.seekg(offset));
 }
-
-const fs::path& FileHandler::name() const
-{
-    return m_name;
-}
-
-std::uint64_t FileHandler::size() const
-{
-    return m_size;
-}
 } // namepsace Hexit

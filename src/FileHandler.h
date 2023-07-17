@@ -23,14 +23,8 @@ public:
 
     bool seek(std::uint64_t offset) override;
 
-    const fs::path& name() const override;
-
-    std::uint64_t size() const override;
-
 private:
-    std::fstream  m_stream;
-    fs::path      m_name;
-    std::uint64_t m_size;
+    std::fstream m_stream;
 };
 } // namespace Hexit
 #endif
