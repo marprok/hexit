@@ -69,26 +69,29 @@ TEST(ByteBufferTest, DataModification)
     std::array<std::uint64_t, 3> byte_ids { 0, size - 1, 1 };
     std::array<std::uint8_t, 3>  original_values { 0xBE, 0xAB, 0xAC };
     std::array<std::uint8_t, 3>  new_values { 0xEF, 0xBA, 0xDC };
-    for (auto byte_id : byte_ids)
-        expectation[byte_id] = original_values[byte_id];
     ASSERT_EQ(size, expected_size_bytes);
+    // set the expectation
+    for (std::size_t i = 0; i < byte_ids.size(); ++i)
+        expectation[byte_ids[i]] = original_values[i];
 
-    for (auto byte_id : byte_ids)
+    for (std::size_t i = 0; i < byte_ids.size(); ++i)
     {
+        auto byte_id         = byte_ids[i];
+        expectation[byte_id] = original_values[i];
         // access the byte to load the chunk
         const auto byte_old = buffer[byte_id];
-        EXPECT_EQ(byte_old, original_values[byte_id]);
+        EXPECT_EQ(byte_old, original_values[i]);
         EXPECT_FALSE(buffer.is_dirty(byte_id));
         EXPECT_FALSE(buffer.has_dirty());
-        buffer.set_byte(byte_id, new_values[byte_id]);
+        buffer.set_byte(byte_id, new_values[i]);
         EXPECT_TRUE(buffer.is_dirty(byte_id));
         EXPECT_TRUE(buffer.has_dirty());
         const auto byte_new = buffer[byte_id];
-        EXPECT_EQ(byte_new, new_values[byte_id]);
-        EXPECT_NE(expectation[byte_id], new_values[byte_id]);
+        EXPECT_EQ(byte_new, new_values[i]);
+        EXPECT_NE(expectation[byte_id], new_values[i]);
         EXPECT_EQ(expectation[byte_id], byte_old);
         buffer.save();
-        EXPECT_EQ(expectation[byte_id], new_values[byte_id]);
+        EXPECT_EQ(expectation[byte_id], new_values[i]);
         EXPECT_NE(expectation[byte_id], byte_old);
     }
     // Only two I/O reads should be performed.
