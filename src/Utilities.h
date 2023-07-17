@@ -25,7 +25,7 @@ inline std::uint8_t hex_char_to_int(std::uint8_t chr)
     return hex_byte;
 }
 
-// Updates the nibble of a give byte.
+// Updates the nibble of a given byte.
 inline std::uint8_t update_nibble(std::uint8_t nibble_id, std::uint8_t nibble_value, std::uint8_t data)
 {
     if (nibble_id > 1)

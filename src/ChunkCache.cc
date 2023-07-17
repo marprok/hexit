@@ -5,8 +5,8 @@ namespace Hexit
 {
 ChunkCache::ChunkCache(IOHandler& handler)
     : m_handler(handler)
-    , m_total_chunks(0)
-    , m_id(0)
+    , m_total_chunks(0u)
+    , m_id(0u)
 {
     m_total_chunks = m_handler.size() / capacity;
     if (m_handler.size() % capacity)
