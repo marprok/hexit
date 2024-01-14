@@ -14,10 +14,10 @@ ByteBuffer::ByteBuffer(IOHandler& handler)
 // is_ok() method should get called to check if an I/O error has occured.
 std::uint8_t ByteBuffer::operator[](std::uint64_t byte_id)
 {
-    std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
-    std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
-    const auto&   recent      = m_cache.recent();
-    const auto&   fallback    = m_cache.fallback();
+    const std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
+    const std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+    const auto&         recent      = m_cache.recent();
+    const auto&         fallback    = m_cache.fallback();
 
     if (recent.m_id == chunk_id)
         return recent.m_data[relative_id];
