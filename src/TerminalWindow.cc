@@ -9,7 +9,7 @@
 
 namespace Hexit
 {
-TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type, std::uint64_t start_from_byte)
+TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type, std::uintmax_t start_from_byte)
     : m_scroller(handler.size(), BYTES_PER_LINE)
     , m_data(handler)
     , m_name(handler.name().filename())
@@ -99,9 +99,9 @@ void TerminalWindow::run()
 
 void TerminalWindow::draw_line(std::uint32_t line)
 {
-    const std::uint64_t line_abs      = m_scroller.first() + line;
-    std::uint64_t       line_byte     = line_abs * BYTES_PER_LINE;
-    std::uint32_t       bytes_to_draw = BYTES_PER_LINE;
+    const std::uintmax_t line_abs      = m_scroller.first() + line;
+    std::uintmax_t       line_byte     = line_abs * BYTES_PER_LINE;
+    std::uint32_t        bytes_to_draw = BYTES_PER_LINE;
 
     if (((m_scroller.total() - 1) == line_abs) && (m_data.size % BYTES_PER_LINE) > 0)
         bytes_to_draw = m_data.size % BYTES_PER_LINE;
@@ -198,7 +198,7 @@ void TerminalWindow::resize()
     if (LINES <= 2)
         return;
 
-    m_scroller.adjust_lines(static_cast<std::uint64_t>(LINES - 2), m_byte / BYTES_PER_LINE);
+    m_scroller.adjust_lines(static_cast<std::uintmax_t>(LINES - 2), m_byte / BYTES_PER_LINE);
     m_update = true;
 }
 
@@ -230,8 +230,8 @@ void TerminalWindow::move_down()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint64_t distance = m_data.size - m_byte;
-    m_update                     = m_scroller.move_down();
+    const std::uintmax_t distance = m_data.size - m_byte;
+    m_update                      = m_scroller.move_down();
     if (distance > BYTES_PER_LINE)
         m_byte += BYTES_PER_LINE;
     else if (distance > (m_data.size % BYTES_PER_LINE))
@@ -281,8 +281,8 @@ void TerminalWindow::move_right()
     if (m_prompt != Prompt::NONE)
         return;
 
-    const std::uint64_t line_abs   = m_byte / BYTES_PER_LINE;
-    std::uint32_t       line_bytes = BYTES_PER_LINE;
+    const std::uintmax_t line_abs   = m_byte / BYTES_PER_LINE;
+    std::uint32_t        line_bytes = BYTES_PER_LINE;
 
     if ((line_abs == m_scroller.total() - 1) && (m_data.size % BYTES_PER_LINE) > 0)
         line_bytes = m_data.size % BYTES_PER_LINE;
@@ -405,7 +405,7 @@ void TerminalWindow::handle_prompt(int key)
         {
             if (!m_input_buffer.empty())
             {
-                std::uint64_t go_to_byte = 0;
+                std::uintmax_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
                     go_to_byte = std::stoull(m_input_buffer, nullptr);
                 else if (m_mode == Mode::HEX)

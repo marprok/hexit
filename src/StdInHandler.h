@@ -21,15 +21,15 @@ public:
 
     void close() override;
 
-    bool read(std::uint8_t* o_buffer, std::size_t buffer_size) override;
+    bool read(std::uint8_t* o_buffer, std::uintmax_t buffer_size) override;
 
-    bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) override;
+    bool write(const std::uint8_t* i_buffer, std::uintmax_t buffer_size) override;
 
-    bool seek(std::uint64_t offset) override;
+    bool seek(std::uintmax_t offset) override;
 
 private:
     std::vector<std::uint8_t> m_data;
-    std::uint64_t             m_offset;
+    std::uintmax_t            m_offset;
 };
 } // namespace Hexit
 #endif // STDIN_HANDLER_H

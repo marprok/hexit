@@ -12,10 +12,10 @@ ByteBuffer::ByteBuffer(IOHandler& handler)
 
 // No bounds checking is performed by the operator at all.
 // is_ok() method should get called to check if an I/O error has occured.
-std::uint8_t ByteBuffer::operator[](std::uint64_t byte_id)
+std::uint8_t ByteBuffer::operator[](std::uintmax_t byte_id)
 {
-    const std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
-    const std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+    const std::uintmax_t chunk_id    = byte_id / ChunkCache::capacity;
+    const std::uintmax_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
     const auto&         recent      = m_cache.recent();
     const auto&         fallback    = m_cache.fallback();
 
@@ -42,10 +42,10 @@ std::uint8_t ByteBuffer::operator[](std::uint64_t byte_id)
     return new_chunk.m_data[relative_id];
 }
 
-void ByteBuffer::set_byte(std::uint64_t byte_id, std::uint8_t byte_value)
+void ByteBuffer::set_byte(std::uintmax_t byte_id, std::uint8_t byte_value)
 {
-    const std::uint64_t chunk_id    = byte_id / ChunkCache::capacity;
-    const std::uint64_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
+    const std::uintmax_t chunk_id    = byte_id / ChunkCache::capacity;
+    const std::uintmax_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
     auto&               recent      = m_cache.recent();
     auto&               fallback    = m_cache.fallback();
 

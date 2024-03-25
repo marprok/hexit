@@ -54,12 +54,12 @@ inline bool is_dec_string(const std::string& str)
                                        { return std::isdigit(uc); });
 }
 
-bool validate_args(std::size_t argc, const char* const* const argv);
+bool validate_args(std::uintmax_t argc, const char* const* const argv);
 
 const char* get_arg(int argc, const char* const* const argv, const std::string& arg, const std::string& alt_arg = "");
 
 bool get_flag(int argc, const char* const* const argv, const std::string& flag);
 
-std::uint64_t str_to_int(const char* const str);
+std::uintmax_t str_to_int(const char* const str);
 } // namespace Hexit
 #endif // UTILITIES_H

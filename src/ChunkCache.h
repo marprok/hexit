@@ -12,13 +12,13 @@ namespace fs = std::filesystem;
 class ChunkCache
 {
 public:
-    static constexpr std::uint64_t capacity = 1024u;
+    static constexpr std::uintmax_t capacity = 1024u;
 
     struct DataChunk
     {
-        std::uint64_t m_id             = { UINT64_MAX };
-        std::uint64_t m_count          = { 0 };
-        std::uint8_t  m_data[capacity] = { 0 };
+        std::uintmax_t m_id             = { UINT64_MAX };
+        std::uintmax_t m_count          = { 0 };
+        std::uint8_t   m_data[capacity] = { 0 };
     };
 
     explicit ChunkCache(IOHandler& handler);
@@ -27,11 +27,11 @@ public:
 
     ChunkCache& operator=(const ChunkCache&) = delete;
 
-    bool load_chunk(std::uint64_t chunk_id);
+    bool load_chunk(std::uintmax_t chunk_id);
 
     bool save_chunk(const DataChunk& chunk);
 
-    inline std::uint64_t total_chunks() const { return m_total_chunks; }
+    inline std::uintmax_t total_chunks() const { return m_total_chunks; }
 
     inline DataChunk& recent() { return m_chunks[m_id]; }
 
@@ -41,7 +41,7 @@ public:
 
 private:
     IOHandler&    m_handler;
-    std::uint64_t m_total_chunks;
+    std::uintmax_t m_total_chunks;
     DataChunk     m_chunks[2];
     std::uint8_t  m_id; // id of the most recently used chunk.
 };

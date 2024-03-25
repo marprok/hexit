@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 using namespace Hexit;
 
 const std::string       file_name("test/path/to/somewhere");
-constexpr std::uint64_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
+constexpr std::uintmax_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
 
 // In case of an io error, is_ok should return true and error_msg() should contain
 // an error message.
@@ -36,10 +36,10 @@ TEST(ByteBufferTest, DataCaching)
 {
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
-    const auto              size = handler.size();
-    ByteBuffer              buffer(handler);
-    constexpr std::uint64_t first_chunk_id = 2, last_chunkc_id = 3;
-    for (std::uint64_t i = ChunkCache::capacity * first_chunk_id;
+    const auto               size = handler.size();
+    ByteBuffer               buffer(handler);
+    constexpr std::uintmax_t first_chunk_id = 2, last_chunkc_id = 3;
+    for (std::uintmax_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * (last_chunkc_id + 1)) && (i < size);
          ++i)
     {
@@ -47,7 +47,7 @@ TEST(ByteBufferTest, DataCaching)
         buffer[i];
     }
     // Accessing again the bytes from the first chunk, should not cause any loading.
-    for (std::uint64_t i = ChunkCache::capacity * first_chunk_id;
+    for (std::uintmax_t i = ChunkCache::capacity * first_chunk_id;
          (i < ChunkCache::capacity * last_chunkc_id) && (i < size);
          ++i)
     {
@@ -63,18 +63,18 @@ TEST(ByteBufferTest, DataModification)
 {
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
-    const auto                   size = handler.size();
-    ByteBuffer                   buffer(handler);
-    std::uint8_t*                expectation = handler.data();
-    std::array<std::uint64_t, 3> byte_ids { 0, size - 1, 1 };
-    std::array<std::uint8_t, 3>  original_values { 0xBE, 0xAB, 0xAC };
-    std::array<std::uint8_t, 3>  new_values { 0xEF, 0xBA, 0xDC };
+    const auto                    size = handler.size();
+    ByteBuffer                    buffer(handler);
+    std::uint8_t*                 expectation = handler.data();
+    std::array<std::uintmax_t, 3> byte_ids { 0, size - 1, 1 };
+    std::array<std::uint8_t, 3>   original_values { 0xBE, 0xAB, 0xAC };
+    std::array<std::uint8_t, 3>   new_values { 0xEF, 0xBA, 0xDC };
     ASSERT_EQ(size, expected_size_bytes);
     // set the expectation
-    for (std::size_t i = 0; i < byte_ids.size(); ++i)
+    for (std::uintmax_t i = 0; i < byte_ids.size(); ++i)
         expectation[byte_ids[i]] = original_values[i];
 
-    for (std::size_t i = 0; i < byte_ids.size(); ++i)
+    for (std::uintmax_t i = 0; i < byte_ids.size(); ++i)
     {
         auto byte_id         = byte_ids[i];
         expectation[byte_id] = original_values[i];
@@ -109,7 +109,7 @@ TEST(ByteBufferTest, ByteRead)
     const auto    size        = handler.size();
     std::uint8_t* expectation = handler.data();
     ByteBuffer    buffer(handler);
-    for (std::uint64_t i = 0; i < size; ++i)
+    for (std::uintmax_t i = 0; i < size; ++i)
         ASSERT_EQ(buffer[i], expectation[i]);
 }
 
@@ -122,7 +122,7 @@ TEST(ByteBufferTest, ByteReadReverse)
     const auto    size        = handler.size();
     std::uint8_t* expectation = handler.data();
     ByteBuffer    buffer(handler);
-    for (std::uint64_t i = size - 1; i > 0; --i)
+    for (std::uintmax_t i = size - 1; i > 0; --i)
         ASSERT_EQ(buffer[i], expectation[i]);
 }
 
@@ -137,11 +137,11 @@ TEST(ByteBufferTest, SaveBytes)
     ByteBuffer    buffer(handler);
     // initialize the data to zero
     std::memset(raw_data, 0, size);
-    std::array<std::uint64_t, 9> dirty_ids { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
+    std::array<std::uintmax_t, 9> dirty_ids { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
-        std::uint64_t from = id * ChunkCache::capacity;
-        std::uint64_t to   = from + ChunkCache::capacity;
+        std::uintmax_t from = id * ChunkCache::capacity;
+        std::uintmax_t to   = from + ChunkCache::capacity;
         if (to >= size)
             to = from + size % ChunkCache::capacity;
 
@@ -174,11 +174,11 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
     ByteBuffer    buffer(handler);
     // initialize the data to zero
     std::memset(raw_data, 0, size);
-    std::array<std::uint64_t, 9> dirty_ids { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
+    std::array<std::uintmax_t, 9> dirty_ids { 0, 10, 50, 80, 100, 140, 150, 200, 249 };
     for (auto id : dirty_ids)
     {
-        std::uint64_t from = id * ChunkCache::capacity;
-        std::uint64_t to   = from + ChunkCache::capacity;
+        std::uintmax_t from = id * ChunkCache::capacity;
+        std::uintmax_t to   = from + ChunkCache::capacity;
         if (to >= size)
             to = from + size % ChunkCache::capacity;
 
