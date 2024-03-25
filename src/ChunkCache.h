@@ -16,7 +16,7 @@ public:
 
     struct DataChunk
     {
-        std::uintmax_t m_id             = { UINT64_MAX };
+        std::uintmax_t m_id             = { UINTMAX_MAX };
         std::uintmax_t m_count          = { 0 };
         std::uint8_t   m_data[capacity] = { 0 };
     };

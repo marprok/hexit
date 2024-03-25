@@ -43,7 +43,9 @@ private:
         m_error_msg = err;
     }
 
-    typedef std::unordered_map<std::uintmax_t, std::uint8_t>      DirtyByteMap;
+    typedef std::unordered_map<std::uintmax_t, std::uint8_t> DirtyByteMap;
+    // Use std::map because traversing in ascending order minimizes access misses
+    // when trying to save all changes on disk in case adjacent chucks are dirty.
     typedef std::map<std::uintmax_t, std::vector<std::uintmax_t>> DirtyChunkMap;
 
     DirtyByteMap  m_dirty_bytes;
