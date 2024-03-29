@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 
-add_compile_options(-Wall -Wextra -Werror -pedantic)
+add_compile_options(-Wall -Wextra -Werror -pedantic -Wconversion)
 add_executable(${PROJECT_NAME})
 
 if(BUILD_TESTING)

@@ -158,13 +158,13 @@ bool TerminalWindow::update_screen()
             draw_line(line);
 
         if (m_data.has_dirty())
-            mvprintw(0, (COLS - m_name.size()) / 2 - 1, "*%s", m_name.c_str());
+            mvprintw(0, (COLS - static_cast<int>(m_name.size())) / 2 - 1, "*%s", m_name.c_str());
         else
-            mvaddstr(0, (COLS - m_name.size()) / 2 - 1, m_name.c_str());
+            mvaddstr(0, (COLS - static_cast<int>(m_name.size())) / 2 - 1, m_name.c_str());
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
-        const std::uint32_t percentage  = static_cast<float>(m_scroller.last() + 1) / m_scroller.total() * 100;
-        const int           info_column = COLS - 8 - m_type.size();
+        const std::uint32_t percentage  = static_cast<std::uint32_t>(static_cast<long double>(m_scroller.last() + 1) / m_scroller.total() * 100);
+        const int           info_column = static_cast<int>(COLS - 8 - m_type.size());
         mvprintw(LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
         if (m_prompt == Prompt::SAVE)
@@ -179,10 +179,10 @@ bool TerminalWindow::update_screen()
     {
         // We have to update the lines above and below in case we have modified a byte contained in them.
         if (m_scroller.active() > 0)
-            draw_line(m_scroller.active() - 1);
-        draw_line(m_scroller.active());
+            draw_line(static_cast<std::uint32_t>(m_scroller.active() - 1));
+        draw_line(static_cast<std::uint32_t>(m_scroller.active()));
         if ((m_scroller.active() + 1) < m_scroller.visible())
-            draw_line(m_scroller.active() + 1);
+            draw_line(static_cast<std::uint32_t>(m_scroller.active() + 1));
     }
 
     // Draw the current byte offset.

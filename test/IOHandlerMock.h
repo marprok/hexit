@@ -36,10 +36,10 @@ public:
 private:
     inline void randomize()
     {
-        std::srand(std::time(nullptr));
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
         std::uint8_t* bytes = data();
         for (std::uintmax_t i = 0; i < m_size; ++i)
-            bytes[i] = rand() % 256;
+            bytes[i] = static_cast<std::uint8_t>(rand() % 256);
     }
 
     std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];

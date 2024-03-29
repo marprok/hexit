@@ -1,6 +1,8 @@
 #ifndef HEXIT_CONFIG_H
 #define HEXIT_CONFIG_H
 
+#include <cstdint>
+
 namespace Hexit
 {
 inline constexpr std::uint32_t BYTES_PER_LINE = 16;
