@@ -179,10 +179,10 @@ bool TerminalWindow::update_screen()
     {
         // We have to update the lines above and below in case we have modified a byte contained in them.
         if (m_scroller.active() > 0)
-            draw_line(static_cast<std::uint32_t>(m_scroller.active() - 1));
-        draw_line(static_cast<std::uint32_t>(m_scroller.active()));
+            draw_line(m_scroller.active() - 1);
+        draw_line(m_scroller.active());
         if ((m_scroller.active() + 1) < m_scroller.visible())
-            draw_line(static_cast<std::uint32_t>(m_scroller.active() + 1));
+            draw_line(m_scroller.active() + 1);
     }
 
     // Draw the current byte offset.

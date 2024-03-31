@@ -72,10 +72,22 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
         for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), i);
+            }
             EXPECT_FALSE(scroller.move_down());
+        }
 
         for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), EXPECTED_LINES - 1 - i);
+            }
             EXPECT_FALSE(scroller.move_up());
+        }
     }
 
     current_byte  = 0u;
@@ -89,10 +101,22 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
         for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), i);
+            }
             EXPECT_FALSE(scroller.move_down());
+        }
 
         for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), EXPECTED_LINES - 1 - i);
+            }
             EXPECT_FALSE(scroller.move_up());
+        }
     }
 }
 } // namespace

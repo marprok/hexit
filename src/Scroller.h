@@ -25,14 +25,14 @@ public:
 
     inline std::uintmax_t visible() const { return m_visible_lines; }
 
-    inline std::uintmax_t active() const { return m_active_line; }
+    inline std::uint32_t active() const { return m_active_line; }
 
 private:
     std::uintmax_t m_first_line;
     std::uintmax_t m_last_line;
     std::uintmax_t m_total_lines;
     std::uintmax_t m_visible_lines;
-    std::uintmax_t m_active_line;
+    std::uint32_t m_active_line;
 };
 } // namespace Hexit
 #endif // SCROLLER_H

@@ -32,7 +32,7 @@ void Scroller::adjust_lines(std::uintmax_t visible_lines, std::uintmax_t current
         m_first_line = current_line / m_visible_lines * m_visible_lines;
         m_last_line  = m_first_line + m_visible_lines - 1;
     }
-    m_active_line = current_line - m_first_line;
+    m_active_line = static_cast<std::uint32_t>(current_line - m_first_line);
 }
 
 bool Scroller::move_down()
