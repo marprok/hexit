@@ -1,6 +1,7 @@
 #include "Utilities.h"
 #include <filesystem>
 #include <iostream>
+#include <string_view>
 
 namespace Hexit
 {
@@ -14,7 +15,7 @@ bool validate_args(std::uintmax_t argc, const char* const* const argv)
     bool           offset = false;
     for (; i < argc && argv[i];)
     {
-        std::string sarg(argv[i]);
+        std::string_view sarg(argv[i]);
         if (sarg == "--help" || sarg == "-h")
         {
             if (help)
