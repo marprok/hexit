@@ -16,6 +16,7 @@ SignatureReader::SignatureReader()
     m_signatures.push_back({ { 0x47, 0x49, 0x46, 0x38, 0x37, 0x61 }, "gif", {} });
     m_signatures.push_back({ { 0x47, 0x49, 0x46, 0x38, 0x39, 0x61 }, "gif", {} });
     m_signatures.push_back({ { 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C }, "7z", {} });
+    m_signatures.push_back({ { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00 }, "xz", {} });
     m_signatures.push_back({ { 0x25, 0x50, 0x44, 0x46, 0x2D }, "pdf", {} });
     m_signatures.push_back({ { 0xFF, 0xD8, 0xFF, 0xDB }, "jpg", {} });
     m_signatures.push_back({ { 0xFF, 0xD8, 0xFF, 0xEE }, "jpg", {} });
@@ -43,13 +44,13 @@ std::string SignatureReader::get_type(const std::vector<std::uint8_t>& query)
 {
     for (const auto& signature : m_signatures)
     {
-        std::size_t signature_size = signature.m_buffer.size() + signature.m_skip.size();
+        std::uintmax_t signature_size = signature.m_buffer.size() + signature.m_skip.size();
         if ((query.size() < signature_size)
             || (signature.m_skip.size() >= signature.m_buffer.size()))
             continue;
 
-        std::size_t i = 0, j = 0;
-        bool        match = false;
+        std::uintmax_t i = 0, j = 0;
+        bool           match = false;
         for (; (i < signature_size) && (j < signature.m_buffer.size());)
         {
             if (signature.m_skip.contains(i))

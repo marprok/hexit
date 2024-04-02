@@ -34,7 +34,7 @@ void FileHandler::close()
     }
 }
 
-bool FileHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
+bool FileHandler::read(std::uint8_t* o_buffer, std::uintmax_t buffer_size)
 {
     if (!o_buffer || !m_stream.is_open())
         return false;
@@ -44,10 +44,10 @@ bool FileHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
 
     m_stream.read(reinterpret_cast<char*>(o_buffer), buffer_size);
 
-    return static_cast<std::size_t>(m_stream.gcount()) == buffer_size;
+    return static_cast<std::uintmax_t>(m_stream.gcount()) == buffer_size;
 }
 
-bool FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
+bool FileHandler::write(const std::uint8_t* i_buffer, std::uintmax_t buffer_size)
 {
     if (m_read_only)
         return true;
@@ -60,7 +60,7 @@ bool FileHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
         m_stream.write(reinterpret_cast<const char*>(i_buffer), buffer_size));
 }
 
-bool FileHandler::seek(std::uint64_t offset)
+bool FileHandler::seek(std::uintmax_t offset)
 {
     if (!m_stream.is_open())
         return false;

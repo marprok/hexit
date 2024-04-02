@@ -30,7 +30,7 @@ void StdInHandler::close()
     m_data.clear();
 }
 
-bool StdInHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
+bool StdInHandler::read(std::uint8_t* o_buffer, std::uintmax_t buffer_size)
 {
     if (!o_buffer
         || m_data.empty()
@@ -43,14 +43,14 @@ bool StdInHandler::read(std::uint8_t* o_buffer, std::size_t buffer_size)
     return true;
 }
 
-bool StdInHandler::write(const std::uint8_t* i_buffer, std::size_t buffer_size)
+bool StdInHandler::write(const std::uint8_t* i_buffer, std::uintmax_t buffer_size)
 {
     static_cast<void>(i_buffer);
     static_cast<void>(buffer_size);
     return true;
 }
 
-bool StdInHandler::seek(std::uint64_t offset)
+bool StdInHandler::seek(std::uintmax_t offset)
 {
     if (m_data.empty() || offset >= m_size)
         return false;

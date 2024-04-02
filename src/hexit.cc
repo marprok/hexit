@@ -42,7 +42,7 @@ int get_type(IOHandler& handler, std::string& file_type)
 
     std::vector<std::uint8_t> query;
     SignatureReader           reader;
-    std::size_t               bytes_to_copy = std::min(handler.size(), static_cast<std::uint64_t>(32u));
+    std::uintmax_t            bytes_to_copy = std::min(handler.size(), static_cast<std::uintmax_t>(32u));
     query.resize(bytes_to_copy);
 
     if (!handler.seek(0u) || !handler.read(query.data(), bytes_to_copy))

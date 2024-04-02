@@ -27,22 +27,22 @@ public:
 
     virtual void close() = 0;
 
-    virtual bool read(std::uint8_t* o_buffer, std::size_t buffer_size) = 0;
+    virtual bool read(std::uint8_t* o_buffer, std::uintmax_t buffer_size) = 0;
 
-    virtual bool write(const std::uint8_t* i_buffer, std::size_t buffer_size) = 0;
+    virtual bool write(const std::uint8_t* i_buffer, std::uintmax_t buffer_size) = 0;
 
-    virtual bool seek(std::uint64_t offset) = 0;
+    virtual bool seek(std::uintmax_t offset) = 0;
 
     inline const fs::path& name() const { return m_name; };
 
-    inline std::uint64_t size() const { return m_size; };
+    inline std::uintmax_t size() const { return m_size; };
 
     inline bool read_only() const { return m_read_only; }
 
 protected:
     bool          m_read_only;
     fs::path      m_name;
-    std::uint64_t m_size;
+    std::uintmax_t m_size;
 };
 } // namespace Hexit
 #endif // IO_HANDLER_H

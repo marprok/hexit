@@ -18,13 +18,13 @@ public:
 
     ByteBuffer& operator=(const ByteBuffer&) = delete;
 
-    std::uint8_t operator[](std::uint64_t byte_id);
+    std::uint8_t operator[](std::uintmax_t byte_id);
 
-    void set_byte(std::uint64_t byte_id, std::uint8_t byte_value);
+    void set_byte(std::uintmax_t byte_id, std::uint8_t byte_value);
 
     void save();
 
-    inline bool is_dirty(std::uint64_t byte_id) const { return m_dirty_bytes.contains(byte_id); }
+    inline bool is_dirty(std::uintmax_t byte_id) const { return m_dirty_bytes.contains(byte_id); }
 
     inline bool has_dirty() const { return m_dirty_bytes.size() != 0; }
 
@@ -34,7 +34,7 @@ public:
 
     const std::string_view error_msg() const { return m_error_msg; }
 
-    const std::uint64_t size;
+    const std::uintmax_t size;
 
 private:
     inline void log_error(const std::string_view& err)
@@ -43,8 +43,10 @@ private:
         m_error_msg = err;
     }
 
-    typedef std::unordered_map<std::uint64_t, std::uint8_t>     DirtyByteMap;
-    typedef std::map<std::uint64_t, std::vector<std::uint64_t>> DirtyChunkMap;
+    typedef std::unordered_map<std::uintmax_t, std::uint8_t> DirtyByteMap;
+    // Use std::map because traversing in ascending order minimizes access misses
+    // when trying to save all changes on disk in case adjacent chucks are dirty.
+    typedef std::map<std::uintmax_t, std::vector<std::uintmax_t>> DirtyChunkMap;
 
     DirtyByteMap  m_dirty_bytes;
     DirtyChunkMap m_dirty_chunks;

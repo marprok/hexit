@@ -13,7 +13,7 @@ namespace Hexit
 class TerminalWindow
 {
 public:
-    TerminalWindow(IOHandler& handler, const std::string& file_type, std::uint64_t go_to_byte = 0);
+    TerminalWindow(IOHandler& handler, const std::string& file_type, std::uintmax_t go_to_byte = 0);
 
     TerminalWindow(const TerminalWindow&) = delete;
 
@@ -79,7 +79,7 @@ private:
     const std::string m_name;
     const std::string m_type;
     std::string       m_input_buffer;
-    std::uint64_t     m_byte;
+    std::uintmax_t    m_byte;
     char              m_offset_format[16];
     Mode              m_mode;
     Prompt            m_prompt;

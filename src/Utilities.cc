@@ -1,20 +1,21 @@
 #include "Utilities.h"
 #include <filesystem>
 #include <iostream>
+#include <string_view>
 
 namespace Hexit
 {
 namespace fs = std::filesystem;
 
-bool validate_args(std::size_t argc, const char* const* const argv)
+bool validate_args(std::uintmax_t argc, const char* const* const argv)
 {
-    std::size_t i      = 0u;
-    bool        help   = false;
-    bool        file   = false;
-    bool        offset = false;
+    std::uintmax_t i      = 0u;
+    bool           help   = false;
+    bool           file   = false;
+    bool           offset = false;
     for (; i < argc && argv[i];)
     {
-        std::string sarg(argv[i]);
+        std::string_view sarg(argv[i]);
         if (sarg == "--help" || sarg == "-h")
         {
             if (help)
@@ -70,7 +71,7 @@ bool get_flag(int argc, const char* const* const argv, const std::string& flag)
     return res != (argv + argc);
 }
 
-std::uint64_t str_to_int(const char* const str)
+std::uintmax_t str_to_int(const char* const str)
 {
     if (!str)
         return 0;

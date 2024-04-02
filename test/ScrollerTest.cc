@@ -18,11 +18,11 @@ TEST(ScrollerTest, InvalidParameters)
 // The scroller should automatically scroll up/down when needed.
 TEST(ScrollerTest, AutoScrolling)
 {
-    constexpr std::uint64_t TOTAL_BYTES = 4321u, BYTES_PER_LINE = 5u, EXPECTED_LINES = 865u;
-    Scroller                scroller(TOTAL_BYTES, BYTES_PER_LINE);
+    constexpr std::uintmax_t TOTAL_BYTES = 4321u, BYTES_PER_LINE = 5u, EXPECTED_LINES = 865u;
+    Scroller                 scroller(TOTAL_BYTES, BYTES_PER_LINE);
     ASSERT_EQ(scroller.total(), EXPECTED_LINES);
 
-    std::uint64_t current_byte = 0u, visible_lines = 31u;
+    std::uintmax_t current_byte = 0u, visible_lines = 31u;
     {
         scroller.adjust_lines(visible_lines, current_byte / BYTES_PER_LINE);
         EXPECT_EQ(scroller.first(), 0u);
@@ -30,7 +30,7 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.active(), 0u);
         EXPECT_EQ(scroller.visible(), visible_lines);
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
         {
             if (i < (visible_lines - 1))
                 EXPECT_FALSE(scroller.move_down());
@@ -49,7 +49,7 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.active(), visible_lines - 1);
         EXPECT_EQ(scroller.visible(), visible_lines);
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
         {
             if (i < (visible_lines - 1))
                 EXPECT_FALSE(scroller.move_up());
@@ -71,11 +71,23 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.active(), 0u);
         EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), i);
+            }
             EXPECT_FALSE(scroller.move_down());
+        }
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), EXPECTED_LINES - 1 - i);
+            }
             EXPECT_FALSE(scroller.move_up());
+        }
     }
 
     current_byte  = 0u;
@@ -88,11 +100,23 @@ TEST(ScrollerTest, AutoScrolling)
         EXPECT_EQ(scroller.active(), 0u);
         EXPECT_EQ(scroller.visible(), EXPECTED_LINES);
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), i);
+            }
             EXPECT_FALSE(scroller.move_down());
+        }
 
-        for (std::uint64_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        for (std::uintmax_t i = 0u; i < (2 * EXPECTED_LINES); ++i)
+        {
+            if (i < EXPECTED_LINES)
+            {
+                EXPECT_EQ(scroller.active(), EXPECTED_LINES - 1 - i);
+            }
             EXPECT_FALSE(scroller.move_up());
+        }
     }
 }
 } // namespace
