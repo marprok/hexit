@@ -1,21 +1,19 @@
 <a id="Top"></a>
 
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-[contributors-shield]: https://img.shields.io/github/contributors/marprok/hexit?style=for-the-badge
-[contributors-url]: https://github.com/marprok/hexit/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/marprok/hexit?style=for-the-badge
-[forks-url]: https://github.com/marprok/hexit/network/members
-[stars-shield]: https://img.shields.io/github/stars/marprok/hexit.svg?style=for-the-badge
-[stars-url]: https://github.com/marprok/hexit/stargazers
-[issues-shield]: https://img.shields.io/github/issues/marprok/hexit.svg?style=for-the-badge
-[issues-url]: https://github.com/marprok/hexit/issues
-[license-shield]: https://img.shields.io/github/license/marprok/hexit.svg?style=for-the-badge
-[license-url]: https://github.com/marprok/hexit/blob/master/LICENSE
+<p align="center">
+  <a href="https://github.com/marprok/hexit/network/members">
+        <img src="https://img.shields.io/github/forks/marprok/hexit" alt="Forks"></a>
+  <a href="https://github.com/marprok/hexit/stargazers">
+        <img src="https://img.shields.io/github/stars/marprok/hexit.svg" alt="Stars"></a>
+  <a href="https://github.com/marprok/hexit/actions/workflows/cmake.yml/badge.svg">
+        <img src="https://github.com/marprok/hexit/actions/workflows/cmake.yml/badge.svg" alt="Build Status"></a>
+  <a href="https://github.com/marprok/hexit/graphs/contributors">
+        <img src="https://img.shields.io/github/contributors/marprok/hexit" alt="Contributors"></a>
+  <a href="https://github.com/marprok/hexit/issues">
+        <img src="https://img.shields.io/github/issues/marprok/hexit.svg" alt="Issues"></a>
+  <a href="https://github.com/marprok/hexit/blob/master/LICENSE">
+        <img src="https://img.shields.io/github/license/marprok/hexit.svg" alt="License"></a>
+</p>
 
 <br />
 <div align="center">
@@ -29,6 +27,8 @@
     <a href="https://github.com/marprok/hexit/issues">Report Bug</a>
     ·
     <a href="https://github.com/marprok/hexit/issues">Request Feature</a>
+  </p>
+  <p>
   </p>
 </div>
 
@@ -58,18 +58,16 @@
 
 [product-demo]: https://github.com/marprok/hexit/assets/18293204/73c7c699-9d60-40c1-8f6a-911c67d5514f
 
+Hexit aims to be a simple yet efficient hex editor.
+
+-   It allows you to view and/or edit raw bytes in a file.
+-   The UI is separated into three visual areas: the byte offset on the left, the hexadecimal representation in the center, and the ASCII interpretation on the right.
+-   Hexit will not load the whole file in memory but it will instead load different 'chunks' of the file on demand. This makes it use as little memory as possible regardless of the actual size of the file.
+-   You can easily jump into different absolute byte offsets.
+-   Hexit will attempt to display the actual type of the file and display it on the bottom right of the screen. It does that by trying to match the first few bytes of each file against a database of well known file signatures.
+-   Hexit can be used as a shell filter. 
+
 ![Product Name Screen Shot][product-demo]
-
--   <strong>Hexit</strong> is a easy to use program used to view and edit binary files.
--   Hexit allows editing the raw data contents of a file, instead of other programs which attempt to interpret the data for you.
--   Hexit's UI is separated into three visual areas: an address area on the left, a hexadecimal area in the center, and a character area on the right.
-
-### Built With
-
--   [![C][CLanguage]][ClanguageURL]
-
-[Clanguage]: https://img.shields.io/badge/C++-0769AD?style=for-the-badge&logo=C%2B%2B&logoColor=white
-[ClanguageURL]: https://en.wikipedia.org/wiki/C%2B%2B
 
 ## Getting Started
 
@@ -82,36 +80,40 @@
 
 ### Installation
 
-1. Clone the repo
+1. clone the repo
     ```sh
     git clone https://github.com/marprok/hexit.git
     ```
-1. Cd into the directory
+2. cd into the directory
     ```sh
     cd hexit
     ```
-1. Make a direcoty named "build" and cd into it
+3. Change the default parameters contained in `src/confing.h` in case the default values are not what you need
     ```sh
     mkdir build && cd build
     ```
-1. Create build files
+4. make a direcoty named `build` and cd into it
+    ```sh
+    mkdir build && cd build
+    ```
+5. configure cmake
     ```sh
     cmake -DCMAKE_BUILD_TYPE=Release ..
     ```
-1. Build the Project
+6. build the Project
     ```sh
-    make
+    make -j8
     ```
 
 ## Usage
 
--   Help Page:
+-   help:
     -   `./hexit -h`
--   Display the hex dump of a file:
+-   display the hex dump of a file:
 
     -   `./hexit -f (--file) <file> [options]`
 
--   Options:
+-   options:
 
     -   Hexadecimal or decimal byte offset to seek during startup: `-o (--offset) <offset>`
 
@@ -122,13 +124,13 @@
 
 | Key               | Function              |
 | ----------------- | --------------------- |
-| ctrl + S          | Save the file         |
-| ctrl + X          | Toggle HEX mode       |
-| ctrl + A          | Toggle ASCII mode     |
-| ctrl + Q          | Exit the editor       |
-| ctrl + G          | Go to byte            |
-| Arrows keys       | Move the cursor       |
-| Page-up/Page-down | Move the page up/down |
+| ctrl + s          | save the file         |
+| ctrl + x          | toggle HEX mode       |
+| ctrl + a          | toggle ASCII mode     |
+| ctrl + q          | exit the editor       |
+| ctrl + g          | go to byte            |
+| Arrows keys       | move the cursor       |
+| Page-up/Page-down | move the page up/down |
 
 ## License
 
