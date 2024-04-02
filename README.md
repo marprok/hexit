@@ -1,4 +1,9 @@
-<a id="Top"></a>
+<div align="center">
+  <h1 align="center">Hexit</h1>
+  <p align="center">
+    A minimalistic Hex-Editor!
+  </p>
+</div>
 
 <p align="center">
   <a href="https://github.com/marprok/hexit/network/members">
@@ -14,45 +19,6 @@
   <a href="https://github.com/marprok/hexit/blob/master/LICENSE">
         <img src="https://img.shields.io/github/license/marprok/hexit.svg" alt="License"></a>
 </p>
-
-<br />
-<div align="center">
-  <h1 align="center">Hexit</h1>
-  <p align="center">
-    A minimalistic Hex-Editor!
-    <br />
-    <br />
-    <a href="https://github.com/marprok/hexit">View Demo</a>
-    ·
-    <a href="https://github.com/marprok/hexit/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/marprok/hexit/issues">Request Feature</a>
-  </p>
-  <p>
-  </p>
-</div>
-
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#controls">Controls</a></li>
-    <li><a href="#license">License</a></li>
-  </ol>
-</details>
 
 ## About The Project
 
@@ -129,11 +95,9 @@ Hexit aims to be a simple yet efficient hex editor.
 | ctrl + a          | toggle ASCII mode     |
 | ctrl + q          | exit the editor       |
 | ctrl + g          | go to byte            |
-| Arrows keys       | move the cursor       |
-| Page-up/Page-down | move the page up/down |
+| arrows keys       | move the cursor       |
+| page-up/Page-down | move the page up/down |
 
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
-<p align="right">(<a href="#Top">back to top</a>)</p>
