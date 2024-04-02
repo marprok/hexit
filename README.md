@@ -37,6 +37,10 @@ Hexit aims to be a simple yet efficient hex editor.
 
 ## Getting Started
 
+## Disclaimer
+
+Although most of the features have corresponding unit tests written for them, the application as a whole is not mature enough. Use it at your own discretion.
+
 ### Prerequisites
 
 -   gcc(c++-20 support is needed)
