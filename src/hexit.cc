@@ -74,6 +74,7 @@ int start_hexit(IOHandler&        handler,
 
     TerminalWindow win(handler, file_type, str_to_int(starting_offset));
     win.run();
+    // ~TerminalWindow de-initializes ncurses
     return 0;
 }
 }
@@ -97,17 +98,14 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    int ret = 0;
     if (!input_file)
     {
         StdInHandler handler(true);
-        ret = start_hexit(handler, starting_offset, "stdin");
+        return start_hexit(handler, starting_offset, "stdin");
     }
     else
     {
         FileHandler handler;
-        ret = start_hexit(handler, starting_offset, input_file);
+        return start_hexit(handler, starting_offset, input_file);
     }
-
-    return ret;
 }

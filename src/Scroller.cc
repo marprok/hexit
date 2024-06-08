@@ -10,10 +10,10 @@ Scroller::Scroller(std::uintmax_t total_bytes, std::uintmax_t bytes_per_line)
     , m_visible_lines(0u)
     , m_active_line(0u)
 {
-    if (total_bytes > 0 && bytes_per_line > 0)
+    if (total_bytes != 0 && bytes_per_line != 0)
     {
         m_total_lines = total_bytes / bytes_per_line;
-        if ((total_bytes % bytes_per_line) > 0)
+        if (total_bytes % bytes_per_line)
             m_total_lines++;
     }
 }

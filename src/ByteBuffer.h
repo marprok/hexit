@@ -3,7 +3,7 @@
 
 #include "ChunkCache.h"
 #include <map>
-#include <string_view>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -32,20 +32,18 @@ public:
 
     inline bool is_ok() const { return m_error_msg.empty(); };
 
-    const std::string_view error_msg() const { return m_error_msg; }
+    const std::string& error_msg() const { return m_error_msg; }
 
     const std::uintmax_t size;
 
 private:
-    inline void log_error(const std::string_view& err)
+    inline void log_error(const std::string& err)
     {
         m_error_msg.reserve(err.size());
         m_error_msg = err;
     }
 
-    typedef std::unordered_map<std::uintmax_t, std::uint8_t> DirtyByteMap;
-    // Use std::map because traversing in ascending order minimizes access misses
-    // when trying to save all changes on disk in case adjacent chucks are dirty.
+    typedef std::unordered_map<std::uintmax_t, std::uint8_t>      DirtyByteMap;
     typedef std::map<std::uintmax_t, std::vector<std::uintmax_t>> DirtyChunkMap;
 
     DirtyByteMap  m_dirty_bytes;

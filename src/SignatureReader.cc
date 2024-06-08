@@ -45,22 +45,16 @@ std::string SignatureReader::get_type(const std::vector<std::uint8_t>& query)
     for (const auto& signature : m_signatures)
     {
         std::uintmax_t signature_size = signature.m_buffer.size() + signature.m_skip.size();
-        if ((query.size() < signature_size)
-            || (signature.m_skip.size() >= signature.m_buffer.size()))
+        if ((query.size() < signature_size) || (signature.m_skip.size() >= signature.m_buffer.size()))
             continue;
 
         std::uintmax_t i = 0, j = 0;
         bool           match = false;
-        for (; (i < signature_size) && (j < signature.m_buffer.size());)
+        while ((i < signature_size) && (j < signature.m_buffer.size()))
         {
             if (signature.m_skip.contains(i))
-            {
                 i++;
-                continue;
-            }
-
-            match = (query[i++] == signature.m_buffer[j++]);
-            if (!match)
+            else if (!(match = (query[i++] == signature.m_buffer[j++])))
                 break;
         }
 

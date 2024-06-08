@@ -145,22 +145,35 @@ TEST(ByteBufferTest, SaveBytes)
         if (to >= size)
             to = from + size % ChunkCache::capacity;
 
-        const auto old_value = buffer[from];
+        const auto old_value = raw_data[from];
         for (; from < to; ++from)
         {
             buffer.set_byte(from, old_value + 1);
             EXPECT_EQ(buffer[from], old_value + 1);
             EXPECT_NE(raw_data[from], old_value + 1);
         }
+    }
+
+    EXPECT_EQ(handler.load_count(), dirty_ids.size());
+    buffer.save();
+    EXPECT_EQ(handler.load_count(), 2 * dirty_ids.size());
+
+    for (auto id : dirty_ids)
+    {
+        std::uintmax_t from = id * ChunkCache::capacity;
+        std::uintmax_t to   = from + ChunkCache::capacity;
+        if (to >= size)
+            to = from + size % ChunkCache::capacity;
+
+        const std::uint8_t old_value = raw_data[from] - 1;
         // save all the dirty bytes
-        buffer.save();
         for (from = id * ChunkCache::capacity; from < to; ++from)
         {
             EXPECT_EQ(raw_data[from], buffer[from]);
             EXPECT_EQ(raw_data[from], old_value + 1);
         }
     }
-    EXPECT_EQ(handler.load_count(), dirty_ids.size());
+    EXPECT_EQ(handler.load_count(), 3 * dirty_ids.size());
 }
 
 // Same as SaveBytes but this time the read only flag is set to true
