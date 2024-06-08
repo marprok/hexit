@@ -14,19 +14,13 @@ TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type,
     , m_data(handler)
     , m_name(handler.name().filename())
     , m_type(file_type)
-    , m_byte(0u)
+    , m_byte(start_from_byte < handler.size() ? start_from_byte : handler.size() - 1)
     , m_mode(Mode::HEX)
     , m_prompt(Prompt::NONE)
     , m_nibble(0u)
     , m_update(true)
     , m_quit(false)
 {
-
-    if (start_from_byte < m_data.size)
-        m_byte = start_from_byte;
-    else
-        m_byte = m_data.size - 1;
-
     std::snprintf(m_offset_format, sizeof(m_offset_format), "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
     m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
