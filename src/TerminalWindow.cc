@@ -28,8 +28,7 @@ TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type,
 
 TerminalWindow::~TerminalWindow()
 {
-    endwin();
-    if (!m_data.is_ok())
+    if (endwin(); !m_data.is_ok())
         std::cerr << m_data.error_msg() << std::endl;
 }
 

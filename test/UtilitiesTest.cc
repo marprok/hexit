@@ -41,8 +41,7 @@ TEST(UtilitiesTest, UpdateNibble)
     EXPECT_EQ(update_nibble(0xFF, 0xF, 0x0E), 0x0E);
     for (std::uint16_t i = 0u; i <= 0xFF; ++i)
     {
-        std::uint8_t chr = static_cast<std::uint8_t>(i);
-        if (std::isxdigit(chr))
+        if (const std::uint8_t chr = static_cast<std::uint8_t>(i); std::isxdigit(chr))
         {
             std::uint8_t new_value = update_nibble(0x0, chr, 0xBE);
             EXPECT_EQ(new_value >> 4, hex_char_to_int(chr));

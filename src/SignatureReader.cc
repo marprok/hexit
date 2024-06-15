@@ -54,7 +54,7 @@ std::string SignatureReader::get_type(const std::vector<std::uint8_t>& query)
         {
             if (signature.m_skip.contains(i))
                 i++;
-            else if (!(match = (query[i++] == signature.m_buffer[j++])))
+            else if (match = (query[i++] == signature.m_buffer[j++]); !match)
                 break;
         }
 

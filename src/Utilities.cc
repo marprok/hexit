@@ -27,8 +27,7 @@ bool validate_args(std::uintmax_t argc, const char* const* const argv)
         {
             if (offset || ((i + 1) >= argc) || !argv[i + 1])
                 break;
-            ++i;
-            if (!is_hex_string(argv[i]) && !is_dec_string(argv[i]))
+            if (++i; !is_hex_string(argv[i]) && !is_dec_string(argv[i]))
                 break;
             ++i;
             offset = true;
@@ -37,8 +36,7 @@ bool validate_args(std::uintmax_t argc, const char* const* const argv)
         {
             if (file || ((i + 1) >= argc) || !argv[i + 1])
                 break;
-            ++i;
-            if (!fs::exists(argv[i]))
+            if (++i; !fs::exists(argv[i]))
                 break;
             ++i;
             file = true;
