@@ -99,7 +99,7 @@ Although most of the features have corresponding unit tests written for them, th
 | ctrl + a          | toggle ASCII mode     |
 | ctrl + q          | exit the editor       |
 | ctrl + g          | go to byte            |
-| arrows keys       | move the cursor       |
+| arrow keys        | move the cursor       |
 | page-up/Page-down | move the page up/down |
 
 ## License
