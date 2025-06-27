@@ -6,18 +6,8 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/marprok/hexit/network/members">
-        <img src="https://img.shields.io/github/forks/marprok/hexit" alt="Forks"></a>
-  <a href="https://github.com/marprok/hexit/stargazers">
-        <img src="https://img.shields.io/github/stars/marprok/hexit.svg" alt="Stars"></a>
   <a href="https://github.com/marprok/hexit/actions/workflows/cmake.yml/badge.svg">
         <img src="https://github.com/marprok/hexit/actions/workflows/cmake.yml/badge.svg" alt="Build Status"></a>
-  <a href="https://github.com/marprok/hexit/graphs/contributors">
-        <img src="https://img.shields.io/github/contributors/marprok/hexit" alt="Contributors"></a>
-  <a href="https://github.com/marprok/hexit/issues">
-        <img src="https://img.shields.io/github/issues/marprok/hexit.svg" alt="Issues"></a>
-  <a href="https://github.com/marprok/hexit/blob/master/LICENSE">
-        <img src="https://img.shields.io/github/license/marprok/hexit.svg" alt="License"></a>
 </p>
 
 ## About The Project
