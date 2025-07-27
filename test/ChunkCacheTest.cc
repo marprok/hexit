@@ -1,19 +1,15 @@
 #include "ChunkCache.h"
 #include "IOHandlerMock.h"
-#include <filesystem>
 #include <gtest/gtest.h>
 
 namespace
 {
-namespace fs = std::filesystem;
 using namespace Hexit;
 
-constexpr std::uintmax_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
-
-inline std::uintmax_t expected_chunks()
+inline std::uintmax_t expected_chunks(const IOHandler& handler)
 {
-    std::uintmax_t chunks = expected_size_bytes / ChunkCache::capacity;
-    if (expected_size_bytes % ChunkCache::capacity)
+    std::uintmax_t chunks = handler.size() / ChunkCache::capacity;
+    if (handler.size() % ChunkCache::capacity)
         chunks++;
     return chunks;
 }
@@ -32,7 +28,7 @@ TEST(ChunkCacheTest, IOHandlerInformation)
     ASSERT_EQ(cache.fallback().m_count, 0);
     ASSERT_EQ(sizeof(cache.fallback().m_data), ChunkCache::capacity);
 
-    ASSERT_EQ(expected_chunks(), cache.total_chunks());
+    ASSERT_EQ(expected_chunks(handler), cache.total_chunks());
 }
 
 // When load_chunk(chunk_id) gets called, the chunk returned by recent()
@@ -43,7 +39,7 @@ TEST(ChunkCacheTest, LoadChunk)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
-    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     ASSERT_TRUE(cache.load_chunk(0));
     EXPECT_EQ(cache.recent().m_id, 0);
     for (std::uintmax_t i = 1; i < cache.total_chunks(); ++i)
@@ -59,7 +55,7 @@ TEST(ChunkCacheTest, LoadChunkReverse)
 {
     IOHandlerMock handler;
     ChunkCache    cache(handler);
-    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     ASSERT_TRUE(cache.load_chunk(cache.total_chunks() - 1));
     EXPECT_EQ(cache.recent().m_id, cache.total_chunks() - 1);
     for (std::uintmax_t i = cache.total_chunks() - 2; i > 0; --i)
@@ -75,7 +71,7 @@ TEST(ChunkCacheTest, SaveChunk)
     IOHandlerMock handler;
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     const auto chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());
@@ -96,7 +92,7 @@ TEST(ChunkCacheTest, SaveChunkReadOnly)
     IOHandlerMock handler(true);
     std::uint8_t* raw_data = handler.data();
     ChunkCache    cache(handler);
-    ASSERT_EQ(cache.total_chunks(), expected_chunks());
+    ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     const auto chunk_id = cache.total_chunks() / 2;
     // initialize the data to zero
     std::memset(raw_data, 0, handler.size());

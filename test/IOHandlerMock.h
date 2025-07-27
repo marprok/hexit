@@ -11,8 +11,6 @@ namespace fs = std::filesystem;
 class IOHandlerMock : public Hexit::IOHandler
 {
 public:
-    static constexpr std::uintmax_t chunk_count = 255;
-
     IOHandlerMock(bool read_only = false);
 
     ~IOHandlerMock() = default;
@@ -37,14 +35,14 @@ private:
     inline void randomize()
     {
         std::srand(static_cast<unsigned int>(std::time(nullptr)));
-        std::uint8_t* bytes = data();
         for (std::uintmax_t i = 0; i < m_size; ++i)
-            bytes[i] = static_cast<std::uint8_t>(rand() % 256);
+            m_data[i] = static_cast<std::uint8_t>(rand() % 256);
     }
 
-    std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];
-    std::uintmax_t m_id;
-    std::uintmax_t m_load_count;
-    bool          m_io_fail;
+    static constexpr std::uintmax_t m_data_size = 255 * Hexit::ChunkCache::capacity + 123; // not a multiple of capacity
+    std::uint8_t                    m_data[m_data_size];
+    std::uintmax_t                  m_id;
+    std::uintmax_t                  m_load_count;
+    bool                            m_io_fail;
 };
 #endif // IOHANDLER_MOCK_H
