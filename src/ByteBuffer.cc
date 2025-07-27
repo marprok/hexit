@@ -1,5 +1,6 @@
 #include "ByteBuffer.h"
 #include "IOHandler.h"
+#include <array>
 #include <string>
 
 namespace Hexit
@@ -16,8 +17,8 @@ std::uint8_t ByteBuffer::operator[](std::uintmax_t byte_id)
 {
     const std::uintmax_t chunk_id    = byte_id / ChunkCache::capacity;
     const std::uintmax_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
-    const auto&         recent      = m_cache.recent();
-    const auto&         fallback    = m_cache.fallback();
+    const auto&          recent      = m_cache.recent();
+    const auto&          fallback    = m_cache.fallback();
 
     if (recent.m_id == chunk_id)
         return recent.m_data[relative_id];
@@ -46,8 +47,8 @@ void ByteBuffer::set_byte(std::uintmax_t byte_id, std::uint8_t byte_value)
 {
     const std::uintmax_t chunk_id    = byte_id / ChunkCache::capacity;
     const std::uintmax_t relative_id = byte_id - ChunkCache::capacity * chunk_id;
-    auto&               recent      = m_cache.recent();
-    auto&               fallback    = m_cache.fallback();
+    auto&                recent      = m_cache.recent();
+    auto&                fallback    = m_cache.fallback();
 
     if (recent.m_id == chunk_id)
         recent.m_data[relative_id] = byte_value;
@@ -108,5 +109,41 @@ void ByteBuffer::save()
 
     m_dirty_bytes.clear();
     m_dirty_chunks.clear();
+}
+// A basic implementation of the Boyer–Moore–Horspool algorithm based on the pseudocode from wiki
+std::optional<std::uintmax_t> ByteBuffer::find(const std::vector<std::uint8_t>& needle, std::uintmax_t from)
+{
+    if (needle.empty() || (from + needle.size() > this->size))
+        return {};
+    // preprocess step
+    std::array<std::size_t, 256> T;
+    for (auto& byte : T)
+        byte = needle.size();
+
+    for (std::size_t i = 0; i < needle.size() - 1; ++i)
+    {
+        T[needle[i]] = needle.size() - 1 - i;
+    }
+    // comparator
+    auto does_match = [this, &needle](std::size_t from)
+    {
+        std::size_t i = needle.size() - 1;
+        while ((*this)[from + i] == needle[i])
+        {
+            if (i-- == 0)
+                return true;
+        }
+        return false;
+    };
+    // pattern matching
+    std::uintmax_t skip = from;
+    while (this->size - skip >= needle.size())
+    {
+        if (does_match(skip)) [[unlikely]]
+            return skip;
+        skip += T[(*this)[skip + needle.size() - 1]];
+    }
+
+    return {};
 }
 } // namespace Hexit

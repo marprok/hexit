@@ -2,11 +2,12 @@
 
 IOHandlerMock::IOHandlerMock(bool read_only)
     : IOHandler(read_only)
+    , m_data(255 * Hexit::ChunkCache::capacity + 123) // not multiple of chunk capacity
     , m_id(0u)
     , m_load_count(0u)
     , m_io_fail(false)
 {
-    m_size = m_data_size;
+    m_size = m_data.size();
     randomize();
 }
 
@@ -27,7 +28,7 @@ bool IOHandlerMock::read(std::uint8_t* o_buffer, std::uintmax_t buffer_size)
         || m_size <= buffer_size * m_id)
         return false;
 
-    std::memcpy(o_buffer, m_data + Hexit::ChunkCache::capacity * m_id, buffer_size);
+    std::memcpy(o_buffer, m_data.data() + Hexit::ChunkCache::capacity * m_id, buffer_size);
     m_load_count++;
     m_id++;
     return !m_io_fail;
@@ -40,7 +41,7 @@ bool IOHandlerMock::write(const std::uint8_t* i_buffer, std::uintmax_t buffer_si
         || m_size <= buffer_size * m_id)
         return false;
 
-    std::memcpy(m_data + Hexit::ChunkCache::capacity * m_id, i_buffer, buffer_size);
+    std::memcpy(m_data.data() + Hexit::ChunkCache::capacity * m_id, i_buffer, buffer_size);
     return !m_io_fail;
 }
 
@@ -50,7 +51,7 @@ bool IOHandlerMock::seek(std::uintmax_t offset)
     return !m_io_fail;
 }
 
-std::uint8_t* IOHandlerMock::data() { return m_data; }
+std::vector<std::uint8_t>& IOHandlerMock::data() { return m_data; }
 
 std::uintmax_t IOHandlerMock::load_count() const { return m_load_count; }
 

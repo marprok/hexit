@@ -21,13 +21,13 @@ bool ChunkCache::load_chunk(std::uintmax_t chunk_id)
     if (chunk_id == (m_total_chunks - 1) && m_handler.size() % capacity)
         bytes_to_read = m_handler.size() % capacity;
 
-    auto& target_cache = m_chunks[1 - m_id];
+    auto& target_cache = m_chunks[!m_id];
     if (!m_handler.read(target_cache.m_data, bytes_to_read))
         return false;
 
     target_cache.m_id    = chunk_id;
     target_cache.m_count = bytes_to_read;
-    m_id                 = 1 - m_id;
+    m_id                 = !m_id;
 
     return true;
 }

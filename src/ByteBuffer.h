@@ -3,6 +3,7 @@
 
 #include "ChunkCache.h"
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +24,8 @@ public:
     void set_byte(std::uintmax_t byte_id, std::uint8_t byte_value);
 
     void save();
+
+    std::optional<std::uintmax_t> find(const std::vector<std::uint8_t>& needle, std::uintmax_t from = 0);
 
     inline bool is_dirty(std::uintmax_t byte_id) const { return m_dirty_bytes.contains(byte_id); }
 

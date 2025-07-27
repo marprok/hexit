@@ -5,6 +5,7 @@
 #include "IOHandler.h"
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -25,7 +26,7 @@ public:
 
     bool seek(std::uintmax_t offset) override;
 
-    std::uint8_t* data();
+    std::vector<std::uint8_t>& data();
 
     std::uintmax_t load_count() const;
 
@@ -39,10 +40,9 @@ private:
             m_data[i] = static_cast<std::uint8_t>(rand() % 256);
     }
 
-    static constexpr std::uintmax_t m_data_size = 255 * Hexit::ChunkCache::capacity + 123; // not a multiple of capacity
-    std::uint8_t                    m_data[m_data_size];
-    std::uintmax_t                  m_id;
-    std::uintmax_t                  m_load_count;
-    bool                            m_io_fail;
+    std::vector<std::uint8_t> m_data;
+    std::uintmax_t            m_id;
+    std::uintmax_t            m_load_count;
+    bool                      m_io_fail;
 };
 #endif // IOHANDLER_MOCK_H

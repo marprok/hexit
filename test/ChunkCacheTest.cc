@@ -69,7 +69,7 @@ TEST(ChunkCacheTest, LoadChunkReverse)
 TEST(ChunkCacheTest, SaveChunk)
 {
     IOHandlerMock handler;
-    std::uint8_t* raw_data = handler.data();
+    std::uint8_t* raw_data = handler.data().data();
     ChunkCache    cache(handler);
     ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     const auto chunk_id = cache.total_chunks() / 2;
@@ -90,7 +90,7 @@ TEST(ChunkCacheTest, SaveChunk)
 TEST(ChunkCacheTest, SaveChunkReadOnly)
 {
     IOHandlerMock handler(true);
-    std::uint8_t* raw_data = handler.data();
+    std::uint8_t* raw_data = handler.data().data();
     ChunkCache    cache(handler);
     ASSERT_EQ(cache.total_chunks(), expected_chunks(handler));
     const auto chunk_id = cache.total_chunks() / 2;
