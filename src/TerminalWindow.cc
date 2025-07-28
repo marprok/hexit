@@ -70,6 +70,12 @@ void TerminalWindow::run()
         case K_QUIT:
             prompt_quit();
             break;
+        case K_GO_TO:
+            prompt_go_to_byte();
+            break;
+        case K_SEARCH:
+            prompt_search();
+            break;
         case K_HEX:
             toggle_hex_mode();
             break;
@@ -79,9 +85,6 @@ void TerminalWindow::run()
         case K_SUSP:
             endwin();
             raise(SIGSTOP);
-            break;
-        case K_GO_TO:
-            prompt_go_to_byte();
             break;
         default:
             consume_input(c);
@@ -160,12 +163,23 @@ bool TerminalWindow::update_screen()
         const int           info_column = static_cast<int>(COLS - 8 - m_type.size());
         mvprintw(LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
-        if (m_prompt == Prompt::SAVE)
+        switch (m_prompt)
+        {
+        case Prompt::SAVE:
             mvaddstr(LINES - 1, 1, "Modified buffer, save?(y/n)");
-        else if (m_prompt == Prompt::QUIT)
+            break;
+        case Prompt::QUIT:
             mvaddstr(LINES - 1, 1, "Modified buffer, quit?(y,n)");
-        else if (m_prompt == Prompt::GO_TO_BYTE)
+            break;
+        case Prompt::GO_TO_BYTE:
             mvprintw(LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
+            break;
+        case Prompt::SEARCH:
+            mvprintw(LINES - 1, 1, "Search: %s", m_input_buffer.c_str());
+            break;
+        default:
+            break;
+        }
         m_update = false;
     }
     else
@@ -349,6 +363,16 @@ void TerminalWindow::prompt_go_to_byte()
         return;
 
     m_prompt = Prompt::GO_TO_BYTE;
+    m_input_buffer.clear();
+    m_update = true;
+}
+
+void TerminalWindow::prompt_search()
+{
+    if (m_prompt == Prompt::SEARCH)
+        return;
+
+    m_prompt = Prompt::SEARCH;
     m_input_buffer.clear();
     m_update = true;
 }

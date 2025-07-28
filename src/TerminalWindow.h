@@ -52,6 +52,8 @@ private:
 
     void prompt_go_to_byte();
 
+    void prompt_search();
+
     void toggle_ascii_mode();
 
     void toggle_hex_mode();
@@ -71,7 +73,8 @@ private:
         NONE,
         SAVE,
         QUIT,
-        GO_TO_BYTE
+        GO_TO_BYTE,
+        SEARCH
     };
 
     Scroller          m_scroller;

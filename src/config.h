@@ -22,14 +22,16 @@ inline constexpr int CTRL_X = 'x' & 0x1F;
 inline constexpr int CTRL_A = 'a' & 0x1F;
 inline constexpr int CTRL_Z = 'z' & 0x1F;
 inline constexpr int CTRL_G = 'g' & 0x1F;
+inline constexpr int CTRL_W = 'w' & 0x1F;
 
 // Feel free to map the controls to the keys of your choice :)
-inline constexpr int K_QUIT  = CTRL_Q; // Quit
-inline constexpr int K_SAVE  = CTRL_S; // Save
-inline constexpr int K_HEX   = CTRL_X; // HEX mode
-inline constexpr int K_ASCII = CTRL_A; // ASCII mode
-inline constexpr int K_SUSP  = CTRL_Z; // Suspend
-inline constexpr int K_GO_TO = CTRL_G; // Go to byte
+inline constexpr int K_QUIT   = CTRL_Q; // Quit
+inline constexpr int K_SAVE   = CTRL_S; // Save
+inline constexpr int K_HEX    = CTRL_X; // HEX mode
+inline constexpr int K_ASCII  = CTRL_A; // ASCII mode
+inline constexpr int K_SUSP   = CTRL_Z; // Suspend
+inline constexpr int K_GO_TO  = CTRL_G; // Go to byte
+inline constexpr int K_SEARCH = CTRL_W; // Search
 } // namespace Hexit
 
 #endif // HEXIT_CONFIG_H
