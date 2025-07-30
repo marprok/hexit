@@ -416,11 +416,11 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
 
 void TerminalWindow::handle_prompt(int key)
 {
-    if (m_prompt == Prompt::GO_TO_BYTE)
+    if (m_prompt == Prompt::GO_TO_BYTE || m_prompt == Prompt::SEARCH)
     {
         if (key == '\n')
         {
-            if (!m_input_buffer.empty())
+            if (m_prompt == Prompt::GO_TO_BYTE && !m_input_buffer.empty())
             {
                 std::uintmax_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
@@ -432,9 +432,25 @@ void TerminalWindow::handle_prompt(int key)
                     m_byte = go_to_byte;
                 else
                     m_byte = m_data.size - 1;
-                m_input_buffer.clear();
+            }
+            else if (m_prompt == Prompt::SEARCH && !m_input_buffer.empty())
+            {
+                std::vector<std::uint8_t> needle;
+                needle.reserve(m_input_buffer.size());
+                std::size_t ci = 0;
+                if (m_mode == Mode::HEX)
+                {
+                    if (m_input_buffer.size() & 0x1)
+                        needle.push_back(hex_char_to_int(static_cast<std::uint8_t>(m_input_buffer[ci++])));
+                    for (; ci < m_input_buffer.size(); ci += 2)
+                        needle.push_back(static_cast<uint8_t>(((hex_char_to_int(static_cast<std::uint8_t>(m_input_buffer[ci])) << 4) | hex_char_to_int(static_cast<std::uint8_t>(m_input_buffer[ci + 1])))));
+                }
+                else
+                    std::copy(m_input_buffer.begin(), m_input_buffer.end(), std::back_inserter(needle));
+                m_byte = m_data.find(needle, m_byte).value_or(m_byte);
             }
             m_prompt = Prompt::NONE;
+            m_input_buffer.clear();
             resize();
         }
         else if ((key == KEY_BACKSPACE) && !m_input_buffer.empty())
@@ -446,8 +462,8 @@ void TerminalWindow::handle_prompt(int key)
                  && (key >= 0 && key <= 0xFF))
         {
 
-            if ((m_mode == Mode::ASCII && isdigit(key))
-                || (m_mode == Mode::HEX && isxdigit(key)))
+            if ((m_prompt == Prompt::SEARCH && ((m_mode == Mode::ASCII && (key >= 0x20 && key <= 0x7F)) || (m_mode == Mode::HEX && std::isxdigit(key))))
+                || ((m_mode == Mode::ASCII && std::isdigit(key)) || (m_mode == Mode::HEX && std::isxdigit(key))))
             {
                 m_input_buffer.push_back(static_cast<char>(key));
                 m_update = true;
