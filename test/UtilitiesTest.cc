@@ -16,21 +16,21 @@ TEST(UtilitiesTest, HexCharToInt)
     {
         std::uint8_t chr = static_cast<std::uint8_t>(i);
         if (chr >= '0' && chr <= '9')
-            EXPECT_EQ(hex_char_to_int(chr), chr - '0');
+            EXPECT_EQ(hdtoi(chr), chr - '0');
         else if (chr == 'A' || chr == 'a')
-            EXPECT_EQ(hex_char_to_int(chr), 10u);
+            EXPECT_EQ(hdtoi(chr), 10u);
         else if (chr == 'B' || chr == 'b')
-            EXPECT_EQ(hex_char_to_int(chr), 11u);
+            EXPECT_EQ(hdtoi(chr), 11u);
         else if (chr == 'C' || chr == 'c')
-            EXPECT_EQ(hex_char_to_int(chr), 12u);
+            EXPECT_EQ(hdtoi(chr), 12u);
         else if (chr == 'D' || chr == 'd')
-            EXPECT_EQ(hex_char_to_int(chr), 13u);
+            EXPECT_EQ(hdtoi(chr), 13u);
         else if (chr == 'E' || chr == 'e')
-            EXPECT_EQ(hex_char_to_int(chr), 14u);
+            EXPECT_EQ(hdtoi(chr), 14u);
         else if (chr == 'F' || chr == 'f')
-            EXPECT_EQ(hex_char_to_int(chr), 15u);
+            EXPECT_EQ(hdtoi(chr), 15u);
         else
-            EXPECT_EQ(hex_char_to_int(chr), chr);
+            EXPECT_EQ(hdtoi(chr), chr);
     }
 }
 
@@ -44,12 +44,12 @@ TEST(UtilitiesTest, UpdateNibble)
         if (const std::uint8_t chr = static_cast<std::uint8_t>(i); std::isxdigit(chr))
         {
             std::uint8_t new_value = update_nibble(0x0, chr, 0xBE);
-            EXPECT_EQ(new_value >> 4, hex_char_to_int(chr));
+            EXPECT_EQ(new_value >> 4, hdtoi(chr));
             EXPECT_EQ(new_value & 0x0F, 0xE);
 
             new_value = update_nibble(0x1, chr, 0xEF);
             EXPECT_EQ(new_value >> 4, 0xE);
-            EXPECT_EQ(new_value & 0x0F, hex_char_to_int(chr));
+            EXPECT_EQ(new_value & 0x0F, hdtoi(chr));
         }
         else if (chr > 0xF)
         {
