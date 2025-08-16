@@ -16,7 +16,7 @@ inline void print_help(const char* bin)
     std::cerr << "\nUsage:\n";
     std::cerr << bin << " -f (--file) <file> [options]\n\n";
     std::cerr << "Display the hex dump of a file.\n\n";
-    std::cerr << "If no file is given via the -f flag, then hexit will read bytes from standard input\n";
+    std::cerr << "If no file is given using the -f flag, then hexit will read bytes from standard input\n";
     std::cerr << "until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.\n\n";
     std::cerr << "Options:\n";
     std::cerr << "-o (--offset) <offset>: Hexadecimal or decimal byte offset to seek during startup.\n";
