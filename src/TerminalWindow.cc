@@ -72,7 +72,7 @@ void TerminalWindow::run()
         case K_GO_TO:
             prompt_go_to_byte();
             break;
-        case K_SEARCH:
+        case K_FIND:
             prompt_search();
             break;
         case K_HEX:
@@ -174,7 +174,7 @@ bool TerminalWindow::update_screen()
             mvprintw(LINES - 1, 1, "Goto byte: %s", m_prompt.input.c_str());
             break;
         case Prompt::SEARCH:
-            mvprintw(LINES - 1, 1, "Search: %s", m_prompt.input.c_str());
+            mvprintw(LINES - 1, 1, "Find: %s", m_prompt.input.c_str());
             break;
         default:
             break;
