@@ -1,7 +1,7 @@
 #include "TerminalWindow.h"
 #include "ByteBuffer.h"
 #include "Utilities.h"
-#include "config.h"
+#include <cinttypes>
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
@@ -10,19 +10,18 @@
 namespace Hexit
 {
 TerminalWindow::TerminalWindow(IOHandler& handler, const std::string& file_type, std::uintmax_t start_from_byte)
-    : m_scroller(handler.size(), BYTES_PER_LINE)
-    , m_data(handler)
+    : m_data(handler)
+    , m_scroller(handler.size(), BYTES_PER_LINE)
+    , m_prompt(std::bind(&TerminalWindow::handle_prompt, this, std::placeholders::_1))
     , m_name(handler.name().filename())
     , m_type(file_type)
     , m_byte(start_from_byte < handler.size() ? start_from_byte : handler.size() - 1)
     , m_mode(Mode::HEX)
-    , m_prompt(Prompt::NONE)
     , m_nibble(0u)
     , m_update(true)
     , m_quit(false)
 {
     std::snprintf(m_offset_format, sizeof(m_offset_format), "%%0%" PRIu32 PRIX64, LINE_OFFSET_LEN);
-    m_input_buffer.reserve(LINE_OFFSET_LEN);
     resize();
 }
 
@@ -70,6 +69,12 @@ void TerminalWindow::run()
         case K_QUIT:
             prompt_quit();
             break;
+        case K_GO_TO:
+            prompt_go_to_byte();
+            break;
+        case K_FIND:
+            prompt_search();
+            break;
         case K_HEX:
             toggle_hex_mode();
             break;
@@ -79,9 +84,6 @@ void TerminalWindow::run()
         case K_SUSP:
             endwin();
             raise(SIGSTOP);
-            break;
-        case K_GO_TO:
-            prompt_go_to_byte();
             break;
         default:
             consume_input(c);
@@ -101,7 +103,7 @@ void TerminalWindow::draw_line(std::uint32_t line)
     // Skip the first box border line.
     line++;
     // Draw the line byte offset.
-    mvprintw(line, 1, m_offset_format, line_byte);
+    mvprintw(static_cast<int>(line), 1, m_offset_format, line_byte);
     for (std::uint32_t i = 0; i < BYTES_PER_LINE; ++i, ++line_byte)
     {
         const std::uint8_t bt           = m_data[line_byte];
@@ -157,15 +159,26 @@ bool TerminalWindow::update_screen()
 
         const char          mode        = m_mode == Mode::ASCII ? 'A' : 'X';
         const std::uint32_t percentage  = static_cast<std::uint32_t>(static_cast<long double>(m_scroller.last() + 1) / m_scroller.total() * 100);
-        const int           info_column = static_cast<int>(COLS - 8 - m_type.size());
+        const int           info_column = COLS - 8 - static_cast<int>(m_type.size());
         mvprintw(LINES - 1, info_column, "%s/%c/%d%%", m_type.data(), mode, percentage);
 
-        if (m_prompt == Prompt::SAVE)
+        switch (m_prompt.type)
+        {
+        case Prompt::SAVE:
             mvaddstr(LINES - 1, 1, "Modified buffer, save?(y/n)");
-        else if (m_prompt == Prompt::QUIT)
+            break;
+        case Prompt::QUIT:
             mvaddstr(LINES - 1, 1, "Modified buffer, quit?(y,n)");
-        else if (m_prompt == Prompt::GO_TO_BYTE)
-            mvprintw(LINES - 1, 1, "Goto byte: %s", m_input_buffer.c_str());
+            break;
+        case Prompt::GO_TO_BYTE:
+            mvprintw(LINES - 1, 1, "Goto byte: %s", m_prompt.input.c_str());
+            break;
+        case Prompt::SEARCH:
+            mvprintw(LINES - 1, 1, "Find: %s", m_prompt.input.c_str());
+            break;
+        default:
+            break;
+        }
         m_update = false;
     }
     else
@@ -179,7 +192,7 @@ bool TerminalWindow::update_screen()
     }
 
     // Draw the current byte offset.
-    if (m_prompt == Prompt::NONE)
+    if (m_prompt.type == Prompt::NONE)
         mvprintw(LINES - 1, 1, m_offset_format, m_byte);
 
     return m_data.is_ok();
@@ -197,7 +210,7 @@ void TerminalWindow::resize()
 
 void TerminalWindow::move_up()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     m_update = m_scroller.move_up();
@@ -207,7 +220,7 @@ void TerminalWindow::move_up()
 
 void TerminalWindow::page_up()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     if (m_byte >= (BYTES_PER_LINE * m_scroller.visible()))
@@ -220,7 +233,7 @@ void TerminalWindow::page_up()
 
 void TerminalWindow::move_down()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     const std::uintmax_t distance = m_data.size - m_byte;
@@ -236,7 +249,7 @@ void TerminalWindow::move_down()
 
 void TerminalWindow::page_down()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     if ((m_data.size - m_byte) > (BYTES_PER_LINE * m_scroller.visible()))
@@ -249,7 +262,7 @@ void TerminalWindow::page_down()
 
 void TerminalWindow::move_left()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     if (m_mode == Mode::HEX)
@@ -271,7 +284,7 @@ void TerminalWindow::move_left()
 
 void TerminalWindow::move_right()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
     const std::uintmax_t line_abs   = m_byte / BYTES_PER_LINE;
@@ -299,8 +312,8 @@ void TerminalWindow::move_right()
 
 void TerminalWindow::consume_input(int key)
 {
-    if (m_prompt != Prompt::NONE)
-        handle_prompt(key);
+    if (m_prompt.type != Prompt::NONE)
+        m_prompt.handle_key(key);
     else if (key >= 0 && key <= 0xFF)
         edit_byte(static_cast<std::uint8_t>(key));
 }
@@ -317,45 +330,57 @@ void TerminalWindow::TerminalWindow::save()
 void TerminalWindow::prompt_save()
 {
     if (!m_data.has_dirty()
-        || m_prompt != Prompt::NONE
+        || m_prompt.type != Prompt::NONE
         || m_data.is_read_only())
         return;
 
-    m_prompt = Prompt::SAVE;
-    m_update = true;
+    m_prompt.type = Prompt::SAVE;
+    m_update      = true;
 }
 
 void TerminalWindow::prompt_quit()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
     {
         // Just remove any active prompt
-        m_prompt = Prompt::NONE;
-        m_update = true;
-        m_input_buffer.clear();
+        m_prompt.type = Prompt::NONE;
+        m_update      = true;
+        m_prompt.input.clear();
+        m_prompt.needle.clear();
     }
     else if (!m_data.has_dirty() || m_data.is_read_only())
         m_quit = true;
     else
     {
-        m_prompt = Prompt::QUIT;
-        m_update = true;
+        m_prompt.type = Prompt::QUIT;
+        m_update      = true;
     }
 }
 
 void TerminalWindow::prompt_go_to_byte()
 {
-    if (m_prompt != Prompt::NONE)
+    if (m_prompt.type != Prompt::NONE)
         return;
 
-    m_prompt = Prompt::GO_TO_BYTE;
-    m_input_buffer.clear();
+    m_prompt.type = Prompt::GO_TO_BYTE;
+    m_prompt.input.clear();
+    m_update = true;
+}
+
+void TerminalWindow::prompt_search()
+{
+    if (m_prompt.type == Prompt::SEARCH)
+        return;
+
+    m_prompt.type = Prompt::SEARCH;
+    m_prompt.input.clear();
+    m_prompt.needle.clear();
     m_update = true;
 }
 
 void TerminalWindow::toggle_ascii_mode()
 {
-    if (m_mode == Mode::ASCII || m_prompt != Prompt::NONE)
+    if (m_mode == Mode::ASCII || m_prompt.type != Prompt::NONE)
         return;
 
     m_mode   = Mode::ASCII;
@@ -365,7 +390,7 @@ void TerminalWindow::toggle_ascii_mode()
 
 void TerminalWindow::toggle_hex_mode()
 {
-    if (m_mode == Mode::HEX || m_prompt != Prompt::NONE)
+    if (m_mode == Mode::HEX || m_prompt.type != Prompt::NONE)
         return;
 
     m_mode   = Mode::HEX;
@@ -392,42 +417,66 @@ void TerminalWindow::edit_byte(std::uint8_t chr)
 
 void TerminalWindow::handle_prompt(int key)
 {
-    if (m_prompt == Prompt::GO_TO_BYTE)
+    if (m_prompt.type == Prompt::GO_TO_BYTE || m_prompt.type == Prompt::SEARCH)
     {
-        if (key == '\n')
+        if (key == '\n' && !m_prompt.input.empty())
         {
-            if (!m_input_buffer.empty())
+            if (m_prompt.type == Prompt::GO_TO_BYTE)
             {
                 std::uintmax_t go_to_byte = 0;
                 if (m_mode == Mode::ASCII)
-                    go_to_byte = std::stoull(m_input_buffer, nullptr);
+                    go_to_byte = std::stoull(m_prompt.input, nullptr);
                 else if (m_mode == Mode::HEX)
-                    go_to_byte = std::stoull(m_input_buffer, nullptr, 16);
+                    go_to_byte = std::stoull(m_prompt.input, nullptr, 16);
 
                 if (go_to_byte < m_data.size)
                     m_byte = go_to_byte;
                 else
                     m_byte = m_data.size - 1;
-                m_input_buffer.clear();
+                m_prompt.type = Prompt::NONE;
+                m_prompt.input.clear();
             }
-            m_prompt = Prompt::NONE;
+            else if (m_prompt.type == Prompt::SEARCH)
+            {
+                if (m_prompt.needle.empty())
+                {
+                    m_prompt.needle.reserve(m_prompt.input.size());
+                    std::size_t ci = 0;
+                    if (m_mode == Mode::HEX)
+                    {
+                        if (m_prompt.input.size() & 0x1)
+                            m_prompt.needle.push_back(hdtoi(static_cast<uint8_t>(m_prompt.input[ci++])));
+                        for (; ci < m_prompt.input.size(); ci += 2)
+                            m_prompt.needle.push_back(static_cast<uint8_t>((hdtoi(static_cast<uint8_t>(m_prompt.input[ci])) << 4) | hdtoi(static_cast<uint8_t>(m_prompt.input[ci + 1]))));
+                    }
+                    else
+                        std::copy(m_prompt.input.begin(), m_prompt.input.end(), std::back_inserter(m_prompt.needle));
+                    m_byte = m_data.find(m_prompt.needle, m_byte).value_or(m_byte);
+                }
+                else
+                    m_byte = m_data.find(m_prompt.needle, m_byte + m_prompt.needle.size()).value_or(m_byte);
+            }
             resize();
         }
-        else if ((key == KEY_BACKSPACE) && !m_input_buffer.empty())
+        else if ((key == KEY_BACKSPACE) && !m_prompt.input.empty())
         {
-            m_input_buffer.pop_back();
+            m_prompt.input.pop_back();
+            m_prompt.needle.clear();
             m_update = true;
         }
-        else if ((m_input_buffer.size() < LINE_OFFSET_LEN)
-                 && (key >= 0 && key <= 0xFF))
+        else if ((m_prompt.input.size() < LINE_OFFSET_LEN)
+                 && (key >= 0x20 && key <= 0x7F))
         {
 
-            if ((m_mode == Mode::ASCII && isdigit(key))
-                || (m_mode == Mode::HEX && isxdigit(key)))
+            if ((m_mode == Mode::HEX && !std::isxdigit(key))
+                || ((m_mode == Mode::ASCII && m_prompt.type == Prompt::GO_TO_BYTE && !std::isdigit(key))))
             {
-                m_input_buffer.push_back(static_cast<char>(key));
-                m_update = true;
+                return;
             }
+
+            m_prompt.input.push_back(static_cast<char>(key));
+            m_prompt.needle.clear();
+            m_update = true;
         }
     }
     else
@@ -437,20 +486,20 @@ void TerminalWindow::handle_prompt(int key)
         case 'y':
         case 'Y':
         {
-            if (m_prompt == Prompt::SAVE)
+            if (m_prompt.type == Prompt::SAVE)
             {
                 save();
-                m_prompt = Prompt::NONE;
+                m_prompt.type = Prompt::NONE;
             }
-            else if (m_prompt == Prompt::QUIT)
+            else if (m_prompt.type == Prompt::QUIT)
                 m_quit = true;
             break;
         }
         case 'n':
         case 'N':
         {
-            m_prompt = Prompt::NONE;
-            m_update = true;
+            m_prompt.type = Prompt::NONE;
+            m_update      = true;
             break;
         }
         default:

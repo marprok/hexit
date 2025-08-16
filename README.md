@@ -20,8 +20,9 @@ Hexit aims to be a simple yet efficient hex editor.
 -   The UI is separated into three visual areas: the byte offset on the left, the hexadecimal representation in the center, and the ASCII interpretation on the right.
 -   Hexit will not load the whole file in memory but it will instead load different 'chunks' of the file on demand. This makes it use as little memory as possible regardless of the actual size of the file.
 -   You can easily jump into different absolute byte offsets.
+-   You can search for matches against both a hex byte stream and an ASCII string.
 -   Hexit will attempt to display the actual type of the file and display it on the bottom right of the screen. It does that by trying to match the first few bytes of each file against a database of well known file signatures.
--   Hexit can be used as a shell filter. 
+-   Hexit can be used as a shell filter.
 
 ![Product Name Screen Shot][product-demo]
 
@@ -48,11 +49,11 @@ Although most of the features have corresponding unit tests written for them, th
     ```sh
     cd hexit
     ```
-3. Change the default parameters contained in `src/confing.h` in case the default values are not what you need
+3. Change the default parameters contained in `src/config.h` in case the default values are not what you need
     ```sh
     mkdir build && cd build
     ```
-4. make a direcoty named `build` and cd into it
+4. make a directory named `build` and cd into it
     ```sh
     mkdir build && cd build
     ```
@@ -77,7 +78,7 @@ Although most of the features have corresponding unit tests written for them, th
 
     -   Hexadecimal or decimal byte offset to seek during startup: `-o (--offset) <offset>`
 
--   If no file is given via the -f flag, then Hexit will read bytes from standard input
+-   If no file is given using the -f flag, then Hexit will read bytes from standard input
     until EOF is reached. When displaying the hex dump of standard input, saving will do nothing.
 
 ## Controls
@@ -89,6 +90,7 @@ Although most of the features have corresponding unit tests written for them, th
 | ctrl + a          | toggle ASCII mode     |
 | ctrl + q          | exit the editor       |
 | ctrl + g          | go to byte            |
+| ctrl + f          | find a sequence       |
 | arrow keys        | move the cursor       |
 | page-up/Page-down | move the page up/down |
 

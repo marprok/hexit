@@ -1,6 +1,5 @@
 #include "Utilities.h"
 #include <filesystem>
-#include <iostream>
 #include <string_view>
 
 namespace Hexit

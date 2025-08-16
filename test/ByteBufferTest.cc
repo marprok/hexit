@@ -2,17 +2,14 @@
 #include "IOHandlerMock.h"
 #include <array>
 #include <filesystem>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <string>
 
 namespace
 {
-namespace fs = std::filesystem;
 using namespace Hexit;
 
-const std::string       file_name("test/path/to/somewhere");
-constexpr std::uintmax_t expected_size_bytes = IOHandlerMock::chunk_count * ChunkCache::capacity;
+const std::string file_name("test/path/to/somewhere");
 
 // In case of an io error, is_ok should return true and error_msg() should contain
 // an error message.
@@ -21,7 +18,7 @@ TEST(ByteBufferTest, RandomAccessError)
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
     ByteBuffer buffer(handler);
-    EXPECT_EQ(buffer.size, expected_size_bytes);
+    EXPECT_EQ(buffer.size, handler.size());
     handler.mock_io_fail(true);
     EXPECT_TRUE(buffer.error_msg().empty());
     EXPECT_TRUE(buffer.is_ok());
@@ -65,11 +62,11 @@ TEST(ByteBufferTest, DataModification)
     ASSERT_TRUE(handler.open(file_name));
     const auto                    size = handler.size();
     ByteBuffer                    buffer(handler);
-    std::uint8_t*                 expectation = handler.data();
+    std::uint8_t*                 expectation = handler.data().data();
     std::array<std::uintmax_t, 3> byte_ids { 0, size - 1, 1 };
     std::array<std::uint8_t, 3>   original_values { 0xBE, 0xAB, 0xAC };
     std::array<std::uint8_t, 3>   new_values { 0xEF, 0xBA, 0xDC };
-    ASSERT_EQ(size, expected_size_bytes);
+    ASSERT_EQ(size, handler.size());
     // set the expectation
     for (std::uintmax_t i = 0; i < byte_ids.size(); ++i)
         expectation[byte_ids[i]] = original_values[i];
@@ -107,7 +104,7 @@ TEST(ByteBufferTest, ByteRead)
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
     const auto    size        = handler.size();
-    std::uint8_t* expectation = handler.data();
+    std::uint8_t* expectation = handler.data().data();
     ByteBuffer    buffer(handler);
     for (std::uintmax_t i = 0; i < size; ++i)
         ASSERT_EQ(buffer[i], expectation[i]);
@@ -120,7 +117,7 @@ TEST(ByteBufferTest, ByteReadReverse)
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
     const auto    size        = handler.size();
-    std::uint8_t* expectation = handler.data();
+    std::uint8_t* expectation = handler.data().data();
     ByteBuffer    buffer(handler);
     for (std::uintmax_t i = size - 1; i > 0; --i)
         ASSERT_EQ(buffer[i], expectation[i]);
@@ -133,7 +130,7 @@ TEST(ByteBufferTest, SaveBytes)
     IOHandlerMock handler;
     ASSERT_TRUE(handler.open(file_name));
     const auto    size     = handler.size();
-    std::uint8_t* raw_data = handler.data();
+    std::uint8_t* raw_data = handler.data().data();
     ByteBuffer    buffer(handler);
     // initialize the data to zero
     std::memset(raw_data, 0, size);
@@ -183,7 +180,7 @@ TEST(ByteBufferTest, SaveAllBytesReadOnly)
     IOHandlerMock handler(true);
     ASSERT_TRUE(handler.open(file_name));
     const auto    size     = handler.size();
-    std::uint8_t* raw_data = handler.data();
+    std::uint8_t* raw_data = handler.data().data();
     ByteBuffer    buffer(handler);
     // initialize the data to zero
     std::memset(raw_data, 0, size);
@@ -220,7 +217,7 @@ TEST(ByteBufferTest, ErrorDuringSave)
     const auto size = handler.size();
     ByteBuffer buffer(handler);
 
-    ASSERT_EQ(size, expected_size_bytes);
+    ASSERT_EQ(size, handler.size());
     EXPECT_TRUE(buffer.error_msg().empty());
     EXPECT_TRUE(buffer.is_ok());
     EXPECT_FALSE(buffer.is_dirty(0));
@@ -232,5 +229,91 @@ TEST(ByteBufferTest, ErrorDuringSave)
     buffer.save();
     EXPECT_FALSE(buffer.error_msg().empty());
     EXPECT_FALSE(buffer.is_ok());
+}
+
+TEST(ByteBufferTest, FindCornerCases)
+{
+    IOHandlerMock handler;
+    ASSERT_TRUE(handler.open(file_name));
+    ByteBuffer buffer(handler);
+
+    // empty needle
+    for (std::size_t i = 0; i < buffer.size; ++i)
+        ASSERT_FALSE(buffer.find({}, i).has_value());
+
+    // full match
+    for (std::size_t i = 0; i < buffer.size; ++i)
+        ASSERT_EQ(buffer.find(handler.data(), i).has_value(), !i);
+
+    // out of range
+    ASSERT_FALSE(buffer.find(handler.data(), buffer.size + 1).has_value());
+}
+
+TEST(ByteBufferTest, FindMatches)
+{
+    std::vector<std::uint8_t> needle;
+    needle.resize(100);
+    for (auto& byte : needle)
+        byte = static_cast<std::uint8_t>(rand() % 256);
+    // match at start
+    {
+        IOHandlerMock handler;
+        ASSERT_TRUE(handler.open(file_name));
+        ByteBuffer buffer(handler);
+        for (std::size_t i = 0; i < needle.size(); ++i)
+            handler.data()[i] = needle[i];
+
+        auto res = buffer.find(needle);
+        ASSERT_TRUE(res.has_value());
+        ASSERT_EQ(res.value(), 0);
+    }
+    // match at midle
+    {
+        IOHandlerMock handler;
+        ASSERT_TRUE(handler.open(file_name));
+        ByteBuffer buffer(handler);
+        for (std::size_t i = 0; i < needle.size(); ++i)
+            handler.data()[buffer.size / 2 + i] = needle[i];
+
+        auto res = buffer.find(needle);
+        ASSERT_TRUE(res.has_value());
+        ASSERT_EQ(res.value(), buffer.size / 2);
+    }
+    // match at end
+    {
+        IOHandlerMock handler;
+        ASSERT_TRUE(handler.open(file_name));
+        ByteBuffer buffer(handler);
+        for (std::size_t i = 0; i < needle.size(); ++i)
+            handler.data()[buffer.size - needle.size() - 1 + i] = needle[i];
+
+        auto res = buffer.find(needle);
+        ASSERT_TRUE(res.has_value());
+        ASSERT_EQ(res.value(), buffer.size - needle.size() - 1);
+    }
+    // multiple matches
+    {
+        IOHandlerMock handler;
+        ASSERT_TRUE(handler.open(file_name));
+        ByteBuffer buffer(handler);
+        for (std::size_t i = 0; i < needle.size(); ++i)
+        {
+            handler.data()[i]                                   = needle[i];
+            handler.data()[buffer.size - needle.size() - 1 + i] = needle[i];
+        }
+        auto res = buffer.find(needle);
+        ASSERT_TRUE(res.has_value());
+        ASSERT_EQ(res.value(), 0);
+        res = buffer.find(needle, needle.size());
+        ASSERT_TRUE(res.has_value());
+        ASSERT_EQ(res.value(), buffer.size - needle.size() - 1);
+    }
+    // no match
+    {
+        IOHandlerMock handler;
+        ASSERT_TRUE(handler.open(file_name));
+        ByteBuffer buffer(handler);
+        ASSERT_FALSE(buffer.find(needle).has_value());
+    }
 }
 } // namespace

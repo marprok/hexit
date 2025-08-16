@@ -5,14 +5,13 @@
 #include "IOHandler.h"
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 namespace fs = std::filesystem;
 
 class IOHandlerMock : public Hexit::IOHandler
 {
 public:
-    static constexpr std::uintmax_t chunk_count = 255;
-
     IOHandlerMock(bool read_only = false);
 
     ~IOHandlerMock() = default;
@@ -27,7 +26,7 @@ public:
 
     bool seek(std::uintmax_t offset) override;
 
-    std::uint8_t* data();
+    std::vector<std::uint8_t>& data();
 
     std::uintmax_t load_count() const;
 
@@ -37,14 +36,13 @@ private:
     inline void randomize()
     {
         std::srand(static_cast<unsigned int>(std::time(nullptr)));
-        std::uint8_t* bytes = data();
         for (std::uintmax_t i = 0; i < m_size; ++i)
-            bytes[i] = static_cast<std::uint8_t>(rand() % 256);
+            m_data[i] = static_cast<std::uint8_t>(rand() % 256);
     }
 
-    std::uint8_t  m_data[chunk_count][Hexit::ChunkCache::capacity];
-    std::uintmax_t m_id;
-    std::uintmax_t m_load_count;
-    bool          m_io_fail;
+    std::vector<std::uint8_t> m_data;
+    std::uintmax_t            m_id;
+    std::uintmax_t            m_load_count;
+    bool                      m_io_fail;
 };
 #endif // IOHANDLER_MOCK_H

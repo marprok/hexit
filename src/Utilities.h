@@ -8,8 +8,8 @@
 
 namespace Hexit
 {
-// Converts a hex character to the corresponding integer value.
-inline std::uint8_t hex_char_to_int(std::uint8_t chr)
+// Converts a hex digit to its corresponding integer value.
+inline std::uint8_t hdtoi(std::uint8_t chr)
 {
     if (!std::isxdigit(chr))
         return chr;
@@ -31,7 +31,7 @@ inline std::uint8_t update_nibble(std::uint8_t nibble_id, std::uint8_t nibble_va
     if (nibble_id > 1)
         return data;
 
-    std::uint8_t hex_digit = hex_char_to_int(nibble_value);
+    std::uint8_t hex_digit = hdtoi(nibble_value);
     if (hex_digit > 0xF)
         return data;
 

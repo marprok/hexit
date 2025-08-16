@@ -3,12 +3,9 @@
 
 #include "IOHandler.h"
 #include <cstdint>
-#include <filesystem>
 
 namespace Hexit
 {
-namespace fs = std::filesystem;
-
 class ChunkCache
 {
 public:
@@ -35,15 +32,15 @@ public:
 
     inline DataChunk& recent() { return m_chunks[m_id]; }
 
-    inline DataChunk& fallback() { return m_chunks[1 - m_id]; }
+    inline DataChunk& fallback() { return m_chunks[!m_id]; }
 
     inline bool is_read_only() const { return m_handler.read_only(); }
 
 private:
-    IOHandler&    m_handler;
+    IOHandler&     m_handler;
     std::uintmax_t m_total_chunks;
-    DataChunk     m_chunks[2];
-    std::uint8_t  m_id; // id of the most recently used chunk.
+    DataChunk      m_chunks[2];
+    std::uint8_t   m_id; // id of the most recently used chunk.
 };
 } // namespace Hexit
 #endif // CHUNK_CACHE_H

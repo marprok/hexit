@@ -3,8 +3,9 @@
 
 #include "ByteBuffer.h"
 #include "Scroller.h"
-#include <cinttypes>
+#include "config.h"
 #include <cstdint>
+#include <functional>
 #include <ncurses.h>
 #include <string>
 
@@ -52,6 +53,8 @@ private:
 
     void prompt_go_to_byte();
 
+    void prompt_search();
+
     void toggle_ascii_mode();
 
     void toggle_hex_mode();
@@ -66,23 +69,37 @@ private:
         ASCII,
     };
 
-    enum class Prompt : std::uint8_t
+    struct Prompt
     {
-        NONE,
-        SAVE,
-        QUIT,
-        GO_TO_BYTE
+
+        Prompt(std::function<void(int)> callback)
+            : handle_key(callback)
+        {
+            input.reserve(LINE_OFFSET_LEN);
+            needle.reserve(LINE_OFFSET_LEN);
+        }
+        std::string              input;
+        std::vector<uint8_t>     needle;
+        std::function<void(int)> handle_key;
+
+        enum
+        {
+            NONE,
+            SAVE,
+            QUIT,
+            GO_TO_BYTE,
+            SEARCH,
+        } type { NONE };
     };
 
-    Scroller          m_scroller;
     ByteBuffer        m_data;
+    Scroller          m_scroller;
+    Prompt            m_prompt;
     const std::string m_name;
     const std::string m_type;
-    std::string       m_input_buffer;
     std::uintmax_t    m_byte;
     char              m_offset_format[16];
     Mode              m_mode;
-    Prompt            m_prompt;
     std::uint8_t      m_nibble;
     bool              m_update;
     bool              m_quit;
