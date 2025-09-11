@@ -5,6 +5,7 @@
 #include <cctype>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace Hexit
 {
@@ -61,5 +62,40 @@ const char* get_arg(int argc, const char* const* const argv, const std::string& 
 bool get_flag(int argc, const char* const* const argv, const std::string& flag);
 
 std::uintmax_t str_to_int(const char* const str);
+
+struct Prompt
+{
+    explicit Prompt(const std::uint32_t max);
+
+    enum Type
+    {
+        NONE,
+        SAVE,
+        QUIT,
+        GO_TO_BYTE,
+        SEARCH,
+    } type { NONE };
+
+    bool push(std::uint8_t c, bool as_hex);
+
+    inline bool is_active() const { return type != NONE; }
+
+    inline const std::string& get() const { return input; }
+
+    inline bool is_ready() const { return !needle.empty(); }
+
+    const std::vector<uint8_t>& to_bytes(bool as_hex);
+
+    bool pop();
+
+    void reset(Type t = NONE);
+
+private:
+    bool is_text_prompt() const { return type == GO_TO_BYTE || type == SEARCH; }
+
+    const std::uint32_t  MAX_CHARACTERS;
+    std::string          input;
+    std::vector<uint8_t> needle;
+};
 } // namespace Hexit
 #endif // UTILITIES_H

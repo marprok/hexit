@@ -223,4 +223,43 @@ TEST(UtilitiesTest, ValidateArgs)
         EXPECT_FALSE(validate_args(3, argv));
     }
 }
+TEST(UtilitiesTest, Prompt)
+{
+    constexpr std::uint32_t MAX = 123;
+    {
+        Prompt pr(MAX);
+        EXPECT_FALSE(pr.is_active());
+        pr.reset(Prompt::SEARCH);
+        EXPECT_EQ(pr.get().size(), 0);
+        EXPECT_TRUE(pr.is_active());
+        EXPECT_FALSE(pr.is_ready());
+        EXPECT_FALSE(pr.pop());
+        for (std::uint32_t i = 0; i < MAX; ++i)
+            EXPECT_TRUE(pr.push('0', false));
+        EXPECT_FALSE(pr.push('0', false));
+        EXPECT_FALSE(pr.is_ready());
+        EXPECT_TRUE(pr.pop());
+        EXPECT_TRUE(pr.push('0', false));
+        EXPECT_EQ(pr.get().size(), MAX);
+        EXPECT_EQ(pr.get(), std::string(MAX, '0'));
+    }
+
+    {
+        Prompt pr(MAX);
+        EXPECT_FALSE(pr.is_active());
+        pr.reset(Prompt::GO_TO_BYTE);
+        EXPECT_EQ(pr.get().size(), 0);
+        EXPECT_TRUE(pr.is_active());
+        EXPECT_FALSE(pr.is_ready());
+        EXPECT_FALSE(pr.pop());
+        for (std::uint32_t i = 0; i < MAX; ++i)
+            EXPECT_TRUE(pr.push('F', true));
+        EXPECT_FALSE(pr.push('F', true));
+        EXPECT_FALSE(pr.is_ready());
+        EXPECT_TRUE(pr.pop());
+        EXPECT_TRUE(pr.push('F', true));
+        EXPECT_EQ(pr.get().size(), MAX);
+        EXPECT_EQ(pr.get(), std::string(MAX, 'F'));
+    }
+}
 } // namespace

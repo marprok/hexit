@@ -3,6 +3,7 @@
 
 #include "ByteBuffer.h"
 #include "Scroller.h"
+#include "Utilities.h"
 #include "config.h"
 #include <cstdint>
 #include <functional>
@@ -11,6 +12,8 @@
 
 namespace Hexit
 {
+struct Prompt;
+
 class TerminalWindow
 {
 public:
@@ -65,31 +68,8 @@ private:
 
     enum class Mode : std::uint8_t
     {
-        HEX,
-        ASCII,
-    };
-
-    struct Prompt
-    {
-
-        Prompt(std::function<void(int)> callback)
-            : handle_key(callback)
-        {
-            input.reserve(LINE_OFFSET_LEN);
-            needle.reserve(LINE_OFFSET_LEN);
-        }
-        std::string              input;
-        std::vector<uint8_t>     needle;
-        std::function<void(int)> handle_key;
-
-        enum
-        {
-            NONE,
-            SAVE,
-            QUIT,
-            GO_TO_BYTE,
-            SEARCH,
-        } type { NONE };
+        HEX   = 16,
+        ASCII = 10,
     };
 
     ByteBuffer        m_data;
