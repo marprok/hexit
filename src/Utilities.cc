@@ -134,7 +134,7 @@ bool Prompt::pop()
     needle.clear();
     return true;
 }
-
+// TODO: maybe check that Type is valid
 void Prompt::reset(Type t)
 {
     input.clear();

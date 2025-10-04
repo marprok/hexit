@@ -226,11 +226,23 @@ TEST(UtilitiesTest, ValidateArgs)
 TEST(UtilitiesTest, Prompt)
 {
     constexpr std::uint32_t MAX = 123;
+    // invalid cases
+    {
+        Prompt pr(MAX);
+        pr.reset(Prompt::SAVE);
+        EXPECT_FALSE(pr.push(0x20 - 1, false));
+        EXPECT_FALSE(pr.push(0x7F + 1, true));
+        EXPECT_FALSE(pr.push('G', true));
+        EXPECT_FALSE(pr.push('9', true));
+        pr.reset(Prompt::GO_TO_BYTE);
+        EXPECT_FALSE(pr.push(' ', false));
+    }
     {
         Prompt pr(MAX);
         EXPECT_FALSE(pr.is_active());
         pr.reset(Prompt::SEARCH);
-        EXPECT_EQ(pr.get().size(), 0);
+        EXPECT_TRUE(pr.get().empty());
+        EXPECT_TRUE(pr.to_bytes(false).empty());
         EXPECT_TRUE(pr.is_active());
         EXPECT_FALSE(pr.is_ready());
         EXPECT_FALSE(pr.pop());
@@ -242,13 +254,18 @@ TEST(UtilitiesTest, Prompt)
         EXPECT_TRUE(pr.push('0', false));
         EXPECT_EQ(pr.get().size(), MAX);
         EXPECT_EQ(pr.get(), std::string(MAX, '0'));
+        const auto& bytes = pr.to_bytes(false);
+        EXPECT_TRUE(pr.is_ready());
+        for (std::uint32_t i = 0; i < MAX; ++i)
+            EXPECT_EQ('0', bytes[i]);
+        EXPECT_EQ(std::addressof(bytes), std::addressof(pr.to_bytes(false)));
     }
-
     {
         Prompt pr(MAX);
         EXPECT_FALSE(pr.is_active());
         pr.reset(Prompt::GO_TO_BYTE);
-        EXPECT_EQ(pr.get().size(), 0);
+        EXPECT_TRUE(pr.get().empty());
+        EXPECT_TRUE(pr.to_bytes(true).empty());
         EXPECT_TRUE(pr.is_active());
         EXPECT_FALSE(pr.is_ready());
         EXPECT_FALSE(pr.pop());
@@ -260,6 +277,12 @@ TEST(UtilitiesTest, Prompt)
         EXPECT_TRUE(pr.push('F', true));
         EXPECT_EQ(pr.get().size(), MAX);
         EXPECT_EQ(pr.get(), std::string(MAX, 'F'));
+        const auto& bytes = pr.to_bytes(true);
+        EXPECT_TRUE(pr.is_ready());
+        EXPECT_EQ(bytes[0], 0x0F);
+        for (std::uint32_t i = 1; i < (MAX / 2); ++i)
+            EXPECT_EQ(0xFF, bytes[i]);
+        EXPECT_EQ(std::addressof(bytes), std::addressof(pr.to_bytes(false)));
     }
 }
 } // namespace
